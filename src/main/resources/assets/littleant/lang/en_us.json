@@ -1,13 +1,3 @@
 {
-  "itemGroup.littleant": "Example Mod Tab",
-  "block.littleant.example_block": "Example Block",
-  "item.littleant.example_item": "Example Item",
-
-  "littleant.configuration.title": "Little Ant Configs",
-  "littleant.configuration.section.littleant.common.toml": "Little Ant Configs",
-  "littleant.configuration.section.littleant.common.toml.title": "Little Ant Configs",
-  "littleant.configuration.items": "Item List",
-  "littleant.configuration.logDirtBlock": "Log Dirt Block",
-  "littleant.configuration.magicNumberIntroduction": "Magic Number Text",
-  "littleant.configuration.magicNumber": "Magic Number"
+  "item.littleant.ant_spawner": "Ant Spawner"
 }
