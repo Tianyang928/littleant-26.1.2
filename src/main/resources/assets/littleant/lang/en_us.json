@@ -1,3 +1,5 @@
 {
-  "item.littleant.ant_spawner": "Ant Spawner"
+  "item.littleant.ant_spawn_egg": "Ant Spawn Egg",
+  "creative_mode_tab.littleant.ant_items_tab": "Ant Items",
+  "block.littleant.ant_crafting_table": "Ant Crafting Table"
 }

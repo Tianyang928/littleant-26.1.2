@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "littleant:item/ant_spawner"
+    "layer0": "littleant:item/ant_spawn_egg"
   }
 }

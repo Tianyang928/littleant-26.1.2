@@ -6,6 +6,7 @@ import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.data.PackOutput;
 import net.tianyang928.littleant.LittleAnt;
+import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.item.ModItems;
 
 public class ModModelProvider extends ModelProvider {
@@ -15,6 +16,8 @@ public class ModModelProvider extends ModelProvider {
 
     @Override
     protected void registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels) {
-        itemModels.generateFlatItem(ModItems.ANT_SPAWNER.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(ModItems.ANT_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+
+        blockModels.createTrivialCube(ModBlocks.ANT_CRAFTING_TABLE.get());
     }
 }

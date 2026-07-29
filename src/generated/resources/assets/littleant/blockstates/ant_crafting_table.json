@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "littleant:block/ant_crafting_table"
+    }
+  }
+}

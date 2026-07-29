@@ -1,5 +1,7 @@
 package net.tianyang928.littleant;
 
+import net.tianyang928.littleant.block.ModBlocks;
+import net.tianyang928.littleant.creativemodetab.ModCreativeModeTabs;
 import net.tianyang928.littleant.item.ModItems;
 import org.slf4j.Logger;
 
@@ -46,7 +48,9 @@ public class LittleAnt {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
+        ModCreativeModeTabs.register(modEventBus);
         ModItems.register(modEventBus);
+        ModBlocks.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (LittleAnt) to respond directly to events.
@@ -67,7 +71,11 @@ public class LittleAnt {
     // Add the example block item to the building blocks tab
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
-            event.accept(ModItems.ANT_SPAWNER);
+            event.accept(ModItems.ANT_SPAWN_EGG);
+        }
+
+        if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
+            event.accept(ModBlocks.ANT_CRAFTING_TABLE);
         }
     }
 

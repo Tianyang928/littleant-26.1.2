@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "littleant:item/ant_spawner"
+    "model": "littleant:block/ant_crafting_table"
   }
 }
