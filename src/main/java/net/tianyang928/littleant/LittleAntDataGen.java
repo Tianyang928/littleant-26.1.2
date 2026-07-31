@@ -11,6 +11,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.tianyang928.littleant.datagen.ModBlockLootTableProvider;
 import net.tianyang928.littleant.datagen.ModBlockTagsProvider;
 import net.tianyang928.littleant.datagen.ModModelProvider;
+import net.tianyang928.littleant.datagen.ModRecipeProvider;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,5 +31,7 @@ public class LittleAntDataGen {
                                                             List.of(new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new,
                                                                                                             LootContextParamSets.BLOCK)),
                                                             lookupProvider));
+        generator.addProvider(true, new ModRecipeProvider.Runner(packOutput, lookupProvider));
+
     }
 }

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:crafting_table",
+    "minecraft:dirt",
+    "minecraft:cobblestone",
+    "minecraft:water_bucket",
+    "minecraft:iron_ingot",
+    "minecraft:bread",
+    "minecraft:bone",
+    "minecraft:gunpowder",
+    "#minecraft:logs"
+  ],
+  "result": {
+    "id": "littleant:ant_crafting_table"
+  }
+}
