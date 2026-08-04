@@ -23,6 +23,7 @@ public class ModCreativeModeTabs {
                     .displayItems((displayParameters,output) -> {
                         output.accept(ModItems.ANT_SPAWN_EGG);
                         output.accept(ModBlocks.ANT_CRAFTING_TABLE);
+                        output.accept(ModItems.PHEROMONE_BLOCK);
                     })
                     .build());
 
