@@ -1,11 +1,20 @@
 package net.tianyang928.littleant.block;
 
+import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -15,28 +24,21 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import net.tianyang928.littleant.block_entity.ModBlockEntities;
 import net.tianyang928.littleant.block_entity.PheromoneBlockEntity;
+import net.tianyang928.littleant.inventory.PheromoneListMenu;
 import net.tianyang928.littleant.item.ModItems;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashMap;
+
 public class PheromoneBlock extends Block implements EntityBlock {
-    public static final BooleanProperty inHand = BooleanProperty.create("in_hand");
+    private static final Component CONTAINER_TITLE = Component.translatable("container.pheromone_list");
 
     public PheromoneBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(stateDefinition.any().setValue(inHand, false));
     }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        // this is where the properties are actually added to the state
-        builder.add(inHand);
-    }
-
-
 
     protected boolean propagatesSkylightDown(BlockState state) {
         return state.getFluidState().isEmpty();
@@ -91,4 +93,44 @@ public class PheromoneBlock extends Block implements EntityBlock {
             );
         }
     }
+
+    @Override
+    protected InteractionResult useWithoutItem(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            BlockHitResult hit
+    ) {
+        if (!level.isClientSide()) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof PheromoneBlockEntity pheromoneBlockEntity) {
+                player.openMenu(pheromoneBlockEntity);
+            }
+        }
+
+        return InteractionResult.SUCCESS;
+    }
+
+//    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
+//        BlockEntity blockEntity = level.getBlockEntity(pos);
+//        HashMap<Integer, Integer> pheromoneList;
+//        if (blockEntity instanceof PheromoneBlockEntity pheromoneBlockEntity) {
+//            // pheromoneBlockEntity 已经是转换后的类型
+//            pheromoneList = pheromoneBlockEntity.getPheromoneList();
+//        }
+//        else {
+//            pheromoneList = new HashMap<>();
+//        }
+//        return new SimpleMenuProvider((containerId,
+//                                       inventory,
+//                                       player) -> new PheromoneListMenu(
+//                                        containerId,
+//                                        inventory,
+//                                        ContainerLevelAccess.create(level, pos),
+//                                        pheromoneList
+//                                        ),CONTAINER_TITLE);
+//
+//    }
+
 }

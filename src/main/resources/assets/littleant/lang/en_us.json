@@ -3,5 +3,6 @@
   "item.littleant.pheromone_block": "Pheromone Block",
   "creative_mode_tab.littleant.ant_items_tab": "Ant Items",
   "block.littleant.ant_crafting_table": "Ant Crafting Table",
-  "block.littleant.pheromone_block": "Pheromone Block"
+  "block.littleant.pheromone_block": "Pheromone Block",
+  "container.pheromone_list": "Pheromone List"
 }

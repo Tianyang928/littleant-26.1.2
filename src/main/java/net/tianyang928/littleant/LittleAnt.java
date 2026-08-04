@@ -3,6 +3,7 @@ package net.tianyang928.littleant;
 import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.block_entity.ModBlockEntities;
 import net.tianyang928.littleant.creativemodetab.ModCreativeModeTabs;
+import net.tianyang928.littleant.inventory.ModMenus;
 import net.tianyang928.littleant.item.ModItems;
 import org.slf4j.Logger;
 
@@ -33,6 +34,7 @@ public class LittleAnt {
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModBlockEntities.register(modEventBus);
+        ModMenus.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (LittleAnt) to respond directly to events.

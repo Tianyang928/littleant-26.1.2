@@ -1,6 +1,12 @@
 package net.tianyang928.littleant.block_entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -8,12 +14,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.tianyang928.littleant.block.PheromoneBlock;
+import net.tianyang928.littleant.inventory.PheromoneListMenu;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Optional;
 
-public class PheromoneBlockEntity extends BlockEntity{
+public class PheromoneBlockEntity extends BlockEntity implements MenuProvider {
     private final HashMap<Integer, Integer> pheromoneMap = new HashMap<>();
     private int tickCount = 0;
 
@@ -83,4 +91,30 @@ public class PheromoneBlockEntity extends BlockEntity{
             blockEntity.pheromoneMap.put(key, blockEntity.pheromoneMap.get(key) - 1);
         }
     }
+
+    public HashMap<Integer, Integer> getPheromoneList() {
+        return this.pheromoneMap;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable(
+                "block.littleant.pheromone_block"
+        );
+    }
+
+    @Override
+    public @Nullable AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
+        return new PheromoneListMenu(i, inventory, this);
+    }
+
+    @Override
+    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buf) {
+        // write pheromone map to buffer
+        for(int key : this.pheromoneMap.keySet()) {
+            buf.writeVarInt(key);
+            buf.writeVarInt(this.pheromoneMap.get(key));
+        }
+    }
+
 }

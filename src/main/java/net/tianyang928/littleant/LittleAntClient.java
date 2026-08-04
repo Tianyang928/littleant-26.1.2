@@ -7,8 +7,11 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.tianyang928.littleant.inventory.ModMenus;
+import net.tianyang928.littleant.inventory.screen.PheromoneListScreen;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = LittleAnt.MOD_ID, dist = Dist.CLIENT)
@@ -27,5 +30,15 @@ public class LittleAntClient {
         // Some client setup code
         LittleAnt.LOGGER.info("HELLO FROM CLIENT SETUP");
         LittleAnt.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+    }
+
+    @SubscribeEvent
+    static void registerScreens(
+            RegisterMenuScreensEvent event
+    ) {
+        event.register(
+                ModMenus.PHEROMONE_LIST_MENU.get(),
+                PheromoneListScreen::new
+        );
     }
 }
