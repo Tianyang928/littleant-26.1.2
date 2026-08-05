@@ -1,10 +1,14 @@
 package net.tianyang928.littleant;
 
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.HandlerThread;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.block_entity.ModBlockEntities;
 import net.tianyang928.littleant.creativemodetab.ModCreativeModeTabs;
 import net.tianyang928.littleant.inventory.ModMenus;
 import net.tianyang928.littleant.item.ModItems;
+import net.tianyang928.littleant.network.SetPheromonePayload;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;

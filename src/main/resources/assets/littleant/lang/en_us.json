@@ -4,5 +4,10 @@
   "creative_mode_tab.littleant.ant_items_tab": "Ant Items",
   "block.littleant.ant_crafting_table": "Ant Crafting Table",
   "block.littleant.pheromone_block": "Pheromone Block",
-  "container.pheromone_list": "Pheromone List"
+  "container.pheromone_list": "Pheromone List",
+  "fml.menu.mods.new_pheromone": "Create New Pheromone",
+  "gui.littleant.pheromone_id_hint": "Pheromone Id",
+  "gui.littleant.pheromone_amount_hint": "Pheromone Amount",
+  "gui.littleant.pheromone_id": "Pheromone Id",
+  "gui.littleant.pheromone_amount": "Pheromone Amount"
 }
