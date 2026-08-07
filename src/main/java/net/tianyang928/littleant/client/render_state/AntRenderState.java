@@ -5,4 +5,5 @@ import net.minecraft.network.chat.Component;
 
 public class AntRenderState extends HumanoidRenderState {
     public Component characterName;
+    public String skinName;
 }
