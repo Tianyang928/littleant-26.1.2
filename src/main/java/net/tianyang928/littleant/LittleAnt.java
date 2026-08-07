@@ -1,11 +1,14 @@
 package net.tianyang928.littleant;
 
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.HandlerThread;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.block_entity.ModBlockEntities;
 import net.tianyang928.littleant.creativemodetab.ModCreativeModeTabs;
+import net.tianyang928.littleant.entity.AntEntity;
+import net.tianyang928.littleant.entity.ModEntities;
 import net.tianyang928.littleant.inventory.ModMenus;
 import net.tianyang928.littleant.item.ModItems;
 import net.tianyang928.littleant.network.SetPheromonePayload;
@@ -39,6 +42,7 @@ public class LittleAnt {
         ModBlocks.register(modEventBus);
         ModBlockEntities.register(modEventBus);
         ModMenus.register(modEventBus);
+        ModEntities.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (LittleAnt) to respond directly to events.
@@ -47,6 +51,7 @@ public class LittleAnt {
 
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
+        modEventBus.addListener(this::registerAttributes);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
@@ -72,5 +77,9 @@ public class LittleAnt {
     public void onServerStarting(ServerStartingEvent event) {
         // Do something when the server starts
         LOGGER.info("HELLO from server starting");
+    }
+
+    private void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.ANT.get(), AntEntity.createAttributes().build());
     }
 }

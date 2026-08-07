@@ -9,6 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
@@ -77,7 +78,9 @@ public class PheromoneBlock extends Block implements EntityBlock {
     ) {
         if (level.isClientSide()
                 && Minecraft.getInstance().player instanceof Player player
-                && player.getMainHandItem().is(ModItems.PHEROMONE_BLOCK.get())) {
+                //主手或副手持有pheromone block，才显示粒子
+                && (player.getMainHandItem().is(ModItems.PHEROMONE_BLOCK.get())
+                    || player.getItemInHand(InteractionHand.OFF_HAND).is(ModItems.PHEROMONE_BLOCK.get()))) {
 
             level.addParticle(
                     new BlockParticleOption(

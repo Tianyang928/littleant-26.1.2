@@ -9,5 +9,6 @@
   "gui.littleant.pheromone_id_hint": "Pheromone Id",
   "gui.littleant.pheromone_amount_hint": "Pheromone Amount",
   "gui.littleant.pheromone_id": "Pheromone Id",
-  "gui.littleant.pheromone_amount": "Pheromone Amount"
+  "gui.littleant.pheromone_amount": "Pheromone Amount",
+  "entity.littleant.ant": "Ant"
 }
