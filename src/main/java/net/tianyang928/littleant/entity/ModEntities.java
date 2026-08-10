@@ -14,7 +14,7 @@ public final class ModEntities {
     public static final Supplier<EntityType<AntEntity>> ANT = ENTITIES.registerEntityType(
             "ant",
             AntEntity::new,
-            MobCategory.CREATURE,
+            MobCategory.MISC,
             builder -> builder
                     .sized(0.6F, 1.8F)
                     .eyeHeight(1.53F)

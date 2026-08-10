@@ -28,14 +28,16 @@ public class AntRenderer extends HumanoidMobRenderer<AntEntity, AntRenderState, 
     public void extractRenderState(AntEntity entity, AntRenderState state, float partialTick) {
         super.extractRenderState(entity, state, partialTick);
 
-        // 从 entity 读取实体名字，写入 state
-        state.characterName = entity.updateCharacterName();
-        state.skinName = entity.updateSkinName();
+        // 从 entity 读取实体皮肤，写入 state
+        state.skinName = entity.getSkinNameAccessor();
     }
 
     @Override
     public Identifier getTextureLocation(AntRenderState antRenderState) {
         String skinName = antRenderState.skinName;
+        if(skinName.isEmpty()){
+            skinName = "null";
+        }
         return Identifier.fromNamespaceAndPath(
                 LittleAnt.MOD_ID,
                 "textures/entity/ant/" + skinName + ".png"

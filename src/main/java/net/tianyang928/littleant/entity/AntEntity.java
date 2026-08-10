@@ -1,11 +1,14 @@
 package net.tianyang928.littleant.entity;
 
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -13,18 +16,25 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.item.ItemStack;
 import net.tianyang928.littleant.LittleAnt;
+import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
+import org.w3c.dom.Attr;
 
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
 public class AntEntity extends PathfinderMob {
 
     AntEntityGlobalData antEntityGlobalData = new AntEntityGlobalData();
+    @Nullable
+    private BreakBlockGoal breakBlockGoal;
 
     private static final EntityDataAccessor<String> skinNameAccessor =
             SynchedEntityData.defineId(
@@ -44,7 +54,8 @@ public class AntEntity extends PathfinderMob {
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
                 .add(Attributes.FOLLOW_RANGE, 24.0D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.10D);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.10D)
+                .add(Attributes.MINING_EFFICIENCY, 0.0D);
     }
 
     @Override
@@ -58,13 +69,25 @@ public class AntEntity extends PathfinderMob {
         this.setCustomName(getRandomCharacterName());
         this.getEntityData().set(skinNameAccessor, getRandomSkinName());
         this.setCustomNameVisible(true);
-
+        this.setPersistenceRequired();
+        LittleAnt.LOGGER.info("[AntEntity] finalizeSpawn, full custom name: {}", Objects.requireNonNull(getCustomName()).getString());
         return data;
     }
 
     @Override
     protected void registerGoals() {
-        // AI 阶段再加入目标；暂时保持为空。
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+
+        this.breakBlockGoal = new BreakBlockGoal(this, BlockPos.ZERO);
+        this.breakBlockGoal.clearTarget();
+        this.goalSelector.addGoal(1, this.breakBlockGoal);
+    }
+
+    // Assigns the next block this ant should path to and mine.
+    public void setBreakTarget(BlockPos target) {
+        if (this.breakBlockGoal != null) {
+            this.breakBlockGoal.setTarget(target);
+        }
     }
 
     @Override
@@ -82,14 +105,17 @@ public class AntEntity extends PathfinderMob {
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
         this.getEntityData().set(skinNameAccessor, input.getStringOr("skin_name", ""));
-        LittleAnt.LOGGER.info("[AntEntity] read skin name from save data: {}", this.getEntityData().get(skinNameAccessor));
+        LittleAnt.LOGGER.info("[AntEntity] read skin name from save data: {}", getSkinNameAccessor());
+
+        // 如果没有皮肤，随机选择一个皮肤
+        ensureSkinName();
     }
 
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
         super.addAdditionalSaveData(output);
-        output.putString("skin_name", this.getEntityData().get(skinNameAccessor));
-        LittleAnt.LOGGER.info("[AntEntity] write skin name to save data: {}", this.getEntityData().get(skinNameAccessor));
+        output.putString("skin_name", getSkinNameAccessor());
+        LittleAnt.LOGGER.info("[AntEntity] write skin name to save data: {}", getSkinNameAccessor());
     }
 
     private Component getRandomCharacterName() {
@@ -109,22 +135,23 @@ public class AntEntity extends PathfinderMob {
     private String getRandomSkinName() {
         // 从 SKIN_NAMES 中随机选择一个皮肤
         int skinIndex = (int) (Math.random() * antEntityGlobalData.getSkinNames().length);
-        LittleAnt.LOGGER.info("[AntEntity] random new skin name: {}", this.getEntityData().get(skinNameAccessor));
+        LittleAnt.LOGGER.info("[AntEntity] random new skin name: {}", getSkinNameAccessor());
         return antEntityGlobalData.getSkinNames()[skinIndex];
     }
 
-    public Component updateCharacterName() {
-        if(this.getCustomName() == null){
-            this.setCustomName(getRandomCharacterName());
-            this.setCustomNameVisible(true);
+    public void ensureSkinName() {
+        if(getSkinNameAccessor().isEmpty()){
+            this.getEntityData().set(skinNameAccessor, getRandomSkinName());
         }
-        return this.getCustomName();
     }
 
-    public String updateSkinName() {
-        if(this.getEntityData().get(skinNameAccessor).isEmpty()){
-            return getRandomSkinName();
-        }
+    public String getSkinNameAccessor() {
         return this.getEntityData().get(skinNameAccessor);
+    }
+
+    @Override
+    public void aiStep() {
+        this.updateSwingTime();
+        super.aiStep();
     }
 }
