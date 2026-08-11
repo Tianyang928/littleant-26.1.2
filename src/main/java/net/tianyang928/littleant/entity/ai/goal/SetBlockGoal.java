@@ -5,9 +5,8 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
 import net.tianyang928.littleant.LittleAnt;
@@ -15,33 +14,29 @@ import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.EnumSet;
 
-public class BreakBlockGoal extends Goal {
+public class SetBlockGoal extends Goal {
     public BlockPos blockPos;
+    public BlockState holdingBlockState;
     protected final PathfinderMob mob;
     private boolean hasTarget;
-    protected int breakTime;
     private long lastCanUseCheck;
     private Path path;
-    protected int lastBreakProgress = -1;
-    private long lastSwingHandCheck;
 
 
-    public BreakBlockGoal(PathfinderMob mob, BlockPos blockPos) {
+    public SetBlockGoal(PathfinderMob mob, BlockPos blockPos) {
         this.mob = mob;
         this.blockPos = blockPos;
         this.hasTarget = true;
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        this.updateHoldingBlockState();
+
+        this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }
 
     public void setTarget(BlockPos blockPos) {
         this.blockPos = blockPos.immutable();
         this.hasTarget = true;
         this.lastCanUseCheck = 0L;
-        this.lastSwingHandCheck = 0L;
-        this.breakTime = 0;
-        if(this.mob instanceof AntEntity antEntity) {
-            antEntity.tryGettingDownWater = false;
-        }
+        this.updateHoldingBlockState();
     }
 
     public void clearTarget() {
@@ -52,41 +47,23 @@ public class BreakBlockGoal extends Goal {
         }
     }
 
-    private long getBlockBreakTime() {
-        BlockState blockState = mob.level().getBlockState(blockPos);
-        if (blockState.isAir() || blockState.getDestroySpeed(mob.level(), blockPos) < 0.0F) {
-            return -1;
-        }
-        float toolSpeed = 1;
-        ItemStack item = this.mob.getMainHandItem();
-        if (!item.isEmpty()) {
-            // Minecraft 的破坏公式：破坏时间 = 方块硬度 / (工具速度 * 30) * 20 ticks
-            toolSpeed = item.getDestroySpeed(blockState);
-            if (toolSpeed > 1.0F) {
-                var miningEfficiency = this.mob.getAttribute(Attributes.MINING_EFFICIENCY);
-                if (miningEfficiency != null) {
-                    toolSpeed += (float) miningEfficiency.getValue();
-                }
-            }
-        }
-        float blockHardness = blockState.getDestroySpeed(mob.level(), blockPos);
-        //LittleAnt.LOGGER.info("[BreakBlockGoal] getBlockBreakTime, block hardness: {}, tool speed: {}, break time: {}", blockHardness, toolSpeed, Math.max(1, (int)Math.ceil(blockHardness / (toolSpeed * 30.0F) * 20.0F)));
-        return Math.max(1, (int)Math.ceil(blockHardness / (toolSpeed) * 20.0F));
-    }
-
     @Override
     public boolean canUse() {
-        if (!this.hasTarget || this.getBlockBreakTime() < 0L) {
+        if (!this.hasTarget
+                || this.holdingBlockState == null
+                || (!this.mob.level().getBlockState(this.blockPos).isAir()
+                && !this.mob.level().getBlockState(this.blockPos).canBeReplaced())) {
             this.clearTarget();
             return false;
         }
         long time = this.mob.level().getGameTime();
         if (time - this.lastCanUseCheck < 20L) {
             return false;
-        } else {
+        }
+        else {
             this.lastCanUseCheck = time;
 
-            // 直接能挖就不寻路了
+            // 直接能放置就不寻路了
             if (isBlockReachable()) {
                 return true;
             }
@@ -98,8 +75,6 @@ public class BreakBlockGoal extends Goal {
     @Override
     public void start() {
         super.start();
-        this.breakTime = 0;
-        this.lastBreakProgress = -1;
         if (!isBlockReachable()) {
             this.mob.getNavigation().moveTo(this.path, 1.0D);
         }
@@ -107,9 +82,10 @@ public class BreakBlockGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return !this.mob.level().getBlockState(this.blockPos).isAir()
+        this.updateHoldingBlockState();
+        return (this.mob.level().getBlockState(this.blockPos).isAir()
+                || this.mob.level().getBlockState(this.blockPos).canBeReplaced())
                 && (isBlockReachable() || !this.mob.getNavigation().isDone())
-                && this.breakTime <= getBlockBreakTime()
                 && this.hasTarget;
     }
 
@@ -166,27 +142,17 @@ public class BreakBlockGoal extends Goal {
             return;
         }
 
-        long time = this.mob.level().getGameTime();
-        if (time - this.lastSwingHandCheck >= 6L) {
-            this.lastSwingHandCheck = time;
-            SoundEvent breakSound = this.mob.level().getBlockState(blockPos).getSoundType().getHitSound();
-            this.mob.level().playSound(null, blockPos, breakSound, SoundSource.BLOCKS, 1.0F, 1.0F);
-            this.mob.swing(InteractionHand.MAIN_HAND, true);
-            //LittleAnt.LOGGER.info("[BreakBlockGoal] tick, swing hand once");
-        }
+        this.mob.level().setBlock(this.blockPos, holdingBlockState, 3);
+        SoundEvent placeSound = this.mob.level().getBlockState(blockPos).getSoundType().getPlaceSound();
+        this.mob.level().playSound(null, blockPos, placeSound, SoundSource.BLOCKS, 1.0F, 1.0F);
+        this.mob.swing(InteractionHand.MAIN_HAND, true);
+        this.mob.getMainHandItem().shrink(1);
+        clearTarget();
+        //LittleAnt.LOGGER.info("[SetBlockGoal] tick, swing hand once");
+    }
 
-        this.breakTime++;
-        int progress = (int) ((float) this.breakTime / this.getBlockBreakTime() * 10.0F);
-        if (progress != this.lastBreakProgress) {
-            this.mob.level().destroyBlockProgress(this.mob.getId(), this.blockPos, progress);
-            this.lastBreakProgress = progress;
-        }
-
-        if (this.breakTime >= this.getBlockBreakTime()) {
-            boolean canDestroy = hasCorrectToolForDrops();
-            this.mob.level().destroyBlock(this.blockPos, canDestroy, this.mob, 512);
-            clearTarget();
-        }
+    private BlockPos getNearestStandableBlockPos() {
+        return this.blockPos;
     }
 
     // 够不着方块
@@ -194,8 +160,12 @@ public class BreakBlockGoal extends Goal {
         return this.mob.distanceToSqr(this.blockPos.getX() + 0.5D, this.blockPos.getY() + 0.5D - 1.0D, this.blockPos.getZ() + 0.5D) <= 4.0D * 4.0D;
     }
 
-    private boolean hasCorrectToolForDrops() {
-        BlockState state = mob.level().getBlockState(this.blockPos);
-        return !state.requiresCorrectToolForDrops() || this.mob.getMainHandItem().isCorrectToolForDrops(state);
+    private void updateHoldingBlockState() {
+        if(this.mob.getMainHandItem().getItem() instanceof BlockItem blockItem) {
+            this.holdingBlockState = blockItem.getBlock().defaultBlockState();
+        }
+        else {
+            this.holdingBlockState = null;
+        }
     }
 }

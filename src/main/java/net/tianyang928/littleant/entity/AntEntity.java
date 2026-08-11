@@ -1,6 +1,8 @@
 package net.tianyang928.littleant.entity;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -16,14 +18,20 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.common.NeoForgeMod;
 import net.tianyang928.littleant.LittleAnt;
+import net.tianyang928.littleant.entity.ai.goal.BetterFloatGoal;
 import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
+import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
 import org.w3c.dom.Attr;
 
 import javax.annotation.Nullable;
@@ -35,6 +43,12 @@ public class AntEntity extends PathfinderMob {
     AntEntityGlobalData antEntityGlobalData = new AntEntityGlobalData();
     @Nullable
     private BreakBlockGoal breakBlockGoal;
+    @Nullable
+    private SetBlockGoal setBlockGoal;
+
+
+
+    public boolean tryGettingDownWater = false;
 
     private static final EntityDataAccessor<String> skinNameAccessor =
             SynchedEntityData.defineId(
@@ -64,29 +78,45 @@ public class AntEntity extends PathfinderMob {
             DifficultyInstance difficulty,
             EntitySpawnReason spawnReason,
             @Nullable SpawnGroupData groupData
-    ){
+    ) {
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnReason, groupData);
         this.setCustomName(getRandomCharacterName());
         this.getEntityData().set(skinNameAccessor, getRandomSkinName());
         this.setCustomNameVisible(true);
         this.setPersistenceRequired();
+
         LittleAnt.LOGGER.info("[AntEntity] finalizeSpawn, full custom name: {}", Objects.requireNonNull(getCustomName()).getString());
         return data;
     }
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new FloatGoal(this));
-
+        //break block init
         this.breakBlockGoal = new BreakBlockGoal(this, BlockPos.ZERO);
         this.breakBlockGoal.clearTarget();
         this.goalSelector.addGoal(1, this.breakBlockGoal);
+        //set block init
+        this.setBlockGoal = new SetBlockGoal(this, BlockPos.ZERO);
+        this.setBlockGoal.clearTarget();
+        this.goalSelector.addGoal(1, this.setBlockGoal);
+
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
+        this.goalSelector.addGoal(2, new BetterFloatGoal(this));
+
+        //this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
 
     // Assigns the next block this ant should path to and mine.
     public void setBreakTarget(BlockPos target) {
         if (this.breakBlockGoal != null) {
             this.breakBlockGoal.setTarget(target);
+        }
+    }
+    public void setSetTarget(BlockPos target) {
+        if (this.setBlockGoal != null) {
+            this.setBlockGoal.setTarget(target);
         }
     }
 
@@ -124,7 +154,7 @@ public class AntEntity extends PathfinderMob {
         int index = (int) (Math.random() * CHARACTER_NAMES.size());
         String selectedName = CHARACTER_NAMES.keySet().toArray(new String[0])[index];
         this.antEntityGlobalData.addNameCount(selectedName);
-        if(CHARACTER_NAMES.get(selectedName) >= 2){
+        if (CHARACTER_NAMES.get(selectedName) >= 2) {
             selectedName += CHARACTER_NAMES.get(selectedName);
         }
 
@@ -140,7 +170,7 @@ public class AntEntity extends PathfinderMob {
     }
 
     public void ensureSkinName() {
-        if(getSkinNameAccessor().isEmpty()){
+        if (getSkinNameAccessor().isEmpty()) {
             this.getEntityData().set(skinNameAccessor, getRandomSkinName());
         }
     }
@@ -153,5 +183,13 @@ public class AntEntity extends PathfinderMob {
     public void aiStep() {
         this.updateSwingTime();
         super.aiStep();
+    }
+
+    public void getDownInWater() {
+        this.sinkInFluid(NeoForgeMod.WATER_TYPE.value());
+    }
+
+    public void giveItem(ItemStack item){
+        this.setItemInHand(InteractionHand.MAIN_HAND, item);
     }
 }
