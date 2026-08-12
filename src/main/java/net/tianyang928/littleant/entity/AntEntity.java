@@ -1,27 +1,26 @@
 package net.tianyang928.littleant.entity;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodData;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.storage.ValueInput;
@@ -32,20 +31,25 @@ import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.goal.BetterFloatGoal;
 import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
-import org.w3c.dom.Attr;
-
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
-public class AntEntity extends PathfinderMob {
+public class AntEntity extends PathfinderMob implements InventoryCarrier {
+
+    public static final int INVENTORY_SIZE = 9;
+    private static final int INVENTORY_SLOT_OFFSET = 300;
 
     AntEntityGlobalData antEntityGlobalData = new AntEntityGlobalData();
     @Nullable
     private BreakBlockGoal breakBlockGoal;
     @Nullable
     private SetBlockGoal setBlockGoal;
-
+    private final SimpleContainer inventory = new SimpleContainer(INVENTORY_SIZE);
+    private final FoodData foodData = new FoodData();
+    private int selectedSlot = 0;
+    private BlockPos lastTimePos = null;
+    private long lastUpdateTime = 0;
 
 
     public boolean tryGettingDownWater = false;
@@ -57,9 +61,12 @@ public class AntEntity extends PathfinderMob {
                     // The entity data accessor type.
                     EntityDataSerializers.STRING
             );
+    private static final EntityDataAccessor<ItemStack> selectedItemAccessor =
+            SynchedEntityData.defineId(AntEntity.class, EntityDataSerializers.ITEM_STACK);
 
     public AntEntity(EntityType<? extends AntEntity> type, Level level) {
         super(type, level);
+        this.setCanPickUpLoot(true);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -84,6 +91,8 @@ public class AntEntity extends PathfinderMob {
         this.getEntityData().set(skinNameAccessor, getRandomSkinName());
         this.setCustomNameVisible(true);
         this.setPersistenceRequired();
+        this.setCanPickUpLoot(true);
+
 
         LittleAnt.LOGGER.info("[AntEntity] finalizeSpawn, full custom name: {}", Objects.requireNonNull(getCustomName()).getString());
         return data;
@@ -124,6 +133,7 @@ public class AntEntity extends PathfinderMob {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(skinNameAccessor, "");
+        builder.define(selectedItemAccessor, ItemStack.EMPTY);
     }
 
     @Override
@@ -135,8 +145,16 @@ public class AntEntity extends PathfinderMob {
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
         this.getEntityData().set(skinNameAccessor, input.getStringOr("skin_name", ""));
+        this.readInventoryFromTag(input);
+        this.selectedSlot = input.getIntOr("selected_slot", 0);
+        this.selectedSlot = Mth.clamp(this.selectedSlot, 0, INVENTORY_SIZE - 1);
+        this.syncSelectedItem();
+        this.foodData.readAdditionalSaveData(input);
         LittleAnt.LOGGER.info("[AntEntity] read skin name from save data: {}", getSkinNameAccessor());
-
+        // 读取库存, 打印列表
+        for (int slot = 0; slot < INVENTORY_SIZE; slot++) {
+            LittleAnt.LOGGER.info("[AntEntity] read inventory from save data, slot: {}, itemStack: {}", slot, this.inventory.getItem(slot).getDisplayName());
+        }
         // 如果没有皮肤，随机选择一个皮肤
         ensureSkinName();
     }
@@ -145,7 +163,63 @@ public class AntEntity extends PathfinderMob {
     protected void addAdditionalSaveData(ValueOutput output) {
         super.addAdditionalSaveData(output);
         output.putString("skin_name", getSkinNameAccessor());
+        this.writeInventoryToTag(output);
+        output.putInt("selected_slot", this.selectedSlot);
+        this.foodData.addAdditionalSaveData(output);
         LittleAnt.LOGGER.info("[AntEntity] write skin name to save data: {}", getSkinNameAccessor());
+    }
+
+    @Override
+    public SimpleContainer getInventory() {
+        return this.inventory;
+    }
+
+    public FoodData getFoodData() {
+        return this.foodData;
+    }
+
+    @Override
+    public @Nullable SlotAccess getSlot(int slot) {
+        int inventorySlot = slot - INVENTORY_SLOT_OFFSET;
+        return inventorySlot >= 0 && inventorySlot < INVENTORY_SIZE
+                ? this.inventory.getSlot(inventorySlot)
+                : super.getSlot(slot);
+    }
+
+    @Override
+    protected void pickUpItem(ServerLevel level, ItemEntity itemEntity) {
+        InventoryCarrier.pickUpItem(level, this, this, itemEntity);
+        this.syncSelectedItem();
+    }
+
+    @Override
+    public boolean wantsToPickUp(ServerLevel level, ItemStack itemStack) {
+        //LittleAnt.LOGGER.info("[AntEntity] wantsToPickUp, itemStack: {}", itemStack.getDisplayName());
+        return this.inventory.canAddItem(itemStack);
+    }
+
+    /**
+     * Consumes one food item from the ant's inventory when it is hungry.
+     * AI goals can call this method when they decide that eating is appropriate.
+     */
+    public boolean eatFromInventory() {
+        if (!this.foodData.needsFood() || this.inventory == null) {
+            return false;
+        }
+
+        for (int slot = 0; slot < INVENTORY_SIZE; slot++) {
+            ItemStack itemStack = this.inventory.getItem(slot);
+            FoodProperties foodProperties = itemStack.get(DataComponents.FOOD);
+            if (foodProperties != null) {
+                this.foodData.eat(foodProperties);
+                itemStack.shrink(1);
+                this.selectedSlot = slot;
+                this.syncSelectedItem();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Component getRandomCharacterName() {
@@ -185,11 +259,66 @@ public class AntEntity extends PathfinderMob {
         super.aiStep();
     }
 
+    @Override
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
+        if(slot == EquipmentSlot.MAINHAND){
+            // The inventory itself is not network-synchronized.  Clients must use
+            // this synced snapshot when rendering the selected inventory slot.
+            if(this.inventory == null){
+                return ItemStack.EMPTY;
+            }
+
+            return this.level().isClientSide()
+                    ? this.getEntityData().get(selectedItemAccessor)
+                    : this.inventory.getItem(this.selectedSlot);
+        }
+        else if(slot == EquipmentSlot.OFFHAND){
+            return ItemStack.EMPTY;
+        }
+        return super.getItemBySlot(slot);
+    }
+
     public void getDownInWater() {
         this.sinkInFluid(NeoForgeMod.WATER_TYPE.value());
     }
 
     public void giveItem(ItemStack item){
-        this.setItemInHand(InteractionHand.MAIN_HAND, item);
+        this.inventory.setItem(this.selectedSlot, item.copy());
+        this.syncSelectedItem();
+    }
+
+    public int getSelectedSlot() {
+        return this.selectedSlot;
+    }
+
+    public void setSelectedSlot(int slot) {
+        this.selectedSlot = Mth.clamp(slot, 0, INVENTORY_SIZE - 1);
+        this.syncSelectedItem();
+    }
+
+    private void syncSelectedItem() {
+        if (!this.level().isClientSide()) {
+            ItemStack selectedItem = this.inventory.getItem(this.selectedSlot);
+            if (!ItemStack.matches(this.getEntityData().get(selectedItemAccessor), selectedItem)) {
+                this.getEntityData().set(selectedItemAccessor, selectedItem.copy());
+            }
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        this.syncSelectedItem();
+        long currentTime = this.level().getGameTime();
+        if(this.lastTimePos == null){
+            this.lastTimePos = this.blockPosition();
+        }
+        // 每1200个tick更新一次食物等级
+        if((currentTime - this.lastUpdateTime) >= 1200){
+            this.lastUpdateTime = currentTime;
+            int minusFoodLevel = (int) Mth.sqrt((float)this.distanceToSqr(this.lastTimePos.getX(), this.lastTimePos.getY(), this.lastTimePos.getZ()))%100;
+            this.foodData.setFoodLevel(this.foodData.getFoodLevel() - minusFoodLevel);
+            this.lastTimePos = this.blockPosition();
+        }
     }
 }

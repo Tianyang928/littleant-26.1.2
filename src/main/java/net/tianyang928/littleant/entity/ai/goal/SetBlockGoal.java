@@ -7,7 +7,13 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.pathfinder.Path;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
@@ -51,8 +57,7 @@ public class SetBlockGoal extends Goal {
     public boolean canUse() {
         if (!this.hasTarget
                 || this.holdingBlockState == null
-                || (!this.mob.level().getBlockState(this.blockPos).isAir()
-                && !this.mob.level().getBlockState(this.blockPos).canBeReplaced())) {
+                || !canBlockPlaced()) {
             this.clearTarget();
             return false;
         }
@@ -83,8 +88,7 @@ public class SetBlockGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         this.updateHoldingBlockState();
-        return (this.mob.level().getBlockState(this.blockPos).isAir()
-                || this.mob.level().getBlockState(this.blockPos).canBeReplaced())
+        return (canBlockPlaced())
                 && (isBlockReachable() || !this.mob.getNavigation().isDone())
                 && this.hasTarget;
     }
@@ -142,11 +146,21 @@ public class SetBlockGoal extends Goal {
             return;
         }
 
+
+        // 调用 setPlacedBy 处理双方块物品（如门、床）的另一半放置
+        Block placedBlock = holdingBlockState.getBlock();
+        ItemStack itemStack = this.mob.getMainHandItem();
         this.mob.level().setBlock(this.blockPos, holdingBlockState, 3);
+        placedBlock.setPlacedBy(this.mob.level(), this.blockPos, holdingBlockState, this.mob, itemStack);
+
+//        LittleAnt.LOGGER.info("[SetBlockGoal] tick, has propertyHorizontalDirectionalBlock: {}", holdingBlockState.hasProperty(HorizontalDirectionalBlock.FACING));
+//        LittleAnt.LOGGER.info("[SetBlockGoal] tick, place block, direction: {}", holdingBlockState.getValue(HorizontalDirectionalBlock.FACING));
+//        LittleAnt.LOGGER.info("[SetBlockGoal] tick, mob direction: {}", this.mob.getDirection());
+
         SoundEvent placeSound = this.mob.level().getBlockState(blockPos).getSoundType().getPlaceSound();
         this.mob.level().playSound(null, blockPos, placeSound, SoundSource.BLOCKS, 1.0F, 1.0F);
         this.mob.swing(InteractionHand.MAIN_HAND, true);
-        this.mob.getMainHandItem().shrink(1);
+        itemStack.shrink(1);
         clearTarget();
         //LittleAnt.LOGGER.info("[SetBlockGoal] tick, swing hand once");
     }
@@ -163,9 +177,41 @@ public class SetBlockGoal extends Goal {
     private void updateHoldingBlockState() {
         if(this.mob.getMainHandItem().getItem() instanceof BlockItem blockItem) {
             this.holdingBlockState = blockItem.getBlock().defaultBlockState();
+            if(holdingBlockState.hasProperty(BlockStateProperties.FACING)) {
+                holdingBlockState = holdingBlockState.setValue(BlockStateProperties.FACING, this.mob.getDirection());
+            }
+            else if(holdingBlockState.hasProperty(HorizontalDirectionalBlock.FACING)) {
+                holdingBlockState = holdingBlockState.setValue(HorizontalDirectionalBlock.FACING, this.mob.getDirection());
+            }
         }
         else {
             this.holdingBlockState = null;
         }
+    }
+
+    private boolean canBlockPlaced() {
+        if(this.holdingBlockState == null){
+            return false;
+        }
+        if(!this.mob.level().getBlockState(this.blockPos).isAir()
+                && !this.mob.level().getBlockState(this.blockPos).canBeReplaced()){
+            return false;
+        }
+        Block placedBlock = holdingBlockState.getBlock();
+        if(placedBlock instanceof BedBlock){
+            BlockPos otherPos = blockPos.relative(holdingBlockState.getValue(BedBlock.FACING));
+            if(this.mob.level().getBlockState(otherPos).isAir() || this.mob.level().getBlockState(otherPos).canBeReplaced()){
+                return true;
+            }
+            return false;
+        }
+        if(placedBlock instanceof DoorBlock){
+            BlockPos otherPos = blockPos.above();
+            if(this.mob.level().getBlockState(otherPos).isAir() || this.mob.level().getBlockState(otherPos).canBeReplaced()){
+                return true;
+            }
+            return false;
+        }
+        return true;
     }
 }
