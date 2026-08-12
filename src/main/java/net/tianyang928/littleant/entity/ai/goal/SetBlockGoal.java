@@ -165,10 +165,6 @@ public class SetBlockGoal extends Goal {
         //LittleAnt.LOGGER.info("[SetBlockGoal] tick, swing hand once");
     }
 
-    private BlockPos getNearestStandableBlockPos() {
-        return this.blockPos;
-    }
-
     // 够不着方块
     private boolean isBlockReachable() {
         return this.mob.distanceToSqr(this.blockPos.getX() + 0.5D, this.blockPos.getY() + 0.5D - 1.0D, this.blockPos.getZ() + 0.5D) <= 4.0D * 4.0D;

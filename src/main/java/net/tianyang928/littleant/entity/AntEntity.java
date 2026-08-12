@@ -23,6 +23,7 @@ import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
@@ -30,6 +31,7 @@ import net.neoforged.neoforge.common.NeoForgeMod;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.goal.BetterFloatGoal;
 import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
+import net.tianyang928.littleant.entity.ai.goal.FindNearestBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
@@ -45,6 +47,9 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     private BreakBlockGoal breakBlockGoal;
     @Nullable
     private SetBlockGoal setBlockGoal;
+    @Nullable
+    private FindNearestBlockGoal findNearestBlockGoal;
+
     private final SimpleContainer inventory = new SimpleContainer(INVENTORY_SIZE);
     private final FoodData foodData = new FoodData();
     private int selectedSlot = 0;
@@ -108,6 +113,10 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         this.setBlockGoal = new SetBlockGoal(this, BlockPos.ZERO);
         this.setBlockGoal.clearTarget();
         this.goalSelector.addGoal(1, this.setBlockGoal);
+        //find the nearest block init
+        this.findNearestBlockGoal = new FindNearestBlockGoal(this, null);
+        this.findNearestBlockGoal.clearTarget();
+        this.goalSelector.addGoal(1, this.findNearestBlockGoal);
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
         this.goalSelector.addGoal(2, new BetterFloatGoal(this));
@@ -126,6 +135,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     public void setSetTarget(BlockPos target) {
         if (this.setBlockGoal != null) {
             this.setBlockGoal.setTarget(target);
+        }
+    }
+    public void setFindNearestTarget(Block blockToFind) {
+        if (this.findNearestBlockGoal != null) {
+            this.findNearestBlockGoal.setTarget(blockToFind);
         }
     }
 

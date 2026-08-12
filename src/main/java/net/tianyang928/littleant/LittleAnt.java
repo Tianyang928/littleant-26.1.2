@@ -4,6 +4,8 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.blocks.BlockInput;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
@@ -11,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.tianyang928.littleant.block.ModBlocks;
@@ -100,7 +103,7 @@ public class LittleAnt {
         // break block
         event.getDispatcher().register(
                 Commands.literal("antbreakblock")
-                        .requires(Commands.hasPermission(Commands.LEVEL_ALL))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .executes(context -> {
@@ -130,7 +133,7 @@ public class LittleAnt {
         // set block
         event.getDispatcher().register(
                 Commands.literal("antsetblock")
-                        .requires(Commands.hasPermission(Commands.LEVEL_ALL))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .executes(context -> {
@@ -159,7 +162,7 @@ public class LittleAnt {
         // give ant item
         event.getDispatcher().register(
                 Commands.literal("antgive")
-                        .requires(Commands.hasPermission(Commands.LEVEL_ALL))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("ant_name", StringArgumentType.string())
                                 .then(Commands.argument("item", ItemArgument.item(buildContext))
                                         .then(Commands.argument("item_count", IntegerArgumentType.integer(1, 64))
@@ -188,5 +191,36 @@ public class LittleAnt {
                                                             () -> Component.literal("已给 " + matched + " 个 Ant " + itemStack.getDisplayName() + " " + itemCount + " 个"), true);
                                                     return antCount;
                                                 })))));
+
+        // find block
+        event.getDispatcher().register(
+                Commands.literal("antfindblock")
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .then(Commands.argument("name", StringArgumentType.string())
+                                .then(Commands.argument("block", BlockStateArgument.block(buildContext))
+                                        .executes(context -> {
+                                            String name = StringArgumentType.getString(context, "name");
+                                            BlockInput blockInput = BlockStateArgument.getBlock(context, "block");
+                                            ServerLevel level = context.getSource().getLevel();
+
+                                            Block block = blockInput.getState().getBlock();
+                                            int count = 0;
+                                            for (var entity : level.getEntities().getAll()) {
+                                                if (entity instanceof AntEntity ant
+                                                        && ant.hasCustomName()
+                                                        && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
+                                                    ant.setFindNearestTarget(block);
+                                                    count++;
+                                                }
+                                            }
+                                            if (count == 0) {
+                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                return 0;
+                                            }
+                                            int matched = count;
+                                            context.getSource().sendSuccess(
+                                                    () -> Component.literal("已让 " + matched + " 个 Ant 查找 " + block.getName()), true);
+                                            return count;
+                                        }))));
     }
 }
