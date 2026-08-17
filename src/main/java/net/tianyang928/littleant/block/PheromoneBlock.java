@@ -114,26 +114,4 @@ public class PheromoneBlock extends Block implements EntityBlock {
 
         return InteractionResult.SUCCESS;
     }
-
-//    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
-//        BlockEntity blockEntity = level.getBlockEntity(pos);
-//        HashMap<Integer, Integer> pheromoneList;
-//        if (blockEntity instanceof PheromoneBlockEntity pheromoneBlockEntity) {
-//            // pheromoneBlockEntity 已经是转换后的类型
-//            pheromoneList = pheromoneBlockEntity.getPheromoneList();
-//        }
-//        else {
-//            pheromoneList = new HashMap<>();
-//        }
-//        return new SimpleMenuProvider((containerId,
-//                                       inventory,
-//                                       player) -> new PheromoneListMenu(
-//                                        containerId,
-//                                        inventory,
-//                                        ContainerLevelAccess.create(level, pos),
-//                                        pheromoneList
-//                                        ),CONTAINER_TITLE);
-//
-//    }
-
 }
