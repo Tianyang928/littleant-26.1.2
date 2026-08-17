@@ -27,12 +27,15 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.goal.BetterFloatGoal;
 import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.FindNearestBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
+import net.tianyang928.littleant.entity.ai.goal.UseCraftingTableGoal;
+import net.tianyang928.littleant.entity.ai.goal.UseInventoryCraftingGoal;
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -49,6 +52,10 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     private SetBlockGoal setBlockGoal;
     @Nullable
     private FindNearestBlockGoal findNearestBlockGoal;
+    @Nullable
+    private UseCraftingTableGoal useCraftingTableGoal;
+    @Nullable
+    private UseInventoryCraftingGoal useInventoryCraftingGoal;
 
     private final SimpleContainer inventory = new SimpleContainer(INVENTORY_SIZE);
     private final FoodData foodData = new FoodData();
@@ -117,6 +124,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         this.findNearestBlockGoal = new FindNearestBlockGoal(this, null);
         this.findNearestBlockGoal.clearTarget();
         this.goalSelector.addGoal(1, this.findNearestBlockGoal);
+        // Crafting is explicitly requested by the ant's AI, never selected automatically.
+        this.useCraftingTableGoal = new UseCraftingTableGoal(this);
+        this.goalSelector.addGoal(1, this.useCraftingTableGoal);
+        this.useInventoryCraftingGoal = new UseInventoryCraftingGoal(this);
+        this.goalSelector.addGoal(1, this.useInventoryCraftingGoal);
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
         this.goalSelector.addGoal(2, new BetterFloatGoal(this));
@@ -140,6 +152,18 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     public void setFindNearestTarget(Block blockToFind) {
         if (this.findNearestBlockGoal != null) {
             this.findNearestBlockGoal.setTarget(blockToFind);
+        }
+    }
+
+    public void setCraftingTableInput(CraftingInput input, BlockPos craftingTablePos, int amountCrafted) {
+        if (this.useCraftingTableGoal != null) {
+            this.useCraftingTableGoal.setInput(input, craftingTablePos, amountCrafted);
+        }
+    }
+
+    public void setInventoryCraftingInput(CraftingInput input, int amountCrafted) {
+        if (this.useInventoryCraftingGoal != null) {
+            this.useInventoryCraftingGoal.setInput(input, amountCrafted);
         }
     }
 

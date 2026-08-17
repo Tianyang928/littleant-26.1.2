@@ -30,7 +30,7 @@ public class FindNearestBlockGoal extends Goal {
         this.hasTarget = true;
         this.resultBlockPos = null;
         this.isFinding = true;
-        this.setFlags(EnumSet.of(Goal.Flag.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
 
         // collect all possible vectors on the sphere
         initSphericalShellVectorDict();
@@ -50,6 +50,7 @@ public class FindNearestBlockGoal extends Goal {
                 int s = x2 + y * y;
                 int z2_max=hi-s;
                 if(z2_max<=0) {
+                    // 补上x^2+y^2=SEARCH_RADIUS^2的情况
                     if((SEARCH_RADIUS+1)*(SEARCH_RADIUS+1)-s > 0) {
                         int z = 0;
                         Vec3 norm = new Vec3(x, y, z).normalize();
@@ -110,7 +111,6 @@ public class FindNearestBlockGoal extends Goal {
     }
 
     public void clearTarget() {
-        this.resultBlockPos = null;
         this.hasTarget = false;
         this.isFinding = false;
         resetIsBlockOpaque();
