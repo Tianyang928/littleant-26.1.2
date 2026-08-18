@@ -2,6 +2,7 @@ package net.tianyang928.littleant.entity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -19,6 +20,10 @@ import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.level.Level;
@@ -36,11 +41,13 @@ import net.tianyang928.littleant.entity.ai.goal.FindNearestBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.UseCraftingTableGoal;
 import net.tianyang928.littleant.entity.ai.goal.UseInventoryCraftingGoal;
+import net.tianyang928.littleant.gui.AntInventoryMenu;
+
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
-public class AntEntity extends PathfinderMob implements InventoryCarrier {
+public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuProvider {
 
     public static final int INVENTORY_SIZE = 9;
     private static final int INVENTORY_SLOT_OFFSET = 300;
@@ -79,6 +86,30 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     public AntEntity(EntityType<? extends AntEntity> type, Level level) {
         super(type, level);
         this.setCanPickUpLoot(true);
+    }
+
+    @Override
+    public Component getDisplayName() {
+        // 如果有自定义名称，就显示自定义名称
+        return this.hasCustomName() ? this.getCustomName() : Component.translatable("container.littleant.ant_inventory");
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory playerInventory, Player player) {
+        return new AntInventoryMenu(containerId, playerInventory, this);
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND && !this.level().isClientSide() && player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(this);
+        }
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buf) {
+        buf.writeInt(this.getId());
     }
 
     public static AttributeSupplier.Builder createAttributes() {

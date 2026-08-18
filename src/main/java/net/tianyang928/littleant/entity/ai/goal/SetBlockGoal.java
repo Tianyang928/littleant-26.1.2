@@ -1,6 +1,7 @@
 package net.tianyang928.littleant.entity.ai.goal;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -96,7 +97,8 @@ public class SetBlockGoal extends Goal {
     @Override
     public boolean requiresUpdateEveryTick() {
         // breakTime uses Minecraft game ticks, not the goal selector's reduced tick rate.
-        return true;
+        // should be false, or blocks will be set twice
+        return false;
     }
 
     @Override
@@ -160,7 +162,9 @@ public class SetBlockGoal extends Goal {
         SoundEvent placeSound = this.mob.level().getBlockState(blockPos).getSoundType().getPlaceSound();
         this.mob.level().playSound(null, blockPos, placeSound, SoundSource.BLOCKS, 1.0F, 1.0F);
         this.mob.swing(InteractionHand.MAIN_HAND, true);
+        LittleAnt.LOGGER.info("[SetBlockGoal] tick, shrink one item");
         itemStack.shrink(1);
+
         clearTarget();
         //LittleAnt.LOGGER.info("[SetBlockGoal] tick, swing hand once");
     }

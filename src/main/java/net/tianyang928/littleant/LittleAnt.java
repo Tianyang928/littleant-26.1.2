@@ -2,7 +2,6 @@ package net.tianyang928.littleant;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
@@ -21,7 +20,7 @@ import net.tianyang928.littleant.block_entity.ModBlockEntities;
 import net.tianyang928.littleant.creativemodetab.ModCreativeModeTabs;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ModEntities;
-import net.tianyang928.littleant.inventory.ModMenus;
+import net.tianyang928.littleant.gui.ModMenus;
 import net.tianyang928.littleant.item.ModItems;
 import org.slf4j.Logger;
 

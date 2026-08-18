@@ -1,4 +1,4 @@
-package net.tianyang928.littleant.inventory;
+package net.tianyang928.littleant.gui;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
@@ -20,6 +20,14 @@ public class ModMenus {
                     "pheromone_list",
                     () -> IMenuTypeExtension.create(
                             PheromoneListMenu::new
+                    )
+            );
+
+    public static final DeferredHolder<MenuType<?>, MenuType<AntInventoryMenu>> ANT_INVENTORY_MENU =
+            MENUS.register(
+                    "ant_inventory",
+                    () -> IMenuTypeExtension.create(
+                            AntInventoryMenu::new
                     )
             );
 

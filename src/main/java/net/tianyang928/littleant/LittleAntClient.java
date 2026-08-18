@@ -14,10 +14,11 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.tianyang928.littleant.entity.ModEntities;
-import net.tianyang928.littleant.inventory.ModMenus;
-import net.tianyang928.littleant.inventory.screen.PheromoneListScreen;
+import net.tianyang928.littleant.gui.ModMenus;
+import net.tianyang928.littleant.gui.screen.PheromoneListScreen;
 import net.tianyang928.littleant.network.SetPheromonePayload;
 import net.tianyang928.littleant.client.renderer.AntRenderer;
+import net.tianyang928.littleant.gui.screen.AntInventoryScreen;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = LittleAnt.MOD_ID, dist = Dist.CLIENT)
@@ -45,6 +46,10 @@ public class LittleAntClient {
         event.register(
                 ModMenus.PHEROMONE_LIST_MENU.get(),
                 PheromoneListScreen::new
+        );
+        event.register(
+                ModMenus.ANT_INVENTORY_MENU.get(),
+                AntInventoryScreen::new
         );
     }
 

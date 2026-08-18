@@ -1,21 +1,14 @@
 package net.tianyang928.littleant.block;
 
-import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -28,11 +21,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.tianyang928.littleant.block_entity.ModBlockEntities;
 import net.tianyang928.littleant.block_entity.PheromoneBlockEntity;
-import net.tianyang928.littleant.inventory.PheromoneListMenu;
 import net.tianyang928.littleant.item.ModItems;
 import org.jspecify.annotations.Nullable;
-
-import java.util.HashMap;
 
 public class PheromoneBlock extends Block implements EntityBlock {
     private static final Component CONTAINER_TITLE = Component.translatable("container.pheromone_list");

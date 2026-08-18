@@ -116,7 +116,7 @@ public class BreakBlockGoal extends Goal {
     @Override
     public boolean requiresUpdateEveryTick() {
         // breakTime uses Minecraft game ticks, not the goal selector's reduced tick rate.
-        return true;
+        return false;
     }
 
     @Override

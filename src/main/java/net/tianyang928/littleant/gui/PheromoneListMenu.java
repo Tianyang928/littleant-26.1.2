@@ -1,18 +1,14 @@
-package net.tianyang928.littleant.inventory;
+package net.tianyang928.littleant.gui;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.block_entity.PheromoneBlockEntity;
-import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class PheromoneListMenu extends AbstractContainerMenu  {

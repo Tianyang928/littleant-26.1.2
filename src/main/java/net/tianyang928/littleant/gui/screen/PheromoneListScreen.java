@@ -1,4 +1,4 @@
-package net.tianyang928.littleant.inventory.screen;
+package net.tianyang928.littleant.gui.screen;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.Font;
@@ -17,7 +17,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.inventory.PheromoneListMenu;
+import net.tianyang928.littleant.gui.PheromoneListMenu;
 import net.tianyang928.littleant.network.SetPheromonePayload;
 
 import java.util.LinkedHashMap;
