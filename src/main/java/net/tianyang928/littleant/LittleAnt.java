@@ -19,6 +19,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.tianyang928.littleant.block.ModBlocks;
@@ -28,6 +32,7 @@ import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ModEntities;
 import net.tianyang928.littleant.gui.ModMenus;
 import net.tianyang928.littleant.item.ModItems;
+import net.tianyang928.littleant.server.command.*;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -105,197 +110,11 @@ public class LittleAnt {
 
     @SubscribeEvent
     public void registerCommands(RegisterCommandsEvent event) {
-        var buildContext = event.getBuildContext();
-
-        // break block
-        event.getDispatcher().register(
-                Commands.literal("antbreakblock")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        .then(Commands.argument("name", StringArgumentType.string())
-                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                        .executes(context -> {
-                                            String name = StringArgumentType.getString(context, "name");
-                                            BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-                                            ServerLevel level = context.getSource().getLevel();
-                                            int count = 0;
-                                            for (var entity : level.getEntities().getAll()) {
-                                                if (entity instanceof AntEntity ant
-                                                        && ant.hasCustomName()
-                                                        && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    ant.setBreakTarget(pos);
-                                                    count++;
-                                                }
-                                            }
-                                            if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
-                                                return 0;
-                                            }
-                                            int matched = count;
-                                            context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 挖掘 " + pos), true);
-                                            return count;
-                                        }))));
-
-
-        // set block
-        event.getDispatcher().register(
-                Commands.literal("antsetblock")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        .then(Commands.argument("name", StringArgumentType.string())
-                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                        .executes(context -> {
-                                            String name = StringArgumentType.getString(context, "name");
-                                            BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-                                            ServerLevel level = context.getSource().getLevel();
-                                            int count = 0;
-                                            for (var entity : level.getEntities().getAll()) {
-                                                if (entity instanceof AntEntity ant
-                                                        && ant.hasCustomName()
-                                                        && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    ant.setSetTarget(pos);
-                                                    count++;
-                                                }
-                                            }
-                                            if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
-                                                return 0;
-                                            }
-                                            int matched = count;
-                                            context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 放置 " + pos), true);
-                                            return count;
-                                        }))));
-
-        // give ant item
-        event.getDispatcher().register(
-                Commands.literal("antgive")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        .then(Commands.argument("ant_name", StringArgumentType.string())
-                                .then(Commands.argument("item", ItemArgument.item(buildContext))
-                                        .then(Commands.argument("item_count", IntegerArgumentType.integer(1, 64))
-                                                .executes(context -> {
-                                                    String name = StringArgumentType.getString(context, "ant_name");
-                                                    ItemInput itemInput = ItemArgument.getItem(context, "item");
-                                                    int itemCount = IntegerArgumentType.getInteger(context, "item_count");
-                                                    ServerLevel level = context.getSource().getLevel();
-
-                                                    ItemStack itemStack = itemInput.createItemStack(itemCount);
-                                                    int antCount = 0;
-                                                    for (var entity : level.getEntities().getAll()) {
-                                                        if (entity instanceof AntEntity ant
-                                                                && ant.hasCustomName()
-                                                                && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                                ant.giveItem(itemStack);
-                                                                antCount++;
-                                                        }
-                                                    }
-                                                    if (antCount == 0) {
-                                                        context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
-                                                        return 0;
-                                                    }
-                                                    int matched = antCount;
-                                                    context.getSource().sendSuccess(
-                                                            () -> Component.literal("已给 " + matched + " 个 Ant " + itemStack.getDisplayName() + " " + itemCount + " 个"), true);
-                                                    return antCount;
-                                                })))));
-
-        // find block
-        event.getDispatcher().register(
-                Commands.literal("antfindblock")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        .then(Commands.argument("name", StringArgumentType.string())
-                                .then(Commands.argument("block", BlockStateArgument.block(buildContext))
-                                        .executes(context -> {
-                                            String name = StringArgumentType.getString(context, "name");
-                                            BlockInput blockInput = BlockStateArgument.getBlock(context, "block");
-                                            ServerLevel level = context.getSource().getLevel();
-
-                                            Block block = blockInput.getState().getBlock();
-                                            int count = 0;
-                                            for (var entity : level.getEntities().getAll()) {
-                                                if (entity instanceof AntEntity ant
-                                                        && ant.hasCustomName()
-                                                        && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    ant.setFindNearestTarget(block);
-                                                    count++;
-                                                }
-                                            }
-                                            if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
-                                                return 0;
-                                            }
-                                            int matched = count;
-                                            context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 查找 " + block.getName()), true);
-                                            return count;
-                                        }))));
-
-        // craft item
-        event.getDispatcher().register(
-                Commands.literal("antcraft")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        .then(Commands.argument("name", StringArgumentType.string())
-                                .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
-                                        .then(Commands.literal("2x2")
-                                                .then(Commands.argument("slot1", ItemArgument.item(buildContext))
-                                                        .then(Commands.argument("slot2", ItemArgument.item(buildContext))
-                                                                .then(Commands.argument("slot3", ItemArgument.item(buildContext))
-                                                                        .then(Commands.argument("slot4", ItemArgument.item(buildContext))
-                                                                                .executes(LittleAnt::executeInventoryCraft))))))
-                                        .then(Commands.literal("3x3")
-                                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                                        .then(Commands.argument("slot1", ItemArgument.item(buildContext))
-                                                                .then(Commands.argument("slot2", ItemArgument.item(buildContext))
-                                                                        .then(Commands.argument("slot3", ItemArgument.item(buildContext))
-                                                                                .then(Commands.argument("slot4", ItemArgument.item(buildContext))
-                                                                                        .then(Commands.argument("slot5", ItemArgument.item(buildContext))
-                                                                                                .then(Commands.argument("slot6", ItemArgument.item(buildContext))
-                                                                                                        .then(Commands.argument("slot7", ItemArgument.item(buildContext))
-                                                                                                                .then(Commands.argument("slot8", ItemArgument.item(buildContext))
-                                                                                                                        .then(Commands.argument("slot9", ItemArgument.item(buildContext))
-                                                                                                                                .executes(LittleAnt::executeTableCraft))))))))))))
-                                )));
-    }
-
-    private static int executeInventoryCraft(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        return queueCraft(context, CraftingInput.of(2, 2, readSlots(context, 4)), null);
-    }
-
-    private static int executeTableCraft(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        return queueCraft(context, CraftingInput.of(3, 3, readSlots(context, 9)),
-                BlockPosArgument.getLoadedBlockPos(context, "pos"));
-    }
-
-    private static List<ItemStack> readSlots(CommandContext<CommandSourceStack> context, int count) throws CommandSyntaxException {
-        List<ItemStack> items = new ArrayList<>(count);
-        for (int i = 1; i <= count; i++) {
-            items.add(ItemArgument.getItem(context, "slot" + i).createItemStack(1));
-        }
-        return items;
-    }
-
-    private static int queueCraft(CommandContext<CommandSourceStack> context, CraftingInput input, BlockPos tablePos) {
-        String name = StringArgumentType.getString(context, "name");
-        int amountCrafted = IntegerArgumentType.getInteger(context, "amount");
-        int count = 0;
-        for (var entity : context.getSource().getLevel().getEntities().getAll()) {
-            if (entity instanceof AntEntity ant && ant.hasCustomName()
-                    && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                if (tablePos == null) {
-                    ant.setInventoryCraftingInput(input, amountCrafted);
-                }
-                else {
-                    ant.setCraftingTableInput(input, tablePos, amountCrafted);
-                }
-                count++;
-            }
-        }
-        if (count == 0) {
-            context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
-            return 0;
-        }
-        int matched = count;
-        context.getSource().sendSuccess(() -> Component.literal("已让 " + matched + " 个 Ant 执行合成调试"), true);
-        return count;
+        AntBreakBlockCommand.register(event);
+        AntSetBlockCommand.register(event);
+        AntGiveCommand.register(event);
+        AntFindBlockCommand.register(event);
+        AntFindBlockEntityCommand.register(event);
+        AntCraftItemCommand.register(event);
     }
 }
