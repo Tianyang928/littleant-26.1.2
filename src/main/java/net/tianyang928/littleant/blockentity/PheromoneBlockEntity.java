@@ -1,4 +1,4 @@
-package net.tianyang928.littleant.block_entity;
+package net.tianyang928.littleant.blockentity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;

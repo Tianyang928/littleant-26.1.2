@@ -10,7 +10,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.block_entity.PheromoneBlockEntity;
 import net.tianyang928.littleant.item.ModItems;
 
 import java.util.function.Function;

@@ -19,8 +19,8 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.tianyang928.littleant.block_entity.ModBlockEntities;
-import net.tianyang928.littleant.block_entity.PheromoneBlockEntity;
+import net.tianyang928.littleant.blockentity.ModBlockEntities;
+import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 import net.tianyang928.littleant.item.ModItems;
 import org.jspecify.annotations.Nullable;
 

@@ -31,6 +31,9 @@ public class ModMenus {
                     )
             );
 
+    public static final DeferredHolder<MenuType<?>, MenuType<AntBrainProgramMenu>> ANT_BRAIN_PROGRAM_MENU =
+            MENUS.register("ant_brain_program", () -> IMenuTypeExtension.create(AntBrainProgramMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

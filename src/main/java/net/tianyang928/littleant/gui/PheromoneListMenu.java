@@ -7,7 +7,7 @@ import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.block.ModBlocks;
-import net.tianyang928.littleant.block_entity.PheromoneBlockEntity;
+import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 
 import java.util.LinkedHashMap;
 

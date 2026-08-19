@@ -11,14 +11,12 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.tianyang928.littleant.entity.ModEntities;
 import net.tianyang928.littleant.gui.ModMenus;
 import net.tianyang928.littleant.gui.screen.PheromoneListScreen;
-import net.tianyang928.littleant.network.SetPheromonePayload;
 import net.tianyang928.littleant.client.renderer.AntRenderer;
 import net.tianyang928.littleant.gui.screen.AntInventoryScreen;
+import net.tianyang928.littleant.gui.screen.AntBrainProgramScreen;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = LittleAnt.MOD_ID, dist = Dist.CLIENT)
@@ -51,16 +49,9 @@ public class LittleAntClient {
                 ModMenus.ANT_INVENTORY_MENU.get(),
                 AntInventoryScreen::new
         );
-    }
-
-    @SubscribeEvent
-    public static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1");
-
-        registrar.playToServer(
-                SetPheromonePayload.TYPE,
-                SetPheromonePayload.STREAM_CODEC,
-                SetPheromonePayload::handlePacketFromClient
+        event.register(
+                ModMenus.ANT_BRAIN_PROGRAM_MENU.get(),
+                AntBrainProgramScreen::new
         );
     }
 

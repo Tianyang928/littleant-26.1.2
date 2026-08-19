@@ -40,9 +40,12 @@ import net.neoforged.neoforge.common.NeoForgeMod;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.goal.*;
 import net.tianyang928.littleant.gui.AntInventoryMenu;
+import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 
 import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuProvider {
@@ -71,6 +74,10 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
     private int selectedSlot = 0;
     private BlockPos lastTimePos = null;
     private long lastUpdateTime = 0;
+    private final LinkedHashMap<Integer, BrainBlock> brainBlocks = new LinkedHashMap<>();
+
+    /** A positioned visual block. Execution/assembly is intentionally a later AI stage. */
+    public record BrainBlock(String text, int x, int y, int id) {}
 
 
     public boolean tryGettingDownWater = false;
@@ -102,16 +109,61 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
     }
 
     @Override
+    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buf) {
+        buf.writeInt(this.getId());
+    }
+
+    @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand == InteractionHand.MAIN_HAND && !this.level().isClientSide() && player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.openMenu(this);
+            // Shift deliberately selects the programming surface; normal use remains the inventory.
+            serverPlayer.openMenu(player.isShiftKeyDown()
+                    ? new MenuProvider() {
+                        @Override
+                        public Component getDisplayName() {
+                            return Component.translatable("menu.littleant.ant_brain_program");
+                        }
+
+                        @Override
+                        public AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inventory, Player ignored) {
+                            return new AntBrainProgramMenu(id, inventory, AntEntity.this);
+                        }
+
+                        @Override
+                        public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buf) {
+                            AntEntity.this.writeBrainProgramClientData(buf);
+                        }
+                    }
+                    : this);
         }
         return InteractionResult.SUCCESS;
     }
 
-    @Override
-    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buf) {
-        buf.writeInt(this.getId());
+    /** Sends the program snapshot when the dedicated brain menu is opened. */
+    public void writeBrainProgramClientData(RegistryFriendlyByteBuf buf) {
+        buf.writeVarInt(this.getId());
+        buf.writeVarInt(this.brainBlocks.size());
+        for (BrainBlock block : this.brainBlocks.values()) {
+            buf.writeUtf(block.text(), 64);
+            buf.writeVarInt(block.x());
+            buf.writeVarInt(block.y());
+            buf.writeVarInt(block.id());
+        }
+    }
+
+    public LinkedHashMap<Integer, BrainBlock> getBrainBlocks() {
+        return (LinkedHashMap<Integer, BrainBlock>) this.brainBlocks.clone();
+    }
+
+    public void addBrainBlock(String text, int x, int y, int id) {
+        if (this.brainBlocks.size() < 256) {
+            this.brainBlocks.put(id,new BrainBlock(text, x, y, id));
+        }
+    }
+
+    public void removeBrainBlock(int id) {
+        this.brainBlocks.remove(id);
+        LittleAnt.LOGGER.info("[AntEntity] removeBrainBlock, id: {}", id);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -240,6 +292,13 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         this.selectedSlot = Mth.clamp(this.selectedSlot, 0, INVENTORY_SIZE - 1);
         this.syncSelectedItem();
         this.foodData.readAdditionalSaveData(input);
+        this.brainBlocks.clear();
+        for (ValueInput child : input.childrenListOrEmpty("BrainBlocks")) {
+            String text = child.getStringOr("text", "");
+            if (!text.isEmpty()) {
+                this.brainBlocks.put(child.getIntOr("id",0), new BrainBlock(text, child.getIntOr("x", 0), child.getIntOr("y", 0), child.getIntOr("id",0)));
+            }
+        }
         LittleAnt.LOGGER.info("[AntEntity] read skin name from save data: {}", getSkinNameAccessor());
         // 读取库存, 打印列表
         for (int slot = 0; slot < INVENTORY_SIZE; slot++) {
@@ -256,6 +315,14 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         this.writeInventoryToTag(output);
         output.putInt("selected_slot", this.selectedSlot);
         this.foodData.addAdditionalSaveData(output);
+        ValueOutput.ValueOutputList brainBlockList = output.childrenList("BrainBlocks");
+        for (BrainBlock block : this.brainBlocks.values()) {
+            ValueOutput child = brainBlockList.addChild();
+            child.putString("text", block.text());
+            child.putInt("x", block.x());
+            child.putInt("y", block.y());
+            child.putInt("id", block.id());
+        }
         LittleAnt.LOGGER.info("[AntEntity] write skin name to save data: {}", getSkinNameAccessor());
     }
 

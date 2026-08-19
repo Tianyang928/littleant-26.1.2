@@ -1,4 +1,4 @@
-package net.tianyang928.littleant.client.render_state;
+package net.tianyang928.littleant.client.renderstate;
 
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 

@@ -11,5 +11,17 @@
   "gui.littleant.pheromone_amount_hint": "Pheromone Amount",
   "gui.littleant.pheromone_id": "Pheromone Id",
   "gui.littleant.pheromone_amount": "Pheromone Amount",
-  "entity.littleant.ant": "Ant"
+  "entity.littleant.ant": "Ant",
+  "menu.littleant.ant_brain_program": "Ant Brain Program",
+  "block.littleant.ant_brain.move_to": "move to coordinates",
+  "block.littleant.ant_brain.break_block": "break block",
+  "block.littleant.ant_brain.place_block": "place block",
+  "block.littleant.ant_brain.craft_item": "craft item",
+  "block.littleant.ant_brain.wait": "wait",
+  "block.littleant.ant_brain.repeat": "repeat",
+  "block.littleant.ant_brain.if": "if",
+  "block.littleant.ant_brain.find_nearest_block": "find nearest block",
+  "block.littleant.ant_brain.find_nearest_entity": "find nearest entity",
+  "block.littleant.ant_brain.sense_pheromone": "sense pheromone",
+  "block.littleant.ant_brain.set_variable": "set variable"
 }
