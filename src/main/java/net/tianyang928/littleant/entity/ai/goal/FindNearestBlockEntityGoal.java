@@ -1,17 +1,15 @@
 package net.tianyang928.littleant.entity.ai.goal;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.behavior.TransportItemsBetweenContainers;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.block.ModBlocks;
@@ -28,7 +26,7 @@ public class FindNearestBlockEntityGoal extends Goal {
     private final PathfinderMob mob;
     private Block blockEntityToFind;
 
-    public FindNearestBlockEntityGoal(PathfinderMob mob, Block blockEntityToFind){
+    public FindNearestBlockEntityGoal(PathfinderMob mob, Block blockEntityToFind) {
         this.mob = mob;
         this.blockEntityToFind = blockEntityToFind;
         this.hasTarget = true;
@@ -64,70 +62,45 @@ public class FindNearestBlockEntityGoal extends Goal {
             if (levelChunk != null) {
                 // 直接遍历区块中的 BlockEntity，而不是遍历所有方块
                 for (BlockEntity potentialTarget : levelChunk.getBlockEntities().values()) {
-                    if (potentialTarget.getBlockState().is(this.blockEntityToFind)
-                            && (isTargetBlockEntityVisible(potentialTarget.getBlockPos())
-                            // 仅当目标是pheromone_block时，才可透视
-                                 || blockEntityToFind.defaultBlockState().is(ModBlocks.PHEROMONE_BLOCK.get()))) {
-                        BlockPos potentialTargetBlockPos = potentialTarget.getBlockPos();
-                        if (mob.distanceToSqr(
-                                result.getX(),
-                                result.getY(),
-                                result.getZ())
-                                > mob.distanceToSqr(
-                                        potentialTargetBlockPos.getX(),
-                                        potentialTargetBlockPos.getY(),
-                                        potentialTargetBlockPos.getZ())) {
-                            result.set(potentialTargetBlockPos);
+                    BlockPos potentialTargetBlockPos = potentialTarget.getBlockPos();
+                    // 获取目标方块的碰撞箱
+                    if (potentialTarget.getBlockState().is(this.blockEntityToFind)) {
+                        Vec3 from = new Vec3(mob.getX(), mob.getEyeY(), mob.getZ());
+                        Vec3 to = Vec3.atCenterOf(potentialTargetBlockPos);
+                        ClipContext context = new ClipContext(
+                                from,
+                                to,
+                                ClipContext.Block.VISUAL,
+                                ClipContext.Fluid.NONE,
+                                mob
+                        );
+                        BlockHitResult blockHitResult = mob.level().clip(context);
+                        if ((blockHitResult.getType() != HitResult.Type.MISS
+                                && blockHitResult.getBlockPos().equals(potentialTargetBlockPos))
+                                || blockEntityToFind.defaultBlockState().is(ModBlocks.PHEROMONE_BLOCK.get())) {
+                            //能看到方块
+                            if (mob.distanceToSqr(
+                                    result.getX(),
+                                    result.getY(),
+                                    result.getZ())
+                                    > mob.distanceToSqr(
+                                    potentialTargetBlockPos.getX(),
+                                    potentialTargetBlockPos.getY(),
+                                    potentialTargetBlockPos.getZ())) {
+                                result.set(potentialTargetBlockPos);
+                            }
                         }
                     }
                 }
             }
         }
         this.hasTarget = false;
-        if(result.getX() != Integer.MAX_VALUE){
+        if (result.getX() != Integer.MAX_VALUE) {
             this.resultBlockPos = result.immutable();
             LittleAnt.LOGGER.info("[FindNearestBlockEntityGoal] 找到目标: {}", this.resultBlockPos);
             return;
         }
         this.resultBlockPos = null;
         LittleAnt.LOGGER.info("[FindNearestBlockEntityGoal] 未找到目标");
-    }
-
-    private boolean isTargetBlockEntityVisible(BlockPos blockPos) {
-        int maxSteps = SEARCH_RADIUS * 4;
-        BlockPos eyeBlockPos =
-                new BlockPos(
-                        Mth.floor(this.mob.getEyePosition().x),
-                        Mth.floor(this.mob.getEyePosition().y),
-                        Mth.floor(this.mob.getEyePosition().z)
-                );
-        Vec3 norm = new Vec3(blockPos).subtract(this.mob.getEyePosition()).normalize();
-        Vec3 tempFloatPos = this.mob.getEyePosition();
-        BlockPos.MutableBlockPos tempBlockPos =
-                new BlockPos.MutableBlockPos(
-                        eyeBlockPos.getX(),
-                        eyeBlockPos.getY(),
-                        eyeBlockPos.getZ()
-                );
-        for(int i = 0; i < maxSteps; i++){
-            if(tempBlockPos.distSqr(eyeBlockPos) >= blockPos.distSqr(eyeBlockPos)){
-                return true;
-            }
-            BlockState state = this.mob.level().getBlockState(tempBlockPos);
-
-            boolean canOcclude = state.canOcclude();
-            if (canOcclude) {
-                return false;
-            }
-            // 沿射线前进一个很小的步长
-            tempFloatPos = tempFloatPos.add(norm.scale(0.25));
-
-            tempBlockPos.set(
-                    Mth.floor(tempFloatPos.x),
-                    Mth.floor(tempFloatPos.y),
-                    Mth.floor(tempFloatPos.z)
-            );
-        }
-        return false;
     }
 }

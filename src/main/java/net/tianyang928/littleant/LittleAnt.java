@@ -116,5 +116,6 @@ public class LittleAnt {
         AntFindBlockCommand.register(event);
         AntFindBlockEntityCommand.register(event);
         AntCraftItemCommand.register(event);
+        AntFindEntityCommand.register(event);
     }
 }

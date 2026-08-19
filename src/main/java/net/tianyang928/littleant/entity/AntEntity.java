@@ -1,6 +1,7 @@
 package net.tianyang928.littleant.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -62,6 +63,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
     private UseInventoryCraftingGoal useInventoryCraftingGoal;
     @Nullable
     private FindNearestBlockEntityGoal findNearestBlockEntityGoal;
+    @Nullable
+    private FindNearestEntityGoal findNearestEntityGoal;
 
     private final SimpleContainer inventory = new SimpleContainer(INVENTORY_SIZE);
     private final FoodData foodData = new FoodData();
@@ -163,6 +166,10 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         this.findNearestBlockEntityGoal = new FindNearestBlockEntityGoal(this, null);
         this.findNearestBlockEntityGoal.clearTarget();
         this.goalSelector.addGoal(1, this.findNearestBlockEntityGoal);
+        //find the nearest entity init
+        this.findNearestEntityGoal = new FindNearestEntityGoal(this, null);
+        this.findNearestEntityGoal.clearTarget();
+        this.goalSelector.addGoal(1, this.findNearestEntityGoal);
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
         this.goalSelector.addGoal(2, new BetterFloatGoal(this));
@@ -204,6 +211,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
     public void setFindNearestBlockEntityTarget(Block blockEntity) {
         if(this.findNearestBlockEntityGoal != null){
             this.findNearestBlockEntityGoal.setTarget(blockEntity);
+        }
+    }
+    public void setFindNearestEntityTarget(EntityType<?> entityType) {
+        if(this.findNearestEntityGoal != null){
+            this.findNearestEntityGoal.setTarget(entityType);
         }
     }
 

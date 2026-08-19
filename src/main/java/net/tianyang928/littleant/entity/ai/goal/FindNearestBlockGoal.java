@@ -12,6 +12,7 @@ import net.tianyang928.littleant.LittleAnt;
 import java.util.EnumSet;
 import java.util.HashSet;
 
+// 因为范围比较大，所以先不用DDA了
 public class FindNearestBlockGoal extends Goal {
     private final int SEARCH_RADIUS = 64;
     private boolean hasTarget;
