@@ -1,8 +1,7 @@
-package net.tianyang928.littleant.entity.ai.goal;
+package net.tianyang928.littleant.entity.ai.sense;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
@@ -14,10 +13,9 @@ import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.block.ModBlocks;
 
-import java.util.EnumSet;
 import java.util.List;
 
-public class FindNearestBlockEntityGoal extends Goal {
+public class FindBlockEntity {
     // 寻找方块实体和寻找方块一样不能透视
 
     private final int SEARCH_RADIUS = 64;
@@ -26,15 +24,13 @@ public class FindNearestBlockEntityGoal extends Goal {
     private final PathfinderMob mob;
     private Block blockEntityToFind;
 
-    public FindNearestBlockEntityGoal(PathfinderMob mob, Block blockEntityToFind) {
+    public FindBlockEntity(PathfinderMob mob, Block blockEntityToFind) {
         this.mob = mob;
         this.blockEntityToFind = blockEntityToFind;
         this.hasTarget = true;
         this.resultBlockPos = null;
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
-    @Override
     public boolean canUse() {
         return this.hasTarget && this.blockEntityToFind != null;
     }
@@ -43,13 +39,16 @@ public class FindNearestBlockEntityGoal extends Goal {
         this.blockEntityToFind = blockEntityToFind;
         this.resultBlockPos = null;
         this.hasTarget = true;
+
+        if(canUse()){
+            start();
+        }
     }
 
     public void clearTarget() {
         this.hasTarget = false;
     }
 
-    @Override
     public void start() {
         BlockPos.MutableBlockPos result = new BlockPos.MutableBlockPos(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
         List<ChunkPos> list = ChunkPos.rangeClosed(
@@ -97,10 +96,10 @@ public class FindNearestBlockEntityGoal extends Goal {
         this.hasTarget = false;
         if (result.getX() != Integer.MAX_VALUE) {
             this.resultBlockPos = result.immutable();
-            LittleAnt.LOGGER.info("[FindNearestBlockEntityGoal] 找到目标: {}", this.resultBlockPos);
+            LittleAnt.LOGGER.info("[FindBlockEntity] 找到目标: {}", this.resultBlockPos);
             return;
         }
         this.resultBlockPos = null;
-        LittleAnt.LOGGER.info("[FindNearestBlockEntityGoal] 未找到目标");
+        LittleAnt.LOGGER.info("[FindBlockEntity] 未找到目标");
     }
 }

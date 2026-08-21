@@ -1,37 +1,29 @@
-package net.tianyang928.littleant.entity.ai.goal;
+package net.tianyang928.littleant.entity.ai.sense;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
 
-import java.util.EnumSet;
 import java.util.HashSet;
 
 // 因为范围比较大，所以先不用DDA了
-public class FindNearestBlockGoal extends Goal {
+public class FindBlock {
     private final int SEARCH_RADIUS = 64;
-    private boolean hasTarget;
-    private boolean isFinding;
     public BlockPos resultBlockPos;
     private final PathfinderMob mob;
     private Block blockToFind;
-    private int hashrateOccupied = 0;
 
     private final char[][][] isBlockOpaque = new char[2*SEARCH_RADIUS+1][2*SEARCH_RADIUS+1][2*SEARCH_RADIUS+1];
     private static final HashSet<Vec3> sphericalShellVectorDict = new HashSet<>();
 
-    public FindNearestBlockGoal(PathfinderMob mob, Block blockToFind) {
+    public FindBlock(PathfinderMob mob, Block blockToFind) {
         this.mob = mob;
         this.blockToFind = blockToFind;
-        this.hasTarget = true;
         this.resultBlockPos = null;
-        this.isFinding = true;
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
 
         // collect all possible vectors on the sphere
         initSphericalShellVectorDict();
@@ -98,23 +90,33 @@ public class FindNearestBlockGoal extends Goal {
         }
     }
 
-    @Override
     public boolean canUse() {
-        return this.hasTarget && this.isFinding && this.blockToFind != null;
+        return this.blockToFind != null;
     }
 
     public void setTarget(Block blockToFind) {
         this.blockToFind = blockToFind;
         this.resultBlockPos = null;
-        this.hasTarget = true;
-        this.isFinding = true;
         resetIsBlockOpaque();
+
+        if(canUse()){
+            start();
+        }
     }
 
     public void clearTarget() {
-        this.hasTarget = false;
-        this.isFinding = false;
         resetIsBlockOpaque();
+    }
+
+    public void start(){
+        resultBlockPos = findBlock();
+        if(resultBlockPos == null){
+            LittleAnt.LOGGER.info("[FindBlock] 没有找到 {}", blockToFind.getName());
+        }
+        else{
+            LittleAnt.LOGGER.info("[FindBlock] 最近的 {} 在 {}", blockToFind.getName(), resultBlockPos.toString());
+        }
+        clearTarget();
     }
 
     private BlockPos findBlock() {
@@ -194,32 +196,5 @@ public class FindNearestBlockGoal extends Goal {
             return null;
         }
         return result.immutable();
-    }
-
-    @Override
-    public void tick() {
-
-        // 随意看向一个方向
-        if(this.mob.level().getRandom().nextInt(20) == 0) {
-            double rnd = (Math.PI * 2D) * this.mob.getRandom().nextDouble();
-            double relX = Math.cos(rnd);
-            double relZ = Math.sin(rnd);
-            this.mob.getLookControl().setLookAt(this.mob.getX() + relX, this.mob.getEyeY(), this.mob.getZ() + relZ);
-        }
-        // 如果当前tickCount和上一次相同，说明已经有一个其他实体进行过搜索，那么直接返回
-        if(Integer.hashCode(this.mob.tickCount) == this.hashrateOccupied) {
-            return;
-        }
-        this.hashrateOccupied = Integer.hashCode(this.mob.tickCount);
-
-        // 每tick最多一个实体搜索方块
-        resultBlockPos = findBlock();
-        if(resultBlockPos == null){
-            LittleAnt.LOGGER.info("[FindNearestBlockGoal] 没有找到 {}", blockToFind.getName());
-        }
-        else{
-            LittleAnt.LOGGER.info("[FindNearestBlockGoal] 最近的 {} 在 {}", blockToFind.getName(), resultBlockPos.toString());
-        }
-        clearTarget();
     }
 }

@@ -1,26 +1,15 @@
-package net.tianyang928.littleant.entity.ai.goal;
+package net.tianyang928.littleant.entity.ai.sense;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.monster.zombie.Zombie;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.block.ModBlocks;
 
-import java.util.EnumSet;
 import java.util.List;
 
-public class FindNearestEntityGoal extends Goal {
+public class FindEntity {
     // 寻找方块实体和寻找方块一样不能透视
 
     private final int SEARCH_RADIUS = 64;
@@ -29,15 +18,13 @@ public class FindNearestEntityGoal extends Goal {
     private final PathfinderMob mob;
     private EntityType<?> entityToFind;
 
-    public FindNearestEntityGoal(PathfinderMob mob, EntityType<?> entityToFind){
+    public FindEntity(PathfinderMob mob, EntityType<?> entityToFind){
         this.mob = mob;
         this.entityToFind = entityToFind;
         this.hasTarget = true;
         this.resultEntity = null;
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
-    @Override
     public boolean canUse() {
         return this.hasTarget && this.entityToFind != null;
     }
@@ -46,6 +33,10 @@ public class FindNearestEntityGoal extends Goal {
         this.entityToFind = entityToFind;
         this.resultEntity = null;
         this.hasTarget = true;
+
+        if(canUse()){
+            start();
+        }
     }
 
     public void clearTarget() {
@@ -53,7 +44,6 @@ public class FindNearestEntityGoal extends Goal {
     }
 
 
-    @Override
     public void start() {
         Entity result = null;
         List<Entity> targetedEntities = this.mob.level().getEntities(
@@ -77,10 +67,10 @@ public class FindNearestEntityGoal extends Goal {
         this.hasTarget = false;
         if(result != null){
             this.resultEntity = result;
-            LittleAnt.LOGGER.info("[FindNearestEntityGoal] 找到目标: {}", this.resultEntity.position());
+            LittleAnt.LOGGER.info("[FindEntity] 找到目标: {}", this.resultEntity.position());
             return;
         }
         this.resultEntity = null;
-        LittleAnt.LOGGER.info("[FindNearestEntityGoal] 未找到目标");
+        LittleAnt.LOGGER.info("[FindEntity] 未找到目标");
     }
 }
