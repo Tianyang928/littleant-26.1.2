@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "modules": [
+    {"opcode":"move_to","category":"behavior","shape":"command","inputs":["x:number","y:number"]},
+    {"opcode":"wait","category":"control","shape":"command","inputs":["seconds:number"]},
+    {"opcode":"repeat","category":"control","shape":"c_shape","inputs":["count:number","body:block"]},
+    {"opcode":"if","category":"control","shape":"c_shape","inputs":["condition:boolean","body:block"]},
+    {"opcode":"add","category":"operators","shape":"reporter","inputs":["a:number","b:number"]},
+    {"opcode":"subtract","category":"operators","shape":"reporter","inputs":["a:number","b:number"]},
+    {"opcode":"multiply","category":"operators","shape":"reporter","inputs":["a:number","b:number"]},
+    {"opcode":"divide","category":"operators","shape":"reporter","inputs":["a:number","b:number"]},
+    {"opcode":"break_block","category":"goal","shape":"command","inputs":["block:text"]},
+    {"opcode":"place_block","category":"goal","shape":"command","inputs":["block:text"]},
+    {"opcode":"craft_item","category":"goal","shape":"command","inputs":["item:text"]},
+    {"opcode":"use_crafting_table","category":"goal","shape":"command","inputs":[]},
+    {"opcode":"use_inventory_crafting","category":"goal","shape":"command","inputs":[]},
+    {"opcode":"use_barrel","category":"goal","shape":"command","inputs":[]},
+    {"opcode":"use_furnace","category":"goal","shape":"command","inputs":[]},
+    {"opcode":"find_nearest_block","category":"goal","shape":"reporter","inputs":["block:text"]},
+    {"opcode":"find_nearest_entity","category":"goal","shape":"reporter","inputs":["entity:text"]},
+    {"opcode":"sense_pheromone","category":"sense","shape":"reporter","inputs":["id:number"]},
+    {"opcode":"set_variable","category":"variables","shape":"command","inputs":["name:text","value:any"]}
+  ]
+}

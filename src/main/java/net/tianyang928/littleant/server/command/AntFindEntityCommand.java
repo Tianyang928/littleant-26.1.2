@@ -2,17 +2,12 @@ package net.tianyang928.littleant.server.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceArgument;
-import net.minecraft.commands.arguments.blocks.BlockInput;
-import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.tianyang928.littleant.entity.AntEntity;
 
@@ -36,7 +31,7 @@ public class AntFindEntityCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    ant.setFindNearestEntityTarget(entityType.value());
+                                                    ant.setFindEntityTarget(entityType.value());
                                                     count++;
                                                 }
                                             }

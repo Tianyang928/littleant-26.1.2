@@ -94,7 +94,7 @@ public class FindBlock {
         return this.blockToFind != null;
     }
 
-    public void setTarget(Block blockToFind) {
+    public BlockPos setTarget(Block blockToFind) {
         this.blockToFind = blockToFind;
         this.resultBlockPos = null;
         resetIsBlockOpaque();
@@ -102,6 +102,7 @@ public class FindBlock {
         if(canUse()){
             start();
         }
+        return resultBlockPos;
     }
 
     public void clearTarget() {

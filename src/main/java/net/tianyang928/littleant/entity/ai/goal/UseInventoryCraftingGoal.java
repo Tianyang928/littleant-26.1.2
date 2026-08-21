@@ -18,7 +18,6 @@ public class UseInventoryCraftingGoal extends Goal {
 
     public UseInventoryCraftingGoal(AntEntity ant) {
         this.ant = ant;
-        this.setFlags(EnumSet.of(Flag.LOOK));
     }
 
     public void setInput(CraftingInput input, int amountCrafted) {

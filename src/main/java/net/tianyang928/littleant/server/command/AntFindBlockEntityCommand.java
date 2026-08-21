@@ -8,7 +8,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.Objects;
@@ -37,7 +36,7 @@ public class AntFindBlockEntityCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    ant.setFindNearestBlockEntityTarget(blockState.getBlock());
+                                                    ant.setFindBlockEntityTarget(blockState.getBlock());
                                                     count++;
                                                 }
                                             }

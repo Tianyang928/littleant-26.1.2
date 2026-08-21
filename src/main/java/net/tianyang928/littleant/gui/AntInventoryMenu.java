@@ -44,7 +44,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         this.addStandardInventorySlots(playerInventory, 8, 92);
     }
 
-    /** Server-side constructor used by {@link AntEntity#createMenu}. */
+    /** Server-side constructor used by AntEntity#createMenu. */
     public AntInventoryMenu(int containerId, Inventory playerInventory, AntEntity ant) {
         this(containerId, playerInventory, ant, ant.getInventory());
     }

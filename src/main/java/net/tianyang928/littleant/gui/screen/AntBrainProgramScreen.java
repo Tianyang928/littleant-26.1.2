@@ -10,14 +10,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
+import net.tianyang928.littleant.entity.ai.brain.BrainBlock;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 import net.tianyang928.littleant.network.PlaceAntBrainBlockPayload;
 import net.tianyang928.littleant.network.RemoveAntBrainBlockPayload;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /** Full-screen, translucent Scratch-inspired palette and canvas for an ant brain. */
 public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgramMenu> {
@@ -40,7 +38,8 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private int selectedCategory;
     private String draggingBlock;
     private int paletteScroll;
-    private final LinkedHashMap<Integer, AntEntity.BrainBlock> placedBlocks = new LinkedHashMap<>();
+    private final LinkedHashMap<UUID, BrainBlock> placedBlocks = new LinkedHashMap<>();
+
 
     private int mouseX, mouseY;
 
@@ -81,11 +80,11 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         //graphics.text(this.font, "拖动模块到右侧编程区域（暂不执行或组装）", 210, 10, 0xFFB8C3D9, false);
 
         if (this.draggingBlock != null) {
-            String blockText = draggingBlock;
+            String blockOpcode = draggingBlock;
             if(this.draggingBlock.contains("-")) {
-                blockText = this.draggingBlock.split("-")[0];
+                blockOpcode = this.draggingBlock.split("-")[0];
             }
-            drawBlock(graphics, blockText, mouseX - BLOCK_WIDTH / 2, mouseY - BLOCK_HEIGHT / 2, colorFor(blockText), true);
+            drawBlock(graphics, blockOpcode, mouseX - BLOCK_WIDTH / 2, mouseY - BLOCK_HEIGHT / 2, colorFor(blockOpcode), true);
         }
         //graphics.pose().popMatrix();
     }
@@ -121,17 +120,17 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         int x = SIDEBAR_WIDTH + PALETTE_WIDTH;
         graphics.fill(x, 28, this.width, this.height, 0x94131A25);
         graphics.text(this.font, "编程区域", x + CANVAS_PADDING, 42, 0xFFDAE2F2, false);
-        for (AntEntity.BrainBlock block : this.placedBlocks.values()) {
-            drawBlock(graphics, block.text(), x + block.x(), 58 + block.y(), colorFor(block.text()), false);
+        for (BrainBlock block : this.placedBlocks.values()) {
+            drawBlock(graphics, block.opcode(), x + block.x(), 58 + block.y(), colorFor(block.opcode()), false);
         }
     }
 
-    private void drawBlock(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean floating) {
+    private void drawBlock(GuiGraphicsExtractor graphics, String opcode, int x, int y, int color, boolean floating) {
         // Until art exists, this identifier atlas is the stable resource hook for every future sprite.
         graphics.fill(x, y, x + BLOCK_WIDTH, y + BLOCK_HEIGHT, floating ? 0xEEFFFFFF & color : color);
         graphics.fill(x + 6, y + BLOCK_HEIGHT - 3, x + 18, y + BLOCK_HEIGHT, 0xFF18202D);
         graphics.fill(x + BLOCK_WIDTH - 18, y + BLOCK_HEIGHT - 3, x + BLOCK_WIDTH - 6, y + BLOCK_HEIGHT, 0xFF18202D);
-        graphics.text(this.font, Component.translatable("block.littleant.ant_brain." + text), x + 10, y + 8, 0xFFFFFFFF, false);
+        graphics.text(this.font, Component.translatable("block.littleant.ant_brain." + opcode), x + 10, y + 8, 0xFFFFFFFF, false);
     }
 
     @Override
@@ -150,17 +149,17 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
 
         // draggingblock 可用于存储两种数据：模块id或模块文本
-        String blockText = paletteBlockAt(x, y);
-        if (blockText != null) {
-            this.draggingBlock = blockText;
+        String blockOpcode = paletteBlockAt(x, y);
+        if (blockOpcode != null) {
+            this.draggingBlock = blockOpcode;
         }
         else {
-            int blockId = canvasBlockAt(x, y);
-            if(blockId != -1) {
-                blockText = this.placedBlocks.get(blockId).text();
-                this.draggingBlock = blockText + "-" + blockId;
+            UUID blockId = canvasBlockAt(x, y);
+            if(blockId != null) {
+                blockOpcode = this.placedBlocks.get(blockId).opcode();
+                this.draggingBlock = blockOpcode + "--" + blockId;
                 this.placedBlocks.remove(blockId);
-                ClientPacketDistributor.sendToServer(new RemoveAntBrainBlockPayload(this.menu.containerId, blockId));
+                ClientPacketDistributor.sendToServer(new RemoveAntBrainBlockPayload(this.menu.containerId, blockId.toString()));
             }
 
         }
@@ -181,22 +180,22 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             if (x >= canvasX && y >= 58) {
                 int relativeX = Math.max(0, x - canvasX - BLOCK_WIDTH / 2);
                 int relativeY = Math.max(0, y - 58 - BLOCK_HEIGHT / 2);
-                int blockId = -1;
-                if(this.draggingBlock.contains("-")) {
-                    String [] result = this.draggingBlock.split("-");
+                UUID blockId = null;
+                if(this.draggingBlock.contains("--")) {
+                    String [] result = this.draggingBlock.split("--");
                     this.draggingBlock = result[0];
-                    blockId = Integer.parseInt(result[1]);
+                    blockId = UUID.fromString(result[1]);
                     LittleAnt.LOGGER.info("[AntBrainProgramScreen] blockId {} ", blockId);
                 }
                 else {
                     Random random = new Random();
                     do {
-                        blockId = random.nextInt(Integer.MAX_VALUE);
+                        blockId = UUID.randomUUID();
                     } while (this.placedBlocks.containsKey(blockId));
 
                 }
-                this.placedBlocks.put(blockId, new AntEntity.BrainBlock(this.draggingBlock, relativeX, relativeY, blockId));
-                ClientPacketDistributor.sendToServer(new PlaceAntBrainBlockPayload(this.menu.containerId, this.draggingBlock, relativeX, relativeY, blockId));
+                this.placedBlocks.put(blockId, new BrainBlock(this.draggingBlock, relativeX, relativeY, blockId));
+                ClientPacketDistributor.sendToServer(new PlaceAntBrainBlockPayload(this.menu.containerId, this.draggingBlock, relativeX, relativeY, blockId.toString()));
             }
             this.draggingBlock = null;
             return true;
@@ -213,10 +212,10 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     @Override
     public boolean keyPressed(KeyEvent event) {
         if(event.key() == 261) {
-            int blockId = canvasBlockAt(this.mouseX, this.mouseY);
-            if(blockId != -1) {
+            UUID blockId = canvasBlockAt(this.mouseX, this.mouseY);
+            if(blockId != null) {
                 this.placedBlocks.remove(blockId);
-                ClientPacketDistributor.sendToServer(new RemoveAntBrainBlockPayload(this.menu.containerId, blockId));
+                ClientPacketDistributor.sendToServer(new RemoveAntBrainBlockPayload(this.menu.containerId, blockId.toString()));
             }
             return true;
         }
@@ -242,16 +241,16 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         return index >= 0 && index < blocks.size() && (y - 62 + this.paletteScroll) % (BLOCK_HEIGHT + 8) < BLOCK_HEIGHT ? blocks.get(index) : null;
     }
 
-    private int canvasBlockAt(int x, int y) {
+    private UUID canvasBlockAt(int x, int y) {
         if (x < SIDEBAR_WIDTH + PALETTE_WIDTH || y < 58) {
-            return -1;
+            return null;
         }
-        for (AntEntity.BrainBlock block : this.placedBlocks.values()) {
+        for (BrainBlock block : this.placedBlocks.values()) {
             if (inside(x, y, block.x() + SIDEBAR_WIDTH + PALETTE_WIDTH, block.y() + 58, BLOCK_WIDTH, BLOCK_HEIGHT)) {
                 return block.id();
             }
         }
-        return -1;
+        return null;
     }
 
     private static boolean inside(int mouseX, int mouseY, int x, int y, int width, int height) {

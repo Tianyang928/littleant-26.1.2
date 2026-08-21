@@ -10,8 +10,10 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 
+import java.util.UUID;
+
 /** Client request to drop one palette block onto the program canvas. */
-public record PlaceAntBrainBlockPayload(int containerId, String text, int x, int y, int id) implements CustomPacketPayload {
+public record PlaceAntBrainBlockPayload(int containerId, String text, int x, int y, String id) implements CustomPacketPayload {
     public static final Type<PlaceAntBrainBlockPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "place_ant_brain_block"));
     public static final StreamCodec<ByteBuf, PlaceAntBrainBlockPayload> STREAM_CODEC = StreamCodec.composite(
@@ -19,7 +21,7 @@ public record PlaceAntBrainBlockPayload(int containerId, String text, int x, int
             ByteBufCodecs.stringUtf8(64), PlaceAntBrainBlockPayload::text,
             ByteBufCodecs.VAR_INT, PlaceAntBrainBlockPayload::x,
             ByteBufCodecs.VAR_INT, PlaceAntBrainBlockPayload::y,
-            ByteBufCodecs.VAR_INT, PlaceAntBrainBlockPayload::id,
+            ByteBufCodecs.stringUtf8(32), PlaceAntBrainBlockPayload::id,
             PlaceAntBrainBlockPayload::new);
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
@@ -32,6 +34,6 @@ public record PlaceAntBrainBlockPayload(int containerId, String text, int x, int
             return;
         }
         // Canvas-relative coordinates and the count are bounded server-side, never trusted from the client.
-        menu.ant.addBrainBlock(payload.text(), Mth.clamp(payload.x(), 0, 4096), Mth.clamp(payload.y(), 0, 4096), payload.id());
+        menu.ant.addBrainBlock(payload.text(), Mth.clamp(payload.x(), 0, 4096), Mth.clamp(payload.y(), 0, 4096), UUID.fromString(payload.id));
     }
 }

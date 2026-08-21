@@ -1,7 +1,7 @@
 package net.tianyang928.littleant.entity;
 
+import com.google.gson.JsonParser;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -20,6 +20,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -30,57 +31,62 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.tianyang928.littleant.LittleAnt;
+import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.entity.ai.goal.*;
+import net.tianyang928.littleant.entity.ai.sense.FindBlock;
+import net.tianyang928.littleant.entity.ai.sense.FindBlockEntity;
+import net.tianyang928.littleant.entity.ai.sense.FindEntity;
 import net.tianyang928.littleant.gui.AntInventoryMenu;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 
 import javax.annotation.Nullable;
-import java.util.LinkedHashMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuProvider {
+public class AntEntity extends PathfinderMob implements InventoryCarrier {
 
     public static final int INVENTORY_SIZE = 9;
     private static final int INVENTORY_SLOT_OFFSET = 300;
 
     AntEntityGlobalData antEntityGlobalData = new AntEntityGlobalData();
+    AntScriptInterpreter antScriptInterpreter = new AntScriptInterpreter(this);
+
     @Nullable
     private BreakBlockGoal breakBlockGoal;
     @Nullable
     private SetBlockGoal setBlockGoal;
     @Nullable
-    private FindNearestBlockGoal findNearestBlockGoal;
-    @Nullable
     private UseCraftingTableGoal useCraftingTableGoal;
     @Nullable
     private UseInventoryCraftingGoal useInventoryCraftingGoal;
-    @Nullable
-    private FindNearestBlockEntityGoal findNearestBlockEntityGoal;
-    @Nullable
-    private FindNearestEntityGoal findNearestEntityGoal;
+
+    private final FindBlockEntity findBlockEntity = new FindBlockEntity(this, null);
+    private final FindEntity findEntity = new FindEntity(this, null);
+    private final FindBlock findBlock = new FindBlock(this, null);
+
 
     private final SimpleContainer inventory = new SimpleContainer(INVENTORY_SIZE);
     private final FoodData foodData = new FoodData();
     private int selectedSlot = 0;
     private BlockPos lastTimePos = null;
     private long lastUpdateTime = 0;
-    private final LinkedHashMap<Integer, BrainBlock> brainBlocks = new LinkedHashMap<>();
-
-    /** A positioned visual block. Execution/assembly is intentionally a later AI stage. */
-    public record BrainBlock(String text, int x, int y, int id) {}
-
+    private final LinkedHashMap<UUID, BrainBlock> brainBlocks = new LinkedHashMap<>();
+    private boolean isProgrammingBrain = false;
+    private Player programmingPlayer = null;
 
     public boolean tryGettingDownWater = false;
+
+    public LivingEntity lastHurtBy = null;
+    public long lastHurtTime = -1;
 
     private static final EntityDataAccessor<String> skinNameAccessor =
             SynchedEntityData.defineId(
@@ -98,22 +104,6 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
     }
 
     @Override
-    public Component getDisplayName() {
-        // 如果有自定义名称，就显示自定义名称
-        return this.hasCustomName() ? this.getCustomName() : Component.translatable("container.littleant.ant_inventory");
-    }
-
-    @Override
-    public AbstractContainerMenu createMenu(int containerId, net.minecraft.world.entity.player.Inventory playerInventory, Player player) {
-        return new AntInventoryMenu(containerId, playerInventory, this);
-    }
-
-    @Override
-    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buf) {
-        buf.writeInt(this.getId());
-    }
-
-    @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand == InteractionHand.MAIN_HAND && !this.level().isClientSide() && player instanceof ServerPlayer serverPlayer) {
             // Shift deliberately selects the programming surface; normal use remains the inventory.
@@ -125,7 +115,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
                         }
 
                         @Override
-                        public AbstractContainerMenu createMenu(int id, net.minecraft.world.entity.player.Inventory inventory, Player ignored) {
+                        public AbstractContainerMenu createMenu(int id, Inventory inventory, Player ignored) {
                             return new AntBrainProgramMenu(id, inventory, AntEntity.this);
                         }
 
@@ -134,7 +124,24 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
                             AntEntity.this.writeBrainProgramClientData(buf);
                         }
                     }
-                    : this);
+                    : new MenuProvider() {
+                        @Override
+                        public Component getDisplayName() {
+                            // 如果有自定义名称，就显示自定义名称
+                            return Component.translatable("container.littleant.ant_inventory");
+                        }
+
+                        @Override
+                        public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+                            return new AntInventoryMenu(containerId, playerInventory, AntEntity.this);
+                        }
+
+                        @Override
+                        public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buf) {
+                            AntEntity.this.writeInventoryClientData(buf);
+                        }
+                    }
+            );
         }
         return InteractionResult.SUCCESS;
     }
@@ -144,26 +151,109 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         buf.writeVarInt(this.getId());
         buf.writeVarInt(this.brainBlocks.size());
         for (BrainBlock block : this.brainBlocks.values()) {
-            buf.writeUtf(block.text(), 64);
+            buf.writeUtf(block.opcode(), 64);
             buf.writeVarInt(block.x());
             buf.writeVarInt(block.y());
-            buf.writeVarInt(block.id());
+            buf.writeUUID(block.id());
+            buf.writeVarInt(block.inputs().size());
+            for (InputSlot slot : block.inputs()) {
+                buf.writeUtf(slot.name(), 32); buf.writeUtf(slot.type().name(), 16);
+                buf.writeVarInt(slot.value().length());
+                buf.writeUtf(slot.value(), slot.value().length());
+                writeUuid(buf, slot.blockId());
+            }
+            writeUuid(buf, block.next());
+            writeUuid(buf, block.parent());
         }
     }
 
-    public LinkedHashMap<Integer, BrainBlock> getBrainBlocks() {
-        return (LinkedHashMap<Integer, BrainBlock>) this.brainBlocks.clone();
+    public void writeInventoryClientData(RegistryFriendlyByteBuf buf) {
+        buf.writeInt(this.getId());
     }
 
-    public void addBrainBlock(String text, int x, int y, int id) {
+    private static void writeUuid(RegistryFriendlyByteBuf buf, UUID id) {
+        buf.writeBoolean(id != null);
+        if (id != null) { buf.writeUUID(id); }
+    }
+
+    public LinkedHashMap<UUID, BrainBlock> getBrainBlocks() {
+        return (LinkedHashMap<UUID, BrainBlock>) this.brainBlocks.clone();
+    }
+
+    public void addBrainBlock(String opcode, int x, int y, UUID id) {
         if (this.brainBlocks.size() < 256) {
-            this.brainBlocks.put(id,new BrainBlock(text, x, y, id));
+            this.brainBlocks.put(id,new BrainBlock(opcode, x, y, id));
         }
     }
 
-    public void removeBrainBlock(int id) {
+    public void removeBrainBlock(UUID id) {
         this.brainBlocks.remove(id);
         LittleAnt.LOGGER.info("[AntEntity] removeBrainBlock, id: {}", id);
+    }
+
+    public void replaceBrainBlocks(Map<UUID, BrainBlock> blocks) {
+        this.brainBlocks.clear();
+        this.brainBlocks.putAll(blocks);
+    }
+
+    public void scriptMoveTo(double x, double y, double z) {
+        getNavigation().moveTo(x, y, z, getAttributeValue(Attributes.MOVEMENT_SPEED));
+    }
+
+    public void scriptStepForward(double distance) {
+        Node node1 = new Node(this.getBlockX(),this.getBlockY(),this.getBlockZ());
+        Vec3 targetPos = this.position().add(getLookAngle().scale(distance));
+        Node node2 = new Node(Mth.floor(targetPos.x()),
+                                Mth.floor(targetPos.y()),
+                                Mth.floor(targetPos.z()));
+        node1.type = PathType.WALKABLE;
+        node2.type = PathType.WALKABLE;
+
+        List<Node> nodes = new ArrayList<>();
+        nodes.add(node1);
+        nodes.add(node2);
+        BlockPos target = new BlockPos(node2.x, node2.y, node2.z);
+        Path manualPath = new Path(nodes, target, true);
+        this.getNavigation().moveTo(manualPath, 1.0);
+    }
+
+    public void scriptLookAt(double x, double y, double z) {
+        this.getLookControl().setLookAt(x, y, z);
+    }
+
+    public void scriptRotate(double angle) {
+        this.setYRot((float)angle);
+    }
+
+    public void scriptSay(String message) {
+        if (message != null && !message.isBlank()) LittleAnt.LOGGER.info("[Ant {}] {}", getUUID(), message.substring(0, Math.min(256, message.length())));
+    }
+
+    public void clearActiveGoals() {
+        if (breakBlockGoal != null) breakBlockGoal.clearTarget();
+        if (setBlockGoal != null) setBlockGoal.clearTarget();
+    }
+
+    public void runScript(String source) {
+        this.brainBlocks.clear();
+        this.brainBlocks.putAll( new CodeToModuleConverter().convert(JsonParser.parseString(source).getAsJsonObject()));
+    }
+
+    public void tickBrainProgram() {
+        if (!level().isClientSide()) {
+            antScriptInterpreter.loadProgram(this.brainBlocks);
+            antScriptInterpreter.start();
+            antScriptInterpreter.tick();
+        }
+    }
+
+    public AntBlackboard getBrainBlackboard() {
+        return antScriptInterpreter.blackboard();
+    }
+
+    public void setIsProgrammingBrain(Player player, boolean isProgramming) {
+        this.isProgrammingBrain = isProgramming;
+        this.programmingPlayer = player;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -205,30 +295,18 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         this.setBlockGoal = new SetBlockGoal(this, BlockPos.ZERO);
         this.setBlockGoal.clearTarget();
         this.goalSelector.addGoal(1, this.setBlockGoal);
-        //find the nearest block init
-        this.findNearestBlockGoal = new FindNearestBlockGoal(this, null);
-        this.findNearestBlockGoal.clearTarget();
-        this.goalSelector.addGoal(1, this.findNearestBlockGoal);
         // Crafting is explicitly requested by the ant's AI, never selected automatically.
         this.useCraftingTableGoal = new UseCraftingTableGoal(this);
         this.goalSelector.addGoal(1, this.useCraftingTableGoal);
         this.useInventoryCraftingGoal = new UseInventoryCraftingGoal(this);
         this.goalSelector.addGoal(1, this.useInventoryCraftingGoal);
-        //find the nearest block entity init
-        this.findNearestBlockEntityGoal = new FindNearestBlockEntityGoal(this, null);
-        this.findNearestBlockEntityGoal.clearTarget();
-        this.goalSelector.addGoal(1, this.findNearestBlockEntityGoal);
-        //find the nearest entity init
-        this.findNearestEntityGoal = new FindNearestEntityGoal(this, null);
-        this.findNearestEntityGoal.clearTarget();
-        this.goalSelector.addGoal(1, this.findNearestEntityGoal);
 
-        this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
-        this.goalSelector.addGoal(2, new BetterFloatGoal(this));
+        //this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
+        //this.goalSelector.addGoal(2, new BetterFloatGoal(this));
 
         //this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0));
-        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        //this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        //this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
 
     // Assigns the next block this ant should path to and mine.
@@ -242,10 +320,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
             this.setBlockGoal.setTarget(target);
         }
     }
-    public void setFindNearestBlockTarget(Block blockToFind) {
-        if (this.findNearestBlockGoal != null) {
-            this.findNearestBlockGoal.setTarget(blockToFind);
+    public BlockPos setFindBlockTarget(Block blockToFind) {
+        if (this.findBlock != null) {
+            return this.findBlock.setTarget(blockToFind);
         }
+        return null;
     }
 
     public void setCraftingTableInput(CraftingInput input, BlockPos craftingTablePos, int amountCrafted) {
@@ -260,14 +339,14 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         }
     }
 
-    public void setFindNearestBlockEntityTarget(Block blockEntity) {
-        if(this.findNearestBlockEntityGoal != null){
-            this.findNearestBlockEntityGoal.setTarget(blockEntity);
+    public void setFindBlockEntityTarget(Block blockEntity) {
+        if(this.findBlockEntity != null){
+            this.findBlockEntity.setTarget(blockEntity);
         }
     }
-    public void setFindNearestEntityTarget(EntityType<?> entityType) {
-        if(this.findNearestEntityGoal != null){
-            this.findNearestEntityGoal.setTarget(entityType);
+    public void setFindEntityTarget(EntityType<?> entityType) {
+        if(this.findEntity != null){
+            this.findEntity.setTarget(entityType);
         }
     }
 
@@ -280,7 +359,17 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
 
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        Entity attacker = source.getEntity();
+        this.lastHurtTime = level.getGameTime();
+        // 记录最后攻击者
+        if (attacker instanceof LivingEntity) {
+            this.setLastHurtBy((LivingEntity) attacker);
+        }
         return super.hurtServer(level, source, amount);
+    }
+
+    private void setLastHurtBy(LivingEntity attacker) {
+        this.lastHurtBy = attacker;
     }
 
     @Override
@@ -294,9 +383,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         this.foodData.readAdditionalSaveData(input);
         this.brainBlocks.clear();
         for (ValueInput child : input.childrenListOrEmpty("BrainBlocks")) {
-            String text = child.getStringOr("text", "");
-            if (!text.isEmpty()) {
-                this.brainBlocks.put(child.getIntOr("id",0), new BrainBlock(text, child.getIntOr("x", 0), child.getIntOr("y", 0), child.getIntOr("id",0)));
+            String opcode = child.getStringOr("opcode", "");
+            if (!opcode.isEmpty()) {
+                UUID next = parseUuid(child.getStringOr("next", ""));
+                UUID parent = parseUuid(child.getStringOr("parent", ""));
+                this.brainBlocks.put(parseUuid(child.getStringOr("id", "")), new BrainBlock(opcode, child.getIntOr("x", 0), child.getIntOr("y", 0), parseUuid(child.getStringOr("id", "")), List.of(), next, parent));
             }
         }
         LittleAnt.LOGGER.info("[AntEntity] read skin name from save data: {}", getSkinNameAccessor());
@@ -318,12 +409,19 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
         ValueOutput.ValueOutputList brainBlockList = output.childrenList("BrainBlocks");
         for (BrainBlock block : this.brainBlocks.values()) {
             ValueOutput child = brainBlockList.addChild();
-            child.putString("text", block.text());
+            child.putString("opcode", block.opcode());
             child.putInt("x", block.x());
             child.putInt("y", block.y());
-            child.putInt("id", block.id());
+            child.putString("id", block.id().toString());
+            if (block.next() != null) child.putString("next", block.next().toString());
+            if (block.parent() != null) child.putString("parent", block.parent().toString());
         }
         LittleAnt.LOGGER.info("[AntEntity] write skin name to save data: {}", getSkinNameAccessor());
+    }
+
+    private static UUID parseUuid(String value) {
+        if (value == null || value.isEmpty()) return null;
+        try { return UUID.fromString(value); } catch (IllegalArgumentException ignored) { return null; }
     }
 
     @Override
@@ -465,6 +563,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
     @Override
     public void tick() {
         super.tick();
+
         this.syncSelectedItem();
         long currentTime = this.level().getGameTime();
         if(this.lastTimePos == null){
@@ -476,6 +575,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, MenuPr
             int minusFoodLevel = (int) Mth.sqrt((float)this.distanceToSqr(this.lastTimePos.getX(), this.lastTimePos.getY(), this.lastTimePos.getZ()))%100;
             this.foodData.setFoodLevel(this.foodData.getFoodLevel() - minusFoodLevel);
             this.lastTimePos = this.blockPosition();
+        }
+
+        // 执行脚本
+        if(!this.isProgrammingBrain){
+            tickBrainProgram();
         }
     }
 }

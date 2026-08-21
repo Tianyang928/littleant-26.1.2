@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
@@ -27,12 +28,17 @@ public class AntFindBlockCommand {
                                             ServerLevel level = context.getSource().getLevel();
 
                                             Block block = blockInput.getState().getBlock();
+                                            BlockPos resultPos = null;
                                             int count = 0;
                                             for (var entity : level.getEntities().getAll()) {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    ant.setFindNearestBlockTarget(block);
+                                                    resultPos = ant.setFindBlockTarget(block);
+                                                    if(resultPos!=null){
+                                                        BlockPos finalResultPos = resultPos;
+                                                        context.getSource().sendSuccess(() -> Component.literal(name + " 已找到 " + block.getName() + " 在 " + finalResultPos), true);
+                                                    }
                                                     count++;
                                                 }
                                             }

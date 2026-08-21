@@ -9,12 +9,14 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 
-public record RemoveAntBrainBlockPayload(int containerId, int id) implements CustomPacketPayload {
+import java.util.UUID;
+
+public record RemoveAntBrainBlockPayload(int containerId, String id) implements CustomPacketPayload {
     public static final Type<RemoveAntBrainBlockPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "remove_ant_brain_block"));
     public static final StreamCodec<ByteBuf, RemoveAntBrainBlockPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, RemoveAntBrainBlockPayload::containerId,
-            ByteBufCodecs.VAR_INT, RemoveAntBrainBlockPayload::id,
+            ByteBufCodecs.stringUtf8(32), RemoveAntBrainBlockPayload::id,
             RemoveAntBrainBlockPayload::new);
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
@@ -27,7 +29,7 @@ public record RemoveAntBrainBlockPayload(int containerId, int id) implements Cus
         }
         // Canvas-relative coordinates and the count are bounded server-side, never trusted from the client.
         if (menu.ant != null) {
-            menu.ant.removeBrainBlock(payload.id());
+            menu.ant.removeBrainBlock(UUID.fromString(payload.id));
         }
     }
 }

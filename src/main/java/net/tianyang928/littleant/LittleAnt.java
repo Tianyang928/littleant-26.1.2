@@ -25,6 +25,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.tianyang928.littleant.network.PlaceAntBrainBlockPayload;
+import net.tianyang928.littleant.network.RunAntScriptPayload;
 import net.tianyang928.littleant.network.SetPheromonePayload;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
@@ -73,6 +74,8 @@ public class LittleAnt {
                 PlaceAntBrainBlockPayload::handlePacketFromClient);
         registrar.playToServer(RemoveAntBrainBlockPayload.TYPE, RemoveAntBrainBlockPayload.STREAM_CODEC,
                 RemoveAntBrainBlockPayload::handlePacketFromClient);
+        registrar.playToServer(RunAntScriptPayload.TYPE, RunAntScriptPayload.STREAM_CODEC,
+                RunAntScriptPayload::handlePacketFromClient);
     }
 
     // Add the example block item to the building blocks tab
@@ -106,5 +109,8 @@ public class LittleAnt {
         AntFindBlockEntityCommand.register(event);
         AntCraftItemCommand.register(event);
         AntFindEntityCommand.register(event);
+        ModuleToCodeCommand.register(event);
+        CodeToModuleCommand.register(event);
+        AntRunJsonCommand.register(event);
     }
 }
