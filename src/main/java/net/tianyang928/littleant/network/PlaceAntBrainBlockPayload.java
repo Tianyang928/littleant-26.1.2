@@ -21,7 +21,7 @@ public record PlaceAntBrainBlockPayload(int containerId, String text, int x, int
             ByteBufCodecs.stringUtf8(64), PlaceAntBrainBlockPayload::text,
             ByteBufCodecs.VAR_INT, PlaceAntBrainBlockPayload::x,
             ByteBufCodecs.VAR_INT, PlaceAntBrainBlockPayload::y,
-            ByteBufCodecs.stringUtf8(32), PlaceAntBrainBlockPayload::id,
+            ByteBufCodecs.stringUtf8(36), PlaceAntBrainBlockPayload::id,
             PlaceAntBrainBlockPayload::new);
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }

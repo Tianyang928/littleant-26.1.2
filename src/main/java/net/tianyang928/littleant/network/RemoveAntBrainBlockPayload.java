@@ -16,7 +16,7 @@ public record RemoveAntBrainBlockPayload(int containerId, String id) implements 
             Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "remove_ant_brain_block"));
     public static final StreamCodec<ByteBuf, RemoveAntBrainBlockPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, RemoveAntBrainBlockPayload::containerId,
-            ByteBufCodecs.stringUtf8(32), RemoveAntBrainBlockPayload::id,
+            ByteBufCodecs.stringUtf8(36), RemoveAntBrainBlockPayload::id,
             RemoveAntBrainBlockPayload::new);
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }

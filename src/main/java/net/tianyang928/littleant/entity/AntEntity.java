@@ -158,8 +158,9 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
             buf.writeVarInt(block.inputs().size());
             for (InputSlot slot : block.inputs()) {
                 buf.writeUtf(slot.name(), 32); buf.writeUtf(slot.type().name(), 16);
-                buf.writeVarInt(slot.value().length());
-                buf.writeUtf(slot.value(), slot.value().length());
+                String value = slot.value() == null ? "" : slot.value();
+                buf.writeVarInt(value.length());
+                buf.writeUtf(value, Math.max(1, value.length()));
                 writeUuid(buf, slot.blockId());
             }
             writeUuid(buf, block.next());
@@ -181,8 +182,9 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     }
 
     public void addBrainBlock(String opcode, int x, int y, UUID id) {
-        if (this.brainBlocks.size() < 256) {
-            this.brainBlocks.put(id,new BrainBlock(opcode, x, y, id));
+        if (this.brainBlocks.size() < 256 && ModuleRegistry.contains(opcode)) {
+            this.brainBlocks.put(id, new BrainBlock(opcode, x, y, id,
+                    ModuleRegistry.createDefaultInputs(opcode), null, null));
         }
     }
 
