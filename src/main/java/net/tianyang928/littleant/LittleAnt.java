@@ -25,6 +25,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.tianyang928.littleant.network.PlaceAntBrainBlockPayload;
+import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
 import net.tianyang928.littleant.network.RunAntScriptPayload;
 import net.tianyang928.littleant.network.SetPheromonePayload;
 import net.neoforged.neoforge.common.NeoForge;
@@ -74,6 +75,8 @@ public class LittleAnt {
                 PlaceAntBrainBlockPayload::handlePacketFromClient);
         registrar.playToServer(RemoveAntBrainBlockPayload.TYPE, RemoveAntBrainBlockPayload.STREAM_CODEC,
                 RemoveAntBrainBlockPayload::handlePacketFromClient);
+        registrar.playToServer(UpdateAntBrainProgramPayload.TYPE, UpdateAntBrainProgramPayload.STREAM_CODEC,
+                UpdateAntBrainProgramPayload::handlePacketFromClient);
         registrar.playToServer(RunAntScriptPayload.TYPE, RunAntScriptPayload.STREAM_CODEC,
                 RunAntScriptPayload::handlePacketFromClient);
     }

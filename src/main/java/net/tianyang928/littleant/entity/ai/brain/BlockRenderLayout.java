@@ -1,6 +1,7 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
 import net.minecraft.network.chat.Component;
+import net.tianyang928.littleant.LittleAnt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,13 +23,13 @@ public record BlockRenderLayout(
         List<Element> elements,
         List<Body> bodies) {
 
-    public static final int INDENT = 16;
-    public static final int PADDING = 7;
-    public static final int GAP = 4;
-    public static final int MIN_COMMAND_HEIGHT = 28;
-    public static final int MIN_REPORTER_HEIGHT = 24;
+    public static final int INDENT = 6;
+    public static final int PADDING = 5;
+    public static final int GAP = 2;
+    public static final int MIN_COMMAND_HEIGHT = 16;
+    public static final int MIN_REPORTER_HEIGHT = 14;
     public static final int EMPTY_BODY_HEIGHT = 28;
-    public static final int MAX_HEADER_WIDTH = 300;
+    //public static final int MAX_HEADER_WIDTH = 180;
 
     public BlockRenderLayout {
         elements = List.copyOf(elements);
@@ -71,7 +72,6 @@ public record BlockRenderLayout(
                                            Map<UUID, BrainBlock> blocks, int x, int y,
                                            TextMeasurer measurer, Set<UUID> active) {
         if (blockId != null && !active.add(blockId)) return cycleFallback(blockId, definition, x, y);
-
         Map<String, InputSlot> inputsByName = new HashMap<>();
         for (InputSlot input : inputs) inputsByName.put(input.name(), input);
         ArrayList<Element> elements = new ArrayList<>();
@@ -79,24 +79,35 @@ public record BlockRenderLayout(
         int cursorX = PADDING;
         int cursorY = PADDING;
         int lineHeight = 0;
-        String pendingInput = null;
+        int inputIndex = 0;
 
         for (String token : ModuleRegistry.getDisplayFormat(definition.opcode())) {
             if ("{}".equals(token)) {
-                if (pendingInput != null) bodyNames.add(pendingInput);
-                pendingInput = null;
+                try{
+                    bodyNames.add(inputs.get(inputIndex).name());
+                }
+                catch (IndexOutOfBoundsException e){
+                    LittleAnt.LOGGER.error("[BlockRenderLayout] IndexOutOfBoundsException: {}, opcode: {}", e.getMessage(), definition.opcode());
+                }
+                inputIndex++;
                 continue;
             }
             if ("()".equals(token) || "<>".equals(token)) {
-                InputSlot input = inputsByName.get(pendingInput);
+                InputSlot input = null;
+                try {
+                    input = inputs.get(inputIndex);
+                }
+                catch (IndexOutOfBoundsException e){
+                    LittleAnt.LOGGER.error("[BlockRenderLayout] IndexOutOfBoundsException: {}, opcode: {}", e.getMessage(), definition.opcode());
+                }
                 if (input != null) {
                     BrainBlock nestedBlock = input.blockId() == null ? null : blocks.get(input.blockId());
                     BlockDefinition nestedDefinition = nestedBlock == null ? null : ModuleRegistry.get(nestedBlock.opcode());
                     BlockRenderLayout nested = nestedDefinition == null ? null : build(nestedBlock.id(), nestedDefinition,
                             effectiveInputs(nestedBlock, nestedDefinition), blocks, 0, 0, measurer, active);
                     Component value = Component.literal(input.value() == null ? "" : input.value());
-                    int elementWidth = nested == null ? Math.max(30, measurer.width(value) + 12) : nested.width();
-                    int elementHeight = nested == null ? 18 : nested.height();
+                    int elementWidth = nested == null ? Math.max(20, measurer.width(value) + 6) : nested.width();
+                    int elementHeight = nested == null ? 12 : nested.height();
                     int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth);
                     cursorX = position[0]; cursorY = position[1]; lineHeight = position[2];
                     elements.add(new Element(ElementKind.INPUT, input.name(), input.type(), value,
@@ -104,7 +115,7 @@ public record BlockRenderLayout(
                     cursorX += elementWidth + GAP;
                     lineHeight = Math.max(lineHeight, elementHeight);
                 }
-                pendingInput = null;
+                inputIndex++;
                 continue;
             }
             if ("2x2".equals(token) || "3x3".equals(token)) {
@@ -113,26 +124,25 @@ public record BlockRenderLayout(
                     InputSlot input = inputsByName.get("slot" + i);
                     if (input == null) continue;
                     Component value = Component.literal(shortValue(input.value()));
-                    int elementWidth = 34;
+                    int elementWidth = 12;
                     if (i % grid == 0) { cursorX = PADDING; cursorY += lineHeight + GAP; lineHeight = 0; }
                     elements.add(new Element(ElementKind.INPUT, input.name(), input.type(), value,
-                            cursorX, cursorY, elementWidth, 18, null));
+                            cursorX, cursorY, elementWidth, 12, null));
                     cursorX += elementWidth + GAP;
-                    lineHeight = 18;
+                    lineHeight = 12;
                 }
+                inputIndex++;
                 continue;
             }
 
-            InputSlot namedInput = inputsByName.get(token);
-            Component text = namedInput == null ? Component.translatable(token) : Component.literal(token);
+            Component text = Component.translatable(token);
             int elementWidth = measurer.width(text);
             int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth);
             cursorX = position[0]; cursorY = position[1]; lineHeight = position[2];
             elements.add(new Element(ElementKind.LABEL, null, null, text,
                     cursorX, cursorY + 5, elementWidth, 9, null));
             cursorX += elementWidth + GAP;
-            lineHeight = Math.max(lineHeight, 18);
-            pendingInput = namedInput == null ? null : token;
+            lineHeight = Math.max(lineHeight, 12);
         }
 
         int headerWidth = PADDING * 2;
@@ -164,9 +174,9 @@ public record BlockRenderLayout(
     }
 
     private static int[] wrap(int cursorX, int cursorY, int lineHeight, int elementWidth) {
-        if (cursorX > PADDING && cursorX + elementWidth + PADDING > MAX_HEADER_WIDTH) {
-            return new int[]{PADDING, cursorY + lineHeight + GAP, 0};
-        }
+//        if (cursorX > PADDING && cursorX + elementWidth + PADDING > MAX_HEADER_WIDTH) {
+//            return new int[]{PADDING, cursorY + lineHeight + GAP, 0};
+//        }
         return new int[]{cursorX, cursorY, lineHeight};
     }
 

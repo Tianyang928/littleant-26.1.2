@@ -1,66 +1,46 @@
 package net.tianyang928.littleant.gui.screen;
 
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
-import net.tianyang928.littleant.entity.ai.brain.BlockDefinition;
-import net.tianyang928.littleant.entity.ai.brain.BlockRenderLayout;
-import net.tianyang928.littleant.entity.ai.brain.BrainBlock;
-import net.tianyang928.littleant.entity.ai.brain.InputSlot;
-import net.tianyang928.littleant.entity.ai.brain.ModuleRegistry;
-import net.tianyang928.littleant.entity.ai.brain.ValueType;
+import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
-import net.tianyang928.littleant.network.PlaceAntBrainBlockPayload;
-import net.tianyang928.littleant.network.RemoveAntBrainBlockPayload;
+import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-/** Registry-driven visual editor. Shapes are rectangular until the sprite renderer is introduced. */
+/** Registry-driven visual editor with graph-aware dragging, snapping and editable literal inputs. */
 public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgramMenu> {
-    private static final int SIDEBAR_WIDTH = 66;
-    private static final int PALETTE_WIDTH = 330;
-    private static final int HEADER_HEIGHT = 28;
-    private static final int PALETTE_HEADER_HEIGHT = 34;
-    private static final int CANVAS_TOP = 58;
-    private static final int LIST_GAP = 8;
-    private static final Map<String, List<BlockDefinition>> MODULES_BY_CATEGORY = ModuleRegistry.byCategory();
-    private static final List<String> CATEGORIES = List.copyOf(MODULES_BY_CATEGORY.keySet());
-
-    private int selectedCategory;
-    private String draggingOpcode;
-    private UUID draggingId;
-    private int draggingStartX;
-    private int draggingStartY;
-    private int paletteScroll;
-    private final LinkedHashMap<UUID, BrainBlock> placedBlocks = new LinkedHashMap<>();
-    private final List<PaletteEntry> paletteEntries = new ArrayList<>();
-    private final LinkedHashMap<UUID, BlockRenderLayout> canvasLayouts = new LinkedHashMap<>();
-    private int mouseX;
-    private int mouseY;
-    private int lastTimeMouseClickX;
-    private int lastTimeMouseClickY;
+    private static final float TEXT_SCALE = 0.75f;
+    private static final int SIDEBAR_WIDTH=66, PALETTE_WIDTH=198, HEADER_HEIGHT=28, PALETTE_HEADER_HEIGHT=34, CANVAS_TOP=58, LIST_GAP=8;
+    private static final int STACK_SNAP_DISTANCE=18, INPUT_SNAP_DISTANCE=18;
+    private static final Map<String,List<BlockDefinition>> MODULES_BY_CATEGORY=ModuleRegistry.byCategory();
+    private static final List<String> CATEGORIES=List.copyOf(MODULES_BY_CATEGORY.keySet());
+    private int selectedCategory,paletteScroll,dragOffsetX,dragOffsetY,dragX,dragY;
+    private String draggingOpcode; private UUID draggingId; private boolean draggingFromPalette;
+    private final LinkedHashMap<UUID,BrainBlock> placedBlocks=new LinkedHashMap<>();
+    private final List<PaletteEntry> paletteEntries=new ArrayList<>();
+    private final LinkedHashMap<UUID,BlockRenderLayout> canvasLayouts=new LinkedHashMap<>();
+    private final Map<InputKey,ScalableEditBox> inputBoxes=new LinkedHashMap<>(); private SnapTarget snapTarget;
+    //private int scaledMouseX, scaledMouseY;
 
     public AntBrainProgramScreen(AntBrainProgramMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 1, 1);
-        this.placedBlocks.putAll(menu.getPlacedBlocks());
-        this.inventoryLabelY = -1000;
+        placedBlocks.putAll(menu.getPlacedBlocks());
+        inventoryLabelY = -1000;
     }
 
     @Override
     protected void init() {
         super.init();
-        this.leftPos = 0;
-        this.topPos = 0;
+        leftPos = topPos = 0;
+        titleLabelY = -1000;
     }
 
     @Override
@@ -69,280 +49,576 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        this.extractBlurredBackground(graphics);
-        this.extractTransparentBackground(graphics);
+    public void extractBackground(GuiGraphicsExtractor g, int x, int y, float p) {
+        extractBlurredBackground(g);
+        extractTransparentBackground(g);
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        rebuildLayouts();
-        drawCategories(graphics);
-        drawPalette(graphics);
-        drawCanvas(graphics);
-        graphics.fill(0, 0, this.width, HEADER_HEIGHT, 0xD91E2430);
-        graphics.text(this.font, Component.translatable("menu.littleant.ant_brain_program"), 12, 10, 0xFFFFFFFF, true);
-
-        if (this.draggingOpcode != null) {
-            BlockDefinition definition = ModuleRegistry.get(this.draggingOpcode);
-            if (definition != null) {
-                BlockRenderLayout preview = BlockRenderLayout.palette(definition, this::textWidth);
-                drawBlock(graphics, preview, mouseX - lastTimeMouseClickX + draggingStartX + canvasLeft(), mouseY - lastTimeMouseClickY + draggingStartY + CANVAS_TOP, true);
-            }
+    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float p) {
+        if (draggingOpcode != null) {
+            dragX = mx - dragOffsetX;
+            dragY = my - dragOffsetY;
         }
+        rebuildLayouts();
+        drawCategories(g);
+        g.fill(0, 0, width, HEADER_HEIGHT, 0xD91E2430);
+        drawScaledText(g,Component.translatable("menu.littleant.ant_brain_program"), 12, 10, 1.0f,0xFFFFFFFF, true);
+        drawPalette(g);
+        drawCanvas(g);
+        BlockRenderLayout preview = draggingLayout();
+        snapTarget = preview == null ? null : findSnapTarget(preview, dragX, dragY);
+        if (snapTarget != null) drawOutline(g, snapTarget.x(), snapTarget.y(), snapTarget.width(), snapTarget.height());
+        if (preview != null)
+            drawDraggingChain(g, snapTarget == null ? dragX : snapTarget.x(), snapTarget == null ? dragY : snapTarget.y());
+
+        //drawInputBoxBackgrounds(g);
+        super.extractRenderState(g, mx, my, p);
+        syncInputBoxes();
     }
 
     private void rebuildLayouts() {
         paletteEntries.clear();
         if (!CATEGORIES.isEmpty()) {
             int y = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT - paletteScroll;
-            for (BlockDefinition definition : MODULES_BY_CATEGORY.getOrDefault(currentCategory(), List.of())) {
-                BlockRenderLayout layout = BlockRenderLayout.palette(definition, this::textWidth);
-                paletteEntries.add(new PaletteEntry(definition, SIDEBAR_WIDTH + 8, y, layout));
-                y += layout.height() + LIST_GAP;
+            for (BlockDefinition d : MODULES_BY_CATEGORY.getOrDefault(currentCategory(), List.of())) {
+                BlockRenderLayout l = BlockRenderLayout.palette(d, this::textWidth);
+                paletteEntries.add(new PaletteEntry(d, SIDEBAR_WIDTH + 8, y, l));
+                y += l.height() + LIST_GAP;
             }
         }
-
         canvasLayouts.clear();
-        Set<UUID> nested = nestedBlockIds();
-        int canvasLeft = canvasLeft();
-        for (BrainBlock block : placedBlocks.values()) {
-            if (nested.contains(block.id())) continue;
-            BlockRenderLayout layout = BlockRenderLayout.block(block, placedBlocks,
-                    canvasLeft + block.x(), CANVAS_TOP + block.y(), this::textWidth);
-            if (layout != null) canvasLayouts.put(block.id(), layout);
-        }
+        Set<UUID> nested = nestedBlockIds(), incomingNext = new HashSet<>();
+        for (BrainBlock b : placedBlocks.values()) if (b.next() != null) incomingNext.add(b.next());
+        if (draggingId != null) nested.addAll(ownedIds(draggingId));
+        Set<UUID> laidOut = new HashSet<>();
+        for (BrainBlock root : placedBlocks.values())
+            if (!nested.contains(root.id()) && !incomingNext.contains(root.id())) {
+                int x = canvasLeft() + root.x(), y = CANVAS_TOP + root.y();
+                UUID current = root.id();
+                while (current != null && laidOut.add(current) && !nested.contains(current)) {
+                    BrainBlock b = placedBlocks.get(current);
+                    if (b == null) break;
+                    BlockRenderLayout l = BlockRenderLayout.block(b, placedBlocks, x, y, this::textWidth);
+                    if (l == null) break;
+                    canvasLayouts.put(b.id(), l);
+                    y += l.height();
+                    current = b.next();
+                }
+            }
     }
 
     private Set<UUID> nestedBlockIds() {
-        Set<UUID> result = new HashSet<>();
-        for (BrainBlock block : placedBlocks.values()) {
-            for (InputSlot input : block.inputs()) {
-                collectNested(input.blockId(), input.type() == ValueType.BLOCK, result);
-            }
-        }
-        return result;
+        Set<UUID> r = new HashSet<>();
+        for (BrainBlock b : placedBlocks.values()) for (InputSlot i : b.inputs()) collectOwned(i.blockId(), r);
+        return r;
     }
 
-    private void collectNested(UUID id, boolean includeNextChain, Set<UUID> result) {
-        UUID current = id;
-        while (current != null && result.add(current)) {
-            BrainBlock child = placedBlocks.get(current);
-            if (child == null) return;
-            for (InputSlot input : child.inputs()) {
-                collectNested(input.blockId(), input.type() == ValueType.BLOCK, result);
-            }
-            current = includeNextChain ? child.next() : null;
-        }
+    private Set<UUID> ownedIds(UUID root) {
+        Set<UUID> r = new HashSet<>();
+        collectOwned(root, r);
+        return r;
     }
 
-    private void drawCategories(GuiGraphicsExtractor graphics) {
-        graphics.fill(0, HEADER_HEIGHT, SIDEBAR_WIDTH, this.height, 0xD9181D27);
+    private void collectOwned(UUID id, Set<UUID> r) {
+        if (id == null || !r.add(id)) return;
+        BrainBlock b = placedBlocks.get(id);
+        if (b == null) return;
+        collectOwned(b.next(), r);
+        for (InputSlot i : b.inputs()) collectOwned(i.blockId(), r);
+    }
+
+    private void drawCategories(GuiGraphicsExtractor g) {
+        g.fill(0, HEADER_HEIGHT, SIDEBAR_WIDTH, height, 0xD9181D27);
         for (int i = 0; i < CATEGORIES.size(); i++) {
             int y = 42 + i * 32;
-            String category = CATEGORIES.get(i);
-            int color = i == selectedCategory ? ModuleRegistry.categoryColor(category) : 0xFF303947;
-            graphics.fill(6, y, SIDEBAR_WIDTH - 6, y + 26, color);
-            graphics.text(this.font, Component.translatable(ModuleRegistry.categoryTranslationKey(category)),
-                    10, y + 9, 0xFFFFFFFF, false);
+            g.fill(6, y, SIDEBAR_WIDTH - 6, y + 26, i == selectedCategory ? ModuleRegistry.categoryColor(CATEGORIES.get(i)) : 0xFF303947);
+            drawScaledText(g, Component.translatable(ModuleRegistry.categoryTranslationKey(CATEGORIES.get(i))), 10, y + 9, 1.0f,0xFFFFFFFF, false);
         }
     }
 
-    private void drawPalette(GuiGraphicsExtractor graphics) {
+    private void drawPalette(GuiGraphicsExtractor g) {
         int right = canvasLeft();
-        graphics.fill(SIDEBAR_WIDTH, HEADER_HEIGHT, right, this.height, 0xE52B3340);
-        graphics.enableScissor(SIDEBAR_WIDTH, HEADER_HEIGHT + PALETTE_HEADER_HEIGHT, right, this.height);
-        for (PaletteEntry entry : paletteEntries) {
-            if (entry.y() + entry.layout().height() >= HEADER_HEIGHT + PALETTE_HEADER_HEIGHT && entry.y() < this.height) {
-                drawBlock(graphics, entry.layout(), entry.x(), entry.y(), false);
-            }
-        }
-        graphics.disableScissor();
-        graphics.fill(SIDEBAR_WIDTH, HEADER_HEIGHT, right, HEADER_HEIGHT + PALETTE_HEADER_HEIGHT, 0xE52B3340);
-        graphics.text(this.font, Component.translatable(ModuleRegistry.categoryTranslationKey(currentCategory())),
-                SIDEBAR_WIDTH + 8, 42, 0xFFFFFFFF, false);
+        g.fill(SIDEBAR_WIDTH, HEADER_HEIGHT, right, height, 0xE52B3340);
+        g.enableScissor(SIDEBAR_WIDTH, HEADER_HEIGHT + PALETTE_HEADER_HEIGHT, right, height);
+        for (PaletteEntry e : paletteEntries)
+            if (e.y() + e.layout().height() >= HEADER_HEIGHT + PALETTE_HEADER_HEIGHT && e.y() < height)
+                drawBlock(g, e.layout(), e.x(), e.y(), false);
+        g.disableScissor();
+        g.fill(SIDEBAR_WIDTH, HEADER_HEIGHT, right, PALETTE_HEADER_HEIGHT, 0xE52B3340);
+        drawScaledText(g, Component.translatable(ModuleRegistry.categoryTranslationKey(currentCategory())), SIDEBAR_WIDTH + 8, 42, 1.0f,0xFFFFFFFF, false);
     }
 
-    private void drawCanvas(GuiGraphicsExtractor graphics) {
+    private void drawCanvas(GuiGraphicsExtractor g) {
         int left = canvasLeft();
-        graphics.fill(left, HEADER_HEIGHT, this.width, this.height, 0x94131A25);
-        graphics.text(this.font, Component.literal("Canvas"), left + 12, 42, 0xFFDAE2F2, false);
-        graphics.enableScissor(left, CANVAS_TOP, this.width, this.height);
-        for (BlockRenderLayout layout : canvasLayouts.values()) drawBlock(graphics, layout, layout.x(), layout.y(), false);
-        graphics.disableScissor();
+        g.fill(left, HEADER_HEIGHT, width, height, 0x94131A25);
+        drawScaledText(g, Component.literal("Canvas"), left + 12, 42, 1.0f, 0xFFDAE2F2, false);
+        g.enableScissor(left, CANVAS_TOP, width, height);
+        //boolean floating = draggingOpcode != null;
+        for (BlockRenderLayout l : canvasLayouts.values()) drawBlock(g, l, l.x(), l.y(), false);
+        g.disableScissor();
     }
 
-    private void drawBlock(GuiGraphicsExtractor graphics, BlockRenderLayout layout, int drawX, int drawY, boolean floating) {
-        int dx = drawX - layout.x();
-        int dy = drawY - layout.y();
-        int color = floating ? fade(layout.definition().color()) : layout.definition().color();
-        graphics.fill(drawX, drawY, drawX + layout.width(), drawY + layout.height(), color);
-        graphics.fill(drawX, drawY, drawX + layout.width(), drawY + 1, lighten(color));
-
-        for (BlockRenderLayout.Element element : layout.elements()) {
-            int ex = drawX + element.x();
-            int ey = drawY + element.y();
-            if (element.kind() == BlockRenderLayout.ElementKind.INPUT) {
-                if (element.nested() != null) {
-                    drawBlock(graphics, element.nested(), ex, ey, floating);
-                } else {
-                    graphics.fill(ex, ey, ex + element.width(), ey + element.height(), 0xCC202631);
-                    graphics.text(this.font, element.text(), ex + 6, ey + 5, 0xFFFFFFFF, false);
+    private void drawBlock(GuiGraphicsExtractor g, BlockRenderLayout l, int x, int y, boolean floating) {
+        int dx = x - l.x(), dy = y - l.y(), color = floating ? fade(l.definition().color()) : l.definition().color();
+        g.fill(x, y, x + l.width(), y + l.height(), color);
+        g.fill(x, y, x + l.width(), y + 1, lighten(color));
+        for (BlockRenderLayout.Element e : l.elements()) {
+            int ex = x + e.x(), ey = y + e.y();
+            if (e.kind() == BlockRenderLayout.ElementKind.INPUT) {
+                if (e.nested() != null) drawBlock(g, e.nested(), ex, ey, floating);
+                else {
+                    g.fill(ex, ey, ex + e.width(), ey + e.height(), 0xCC202631);
+                    drawScaledText(g, e.text(), ex + 3, ey + 5, TEXT_SCALE,0xFFFFFFFF, false);
                 }
             } else {
-                graphics.text(this.font, element.text(), ex, ey, 0xFFFFFFFF, false);
+                drawScaledText(g, e.text(), ex, ey, TEXT_SCALE, 0xFFFFFFFF, false);
             }
         }
+        for (BlockRenderLayout.Body b : l.bodies()) {
+            int bx = x + b.x(), by = y + b.y();
+            g.fill(bx, by, bx + b.width(), by + b.height(), 0x66202731);
+            for (BlockRenderLayout c : b.children()) drawBlock(g, c, c.x() + dx, c.y() + dy, floating);
+        }
+    }
 
-        for (BlockRenderLayout.Body body : layout.bodies()) {
-            int bx = drawX + body.x();
-            int by = drawY + body.y();
-            graphics.fill(bx, by, bx + body.width(), by + body.height(), 0x66202731);
-            for (BlockRenderLayout child : body.children()) {
-                drawBlock(graphics, child, child.x() + dx, child.y() + dy, floating);
-            }
+    private void drawOutline(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+        g.fill(x - 2, y - 2, x + w + 2, y, 0xFFFFFFFF);
+        g.fill(x - 2, y + h, x + w + 2, y + h + 2, 0xFFFFFFFF);
+        g.fill(x - 2, y, x, y + h, 0xFFFFFFFF);
+        g.fill(x + w, y, x + w + 2, y + h, 0xFFFFFFFF);
+    }
+
+    private void drawDraggingChain(GuiGraphicsExtractor g, int x, int y) {
+        if (draggingId == null) {
+            BlockRenderLayout l = draggingLayout();
+            if (l != null) drawBlock(g, l, x, y, true);
+            return;
         }
+        Set<UUID> seen = new HashSet<>();
+        UUID current = draggingId;
+        int cy = y;
+        while (current != null && seen.add(current)) {
+            BrainBlock b = placedBlocks.get(current);
+            if (b == null) break;
+            BlockRenderLayout l = BlockRenderLayout.block(b, placedBlocks, x, cy, this::textWidth);
+            if (l == null) break;
+            drawBlock(g, l, x, cy, true);
+            cy += l.height();
+            current = b.next();
+        }
+    }
+
+    private void drawScaledText(
+            GuiGraphicsExtractor graphics,
+            Component text,
+            int x,
+            int y,
+            float scale,
+            int color,
+            boolean shadow
+    ) {
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y);
+        graphics.pose().scale(scale, scale);
+        graphics.text(this.font, text, 0, 0, color, shadow);
+        graphics.pose().popMatrix();
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        lastTimeMouseClickX = (int) event.x();
-        lastTimeMouseClickY = (int) event.y();
-        if (event.button() != 0) {
-            return super.mouseClicked(event, doubleClick);
-        }
-        int x = (int) event.x();
-        int y = (int) event.y();
+    public boolean mouseClicked(MouseButtonEvent e, boolean d) {
+        if (e.button() != 0) return super.mouseClicked(e, d);
+        // AbstractContainerScreen consumes every left click, even when no child widget was hit.
+        // Only delegate when the pointer is actually over a visible literal input.
+        int x = (int) e.x(), y = (int) e.y();
+        if (inputBoxAt(x, y) != null) return super.mouseClicked(e, d);
+        clearFocus();
         for (int i = 0; i < CATEGORIES.size(); i++) {
-            if (inside(x, y, 6, 42 + i * 32, SIDEBAR_WIDTH - 12, 26)) {
+            if (inside(x, y, 3, 42 + i * 32, SIDEBAR_WIDTH - 12, 26)) {
                 selectedCategory = i;
                 paletteScroll = 0;
                 return true;
             }
         }
-
-        PaletteEntry paletteEntry = paletteEntryAt(x, y);
-        if (paletteEntry != null) {
-            draggingOpcode = paletteEntry.definition().opcode();
+        PaletteEntry pe = paletteEntryAt(x, y);
+        if (pe != null) {
+            draggingOpcode = pe.definition().opcode();
             draggingId = null;
+            draggingFromPalette = true;
+            dragX = x - pe.layout().width() / 2;
+            dragY = y - pe.layout().headerHeight() / 2;
+            dragOffsetX = x - dragX;
+            dragOffsetY = y - dragY;
+            hideInputBoxes();
             return true;
         }
-
-        UUID blockId = canvasBlockAt(x, y);
-        if (blockId != null) {
-            BrainBlock block = placedBlocks.remove(blockId);
-            draggingOpcode = block.opcode();
-            draggingId = blockId;
-            draggingStartX = block.x();
-            draggingStartY = block.y();
-            ClientPacketDistributor.sendToServer(new RemoveAntBrainBlockPayload(this.menu.containerId, blockId.toString()));
+        LayoutHit hit = canvasBlockAt(x, y);
+        if (hit != null) {
+            draggingId = hit.id();
+            draggingOpcode = placedBlocks.get(hit.id()).opcode();
+            draggingFromPalette = false;
+            dragX = hit.x();
+            dragY = hit.y();
+            dragOffsetX = x - dragX;
+            dragOffsetY = y - dragY;
+            detachIncoming(draggingId);
+            hideInputBoxes();
             return true;
         }
         return true;
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        return draggingOpcode != null || super.mouseDragged(event, dx, dy);
+    public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+        return draggingOpcode != null || super.mouseDragged(e, dx, dy);
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() != 0 || draggingOpcode == null) return super.mouseReleased(event);
-        BlockDefinition definition = ModuleRegistry.get(draggingOpcode);
-        BlockRenderLayout preview = definition == null ? null : BlockRenderLayout.palette(definition, this::textWidth);
-        int x = (int) event.x();
-        int y = (int) event.y();
-        if (preview != null && x >= canvasLeft() && y >= CANVAS_TOP) {
-            int worldX = Math.max(0, x - canvasLeft() - preview.width() / 2);
-            int worldY = Math.max(0, y - CANVAS_TOP - preview.headerHeight() / 2);
-            UUID id = draggingId == null ? UUID.randomUUID() : draggingId;
-            placedBlocks.put(id, new BrainBlock(draggingOpcode, worldX, worldY, id,
-                    ModuleRegistry.createDefaultInputs(draggingOpcode), null, null));
-            ClientPacketDistributor.sendToServer(new PlaceAntBrainBlockPayload(
-                    this.menu.containerId, draggingOpcode, worldX, worldY, id.toString()));
+    public boolean mouseReleased(MouseButtonEvent e) {
+        if (e.button() != 0 || draggingOpcode == null) return super.mouseReleased(e);
+        if (dragX >= canvasLeft() && dragY >= CANVAS_TOP) {
+            if (draggingId == null) {
+                draggingId = UUID.randomUUID();
+                placedBlocks.put(draggingId, new BrainBlock(draggingOpcode, 0, 0, draggingId, ModuleRegistry.createDefaultInputs(draggingOpcode), null, null));
+            }
+            if (snapTarget != null) applySnap(snapTarget);
+            else setBlockPosition(draggingId, Math.max(0, dragX - canvasLeft()), Math.max(0, dragY - CANVAS_TOP), null);
+            sendProgram();
+        } else if (!draggingFromPalette && draggingId != null) {
+            for (UUID id : ownedIds(draggingId)) placedBlocks.remove(id);
+            sendProgram();
         }
         draggingOpcode = null;
         draggingId = null;
+        snapTarget = null;
+        draggingFromPalette = false;
         return true;
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent e) {
+        if (e.key() == 261 && draggingId != null) {
+            for (UUID id : ownedIds(draggingId)) placedBlocks.remove(id);
+            sendProgram();
+            draggingOpcode = null;
+            draggingId = null;
+            snapTarget = null;
+            return true;
+        }
+        return super.keyPressed(e);
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double sx, double sy) {
+        if (x >= SIDEBAR_WIDTH && x < canvasLeft()) {
+            int ch = paletteEntries.isEmpty() ? 0 : paletteEntries.getLast().y() + paletteEntries.getLast().layout().height() + paletteScroll, vh = height - HEADER_HEIGHT - PALETTE_HEADER_HEIGHT;
+            paletteScroll = Math.max(0, Math.min(Math.max(0, ch - (HEADER_HEIGHT + PALETTE_HEADER_HEIGHT) - vh), paletteScroll - (int) (sy * 16)));
+            return true;
+        }
+        return super.mouseScrolled(x, y, sx, sy);
     }
 
     @Override
     public void mouseMoved(double x, double y) {
-        mouseX = (int) x;
-        mouseY = (int) y;
+        super.mouseMoved(x, y);
     }
 
-    @Override
-    public boolean keyPressed(KeyEvent event) {
-        if (event.key() == 261) {
-            UUID blockId = canvasBlockAt(mouseX, mouseY);
-            if (blockId != null) {
-                placedBlocks.remove(blockId);
-                ClientPacketDistributor.sendToServer(new RemoveAntBrainBlockPayload(this.menu.containerId, blockId.toString()));
+    private BlockRenderLayout draggingLayout() {
+        BlockDefinition d = ModuleRegistry.get(draggingOpcode);
+        if (d == null) return null;
+        if (draggingId == null) return BlockRenderLayout.palette(d, this::textWidth);
+        BrainBlock b = placedBlocks.get(draggingId);
+        return b == null ? null : BlockRenderLayout.block(b, placedBlocks, dragX, dragY, this::textWidth);
+    }
+
+    private SnapTarget findSnapTarget(BlockRenderLayout p, int x, int y) {
+        boolean value = p.definition().shape() == BlockShape.BOOLEAN || p.definition().shape() == BlockShape.REPORTER;
+        SnapTarget best = null;
+        for (BlockRenderLayout r : canvasLayouts.values())
+            best = better(best, findSnapRecursive(r, p, x, y, value, 0, 0));
+        return best;
+    }
+
+    private SnapTarget findSnapRecursive(BlockRenderLayout l, BlockRenderLayout p, int px, int py, boolean value, int dx, int dy) {
+        int lx = l.x() + dx, ly = l.y() + dy, dragHeight = draggingChainHeight();
+        SnapTarget best = null;
+        for (BlockRenderLayout.Element e : l.elements()) {
+            int ex = lx + e.x(), ey = ly + e.y();
+            if (e.nested() == null && value && compatible(p.definition(), e.type())) {
+                int dist = distance(px + p.width() / 2, py + p.headerHeight() / 2, ex + e.width() / 2, ey + e.height() / 2);
+                if (dist <= INPUT_SNAP_DISTANCE)
+                    best = new SnapTarget(SnapKind.INPUT, l.blockId(), e.inputName(), ex, ey, e.width(), e.height(), dist);
+            } else if (e.nested() != null)
+                best = better(best, findSnapRecursive(e.nested(), p, px, py, value, ex - e.nested().x(), ey - e.nested().y()));
+        }
+        for (BlockRenderLayout.Body b : l.bodies()) {
+            int bx = lx + b.x(), by = ly + b.y();
+            if (!value && stackable(p.definition().shape()) && b.children().isEmpty()) {
+                int dist = distance(px, py, bx, by);
+                if (dist <= STACK_SNAP_DISTANCE)
+                    best = better(best, new SnapTarget(SnapKind.BODY, l.blockId(), b.inputName(), bx, by, Math.max(p.width(), 24), dragHeight, dist));
             }
-            return true;
+            for (BlockRenderLayout c : b.children())
+                best = better(best, findSnapRecursive(c, p, px, py, value, dx, dy));
         }
-        return super.keyPressed(event);
+        if (!value && stackable(p.definition().shape()) && stackable(l.definition().shape())) {
+            int below = distance(px, py, lx, ly + l.height());
+            if (below <= STACK_SNAP_DISTANCE)
+                best = better(best, new SnapTarget(SnapKind.AFTER, l.blockId(), null, lx, ly + l.height(), p.width(), dragHeight, below));
+            int above = distance(px, py + dragHeight, lx, ly);
+            if (above <= STACK_SNAP_DISTANCE)
+                best = better(best, new SnapTarget(SnapKind.BEFORE, l.blockId(), null, lx, ly - dragHeight, p.width(), dragHeight, above));
+        }
+        return best;
     }
 
-    @Override
-    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
-        if (x >= SIDEBAR_WIDTH && x < canvasLeft()) {
-            int contentHeight = paletteEntries.isEmpty() ? 0
-                    : paletteEntries.getLast().y() + paletteEntries.getLast().layout().height() + paletteScroll;
-            int visibleHeight = this.height - HEADER_HEIGHT - PALETTE_HEADER_HEIGHT;
-            int maxScroll = Math.max(0, contentHeight - (HEADER_HEIGHT + PALETTE_HEADER_HEIGHT) - visibleHeight);
-            paletteScroll = Math.max(0, Math.min(maxScroll, paletteScroll - (int) (scrollY * 16)));
-            return true;
+    private int draggingChainHeight() {
+        BlockRenderLayout first = draggingLayout();
+        if (first == null || draggingId == null) return first == null ? 0 : first.height();
+        int h = 0;
+        Set<UUID> seen = new HashSet<>();
+        UUID current = draggingId;
+        while (current != null && seen.add(current)) {
+            BrainBlock b = placedBlocks.get(current);
+            if (b == null) break;
+            BlockRenderLayout l = BlockRenderLayout.block(b, placedBlocks, 0, 0, this::textWidth);
+            if (l == null) break;
+            h += l.height();
+            current = b.next();
         }
-        return super.mouseScrolled(x, y, scrollX, scrollY);
+        return h;
+    }
+
+    private void applySnap(SnapTarget t) {
+        if (t.kind() == SnapKind.INPUT || t.kind() == SnapKind.BODY) {
+            BrainBlock o = placedBlocks.get(t.owner());
+            ValueType type = t.kind() == SnapKind.BODY ? ValueType.BLOCK : inputType(o, t.input());
+            placedBlocks.put(o.id(), copy(o, o.x(), o.y(), replaceInput(o.inputs(), t.input(), InputSlot.block(t.input(), type, draggingId)), o.next(), o.parent()));
+            setBlockPosition(draggingId, 0, 0, o.id());
+            return;
+        }
+        BrainBlock a = placedBlocks.get(t.owner());
+        UUID tail = chainTail(draggingId);
+        if (t.kind() == SnapKind.AFTER) {
+            UUID old = a.next();
+            placedBlocks.put(a.id(), copy(a, a.x(), a.y(), a.inputs(), draggingId, a.parent()));
+            BrainBlock tb = placedBlocks.get(tail);
+            placedBlocks.put(tail, copy(tb, tb.x(), tb.y(), tb.inputs(), old, a.parent()));
+            setBlockPosition(draggingId, 0, 0, a.parent());
+        } else {
+            replaceIncoming(a.id(), draggingId);
+            BrainBlock tb = placedBlocks.get(tail);
+            placedBlocks.put(tail, copy(tb, tb.x(), tb.y(), tb.inputs(), a.id(), a.parent()));
+            setBlockPosition(draggingId, a.x(), a.y(), a.parent());
+        }
+    }
+
+    private void detachIncoming(UUID id) {
+        replaceIncoming(id, null);
+        BrainBlock b = placedBlocks.get(id);
+        if (b != null) placedBlocks.put(id, copy(b, b.x(), b.y(), b.inputs(), b.next(), null));
+    }
+
+    private void replaceIncoming(UUID oldId, UUID newId) {
+        for (BrainBlock b : List.copyOf(placedBlocks.values())) {
+            boolean changed = false;
+            UUID next = b.next();
+            if (oldId.equals(next)) {
+                next = newId;
+                changed = true;
+            }
+            List<InputSlot> inputs = new ArrayList<>();
+            for (InputSlot s : b.inputs()) {
+                if (oldId.equals(s.blockId())) {
+                    inputs.add(newId == null ? InputSlot.literal(s.name(), s.type(), "") : InputSlot.block(s.name(), s.type(), newId));
+                    changed = true;
+                } else inputs.add(s);
+            }
+            if (changed) placedBlocks.put(b.id(), copy(b, b.x(), b.y(), inputs, next, b.parent()));
+        }
+    }
+
+    private void setBlockPosition(UUID id, int x, int y, UUID parent) {
+        BrainBlock b = placedBlocks.get(id);
+        placedBlocks.put(id, copy(b, x, y, b.inputs(), b.next(), parent));
+        setChainParent(b.next(), parent, new HashSet<>());
+    }
+
+    private void setChainParent(UUID id, UUID parent, Set<UUID> seen) {
+        if (id == null || !seen.add(id)) return;
+        BrainBlock b = placedBlocks.get(id);
+        if (b == null) return;
+        placedBlocks.put(id, copy(b, b.x(), b.y(), b.inputs(), b.next(), parent));
+        setChainParent(b.next(), parent, seen);
+    }
+
+    private UUID chainTail(UUID root) {
+        Set<UUID> s = new HashSet<>();
+        UUID c = root;
+        while (placedBlocks.get(c).next() != null && s.add(c)) c = placedBlocks.get(c).next();
+        return c;
+    }
+
+    private void syncInputBoxes() {
+        Set<InputKey> visible = new HashSet<>();
+        for (BlockRenderLayout l : canvasLayouts.values()) collectInputBoxes(l, 0, 0, visible);
+        for (var e : inputBoxes.entrySet()) {
+            e.getValue().visible = visible.contains(e.getKey()) && draggingOpcode == null;
+        }
+    }
+
+    private ScalableEditBox inputBoxAt(double x, double y) {
+        for (ScalableEditBox box : inputBoxes.values()) {
+            if (box.visible && box.isMouseOver(x, y)) return box;
+        }
+        return null;
+    }
+
+    private void drawInputBoxBackgrounds(GuiGraphicsExtractor g) {
+        for (BlockRenderLayout l : canvasLayouts.values()) {
+            for(BlockRenderLayout.Element e : l.elements()){
+                if(e.kind() == BlockRenderLayout.ElementKind.INPUT){
+                    int x = l.x() + e.x(), y = l.y() + e.y(), w = e.width(), h = e.height();
+                    g.fill(x, y, x + w, y + h, 0xE0202631);
+//                    int border = box.isFocused() ? 0xFFFFFFFF : 0xFF596273;
+//                    g.fill(x, y, x + w, y + 1, border);
+//                    g.fill(x, y + h - 1, x + w, y + h, border);
+//                    g.fill(x, y, x + 1, y + h, border);
+//                    g.fill(x + w - 1, y, x + w, y + h, border);
+                }
+            }
+
+        }
+    }
+
+    private void collectInputBoxes(BlockRenderLayout l, int dx, int dy, Set<InputKey> visible) {
+        int lx = l.x() + dx, ly = l.y() + dy;
+        for (BlockRenderLayout.Element e : l.elements()) {
+            if(e.kind() == BlockRenderLayout.ElementKind.LABEL){
+                continue;
+            }
+            int ex = lx + e.x(), ey = ly + e.y();
+            if (e.nested() != null) collectInputBoxes(e.nested(), ex - e.nested().x(), ey - e.nested().y(), visible);
+            else if (l.blockId() != null) {
+                InputKey key = new InputKey(l.blockId(), e.inputName());
+                visible.add(key);
+                ScalableEditBox box = inputBoxes.get(key);
+                if (box == null) {
+                    box = new ScalableEditBox(font, ex + 3, ey + 5, (int)(e.width()/TEXT_SCALE), e.height(), Component.literal(e.inputName()));
+                    box.setMaxLength(256);
+                    box.setBordered(false);
+                    box.setTextColor(0xFFFFFFFF);
+                    String initial = inputValue(l.blockId(), e.inputName());
+                    box.setValue(initial == null ? "" : initial);
+                    InputKey captured = key;
+                    box.setResponder(v -> updateLiteral(captured, v));
+                    inputBoxes.put(key, addRenderableWidget(box));
+                }
+                box.setX(ex + 3);
+                box.setY(ey + 5);
+                box.setWidth((int)(e.width()/TEXT_SCALE));
+                box.setHeight(e.height());
+                box.visible = draggingOpcode == null;
+            }
+        }
+        for (BlockRenderLayout.Body b : l.bodies())
+            for (BlockRenderLayout c : b.children()) collectInputBoxes(c, dx, dy, visible);
+    }
+
+    private void updateLiteral(InputKey key, String value) {
+        BrainBlock b = placedBlocks.get(key.block());
+        if (b == null) return;
+        for (InputSlot i : b.inputs())
+            if (i.name().equals(key.input()) && i.blockId() == null) {
+                placedBlocks.put(b.id(), copy(b, b.x(), b.y(), replaceInput(b.inputs(), key.input(), InputSlot.literal(i.name(), i.type(), value)), b.next(), b.parent()));
+                sendProgram();
+                return;
+            }
+    }
+
+    private void hideInputBoxes() {
+        for (ScalableEditBox b : inputBoxes.values()) b.visible = false;
+    }
+
+    private void sendProgram() {
+        ClientPacketDistributor.sendToServer(new UpdateAntBrainProgramPayload(menu.containerId, UpdateAntBrainProgramPayload.encode(placedBlocks)));
     }
 
     private PaletteEntry paletteEntryAt(int x, int y) {
         if (x < SIDEBAR_WIDTH || x >= canvasLeft() || y < HEADER_HEIGHT + PALETTE_HEADER_HEIGHT) return null;
-        for (PaletteEntry entry : paletteEntries) {
-            if (inside(x, y, entry.x(), entry.y(), entry.layout().width(), entry.layout().height())) return entry;
+        for (PaletteEntry e : paletteEntries)
+            if (inside(x, y, e.x(), e.y(), e.layout().width(), e.layout().height())) return e;
+        return null;
+    }
+
+    private LayoutHit canvasBlockAt(int x, int y) {
+        List<BlockRenderLayout> roots = new ArrayList<>(canvasLayouts.values());
+        for (int i = roots.size() - 1; i >= 0; i--) {
+            LayoutHit h = blockAtRecursive(roots.get(i), x, y, 0, 0);
+            if (h != null) return h;
         }
         return null;
     }
 
-    private UUID canvasBlockAt(int x, int y) {
-        if (x < canvasLeft() || y < CANVAS_TOP) return null;
-        List<Map.Entry<UUID, BlockRenderLayout>> entries = new ArrayList<>(canvasLayouts.entrySet());
-        for (int i = entries.size() - 1; i >= 0; i--) {
-            UUID hit = blockAtRecursive(entries.get(i).getValue(), x, y, 0, 0);
-            if (hit != null) return hit;
-        }
-        return null;
-    }
-
-    private UUID blockAtRecursive(BlockRenderLayout layout, int x, int y, int dx, int dy) {
-        for (BlockRenderLayout.Element element : layout.elements()) {
-            if (element.nested() == null) continue;
-            int nestedX = layout.x() + dx + element.x();
-            int nestedY = layout.y() + dy + element.y();
-            UUID hit = blockAtRecursive(element.nested(), x, y,
-                    nestedX - element.nested().x(), nestedY - element.nested().y());
-            if (hit != null) return hit;
-        }
-        for (BlockRenderLayout.Body body : layout.bodies()) {
-            for (BlockRenderLayout child : body.children()) {
-                UUID hit = blockAtRecursive(child, x, y, dx, dy);
-                if (hit != null) return hit;
+    private LayoutHit blockAtRecursive(BlockRenderLayout l, int x, int y, int dx, int dy) {
+        int lx = l.x() + dx, ly = l.y() + dy;
+        for (BlockRenderLayout.Element e : l.elements())
+            if (e.nested() != null) {
+                int nx = lx + e.x(), ny = ly + e.y();
+                LayoutHit h = blockAtRecursive(e.nested(), x, y, nx - e.nested().x(), ny - e.nested().y());
+                if (h != null) return h;
             }
-        }
-        return x >= layout.x() + dx && x < layout.x() + dx + layout.width()
-                && y >= layout.y() + dy && y < layout.y() + dy + layout.height()
-                ? layout.blockId() : null;
+        for (BlockRenderLayout.Body b : l.bodies())
+            for (BlockRenderLayout c : b.children()) {
+                LayoutHit h = blockAtRecursive(c, x, y, dx, dy);
+                if (h != null) return h;
+            }
+        return inside(x, y, lx, ly, l.width(), l.height()) ? new LayoutHit(l.blockId(), lx, ly) : null;
     }
 
-    private int textWidth(Component text) {
-        return this.font.width(text);
+    private String inputValue(UUID id, String name) {
+        BrainBlock b = placedBlocks.get(id);
+        if (b != null) for (InputSlot s : b.inputs()) if (s.name().equals(name)) return s.value();
+        return "";
+    }
+
+    private ValueType inputType(BrainBlock b, String name) {
+        for (InputSlot s : b.inputs()) if (s.name().equals(name)) return s.type();
+        return ValueType.ANY;
+    }
+
+    private static List<InputSlot> replaceInput(List<InputSlot> in, String name, InputSlot r) {
+        return in.stream().map(i -> i.name().equals(name) ? r : i).toList();
+    }
+
+    private static BrainBlock copy(BrainBlock b, int x, int y, List<InputSlot> in, UUID next, UUID parent) {
+        return new BrainBlock(b.opcode(), x, y, b.id(), in, next, parent);
+    }
+
+    private static boolean compatible(BlockDefinition d, ValueType t) {
+        ValueType output = ModuleRegistry.outputType(d.opcode());
+        return t == ValueType.ANY || output == t;
+    }
+
+    private static boolean stackable(BlockShape s) {
+        return s == BlockShape.COMMAND || s == BlockShape.C_SHAPE || s == BlockShape.E_SHAPE;
+    }
+
+    private static SnapTarget better(SnapTarget a, SnapTarget b) {
+        return b == null || a != null && a.distance() <= b.distance() ? a : b;
+    }
+
+    private static int distance(int ax, int ay, int bx, int by) {
+        int dx = ax - bx, dy = ay - by;
+        return (int) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    private int textWidth(Component t) {
+        return (int) (font.width(t) * TEXT_SCALE);
     }
 
     private int canvasLeft() {
-        return Math.min(this.width - 120, SIDEBAR_WIDTH + PALETTE_WIDTH);
+        return Math.min(width - 120, SIDEBAR_WIDTH + PALETTE_WIDTH);
     }
 
     private String currentCategory() {
@@ -351,20 +627,74 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         return CATEGORIES.get(selectedCategory);
     }
 
-    private static boolean inside(int mouseX, int mouseY, int x, int y, int width, int height) {
-        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    private static boolean inside(int mx, int my, int x, int y, int w, int h) {
+        return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 
-    private static int fade(int color) {
-        return (color & 0x00FFFFFF) | 0xDD000000;
+    private static int fade(int c) {
+        return c & 0x00FFFFFF | 0xDD000000;
     }
 
-    private static int lighten(int color) {
-        int r = Math.min(255, ((color >> 16) & 255) + 30);
-        int g = Math.min(255, ((color >> 8) & 255) + 30);
-        int b = Math.min(255, (color & 255) + 30);
-        return (color & 0xFF000000) | r << 16 | g << 8 | b;
+    private static int lighten(int c) {
+        int r = Math.min(255, (c >> 16 & 255) + 30), g = Math.min(255, (c >> 8 & 255) + 30), b = Math.min(255, (c & 255) + 30);
+        return c & 0xFF000000 | r << 16 | g << 8 | b;
     }
 
-    private record PaletteEntry(BlockDefinition definition, int x, int y, BlockRenderLayout layout) {}
+    private enum SnapKind {AFTER, BEFORE, INPUT, BODY}
+
+    private record SnapTarget(SnapKind kind, UUID owner, String input, int x, int y, int width, int height,
+                              int distance) {
+    }
+
+    private record PaletteEntry(BlockDefinition definition, int x, int y, BlockRenderLayout layout) {
+    }
+
+    private record LayoutHit(UUID id, int x, int y) {
+    }
+
+    private record InputKey(UUID block, String input) {
+    }
+
+    private class ScalableEditBox extends EditBox {
+
+        public ScalableEditBox(Font font, int x, int y, int width, int height, Component narration) {
+            super(font, x, y, (int) (width/TEXT_SCALE), (int)(height/TEXT_SCALE), narration);
+            this.visible = true;
+        }
+
+        @Override
+        public void extractWidgetRenderState(
+                GuiGraphicsExtractor graphics,
+                int mouseX,
+                int mouseY,
+                float partialTick
+        ) {
+            float x = this.getX();
+            float y = this.getY();
+
+            graphics.pose().pushMatrix();
+
+            // 将缩放中心移动到输入框左上角
+            graphics.pose().translate(x, y);
+            graphics.pose().scale(TEXT_SCALE, TEXT_SCALE);
+            graphics.pose().translate(-x, -y);
+
+            super.extractWidgetRenderState(
+                    graphics,
+                    (int) (mouseX*TEXT_SCALE),
+                    (int) (mouseY*TEXT_SCALE),
+                    partialTick
+            );
+
+            graphics.pose().popMatrix();
+        }
+
+        @Override
+        public boolean mouseClicked(MouseButtonEvent e, boolean d)  {
+            int newX = (int)((e.x()-this.getX()) / TEXT_SCALE + getX());
+            int newY = (int)((e.y()-this.getY()) / TEXT_SCALE + getY());
+            MouseButtonEvent me = new MouseButtonEvent(newX, newY, e.buttonInfo());
+            return super.mouseClicked(me, d);
+        }
+    }
 }

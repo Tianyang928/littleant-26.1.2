@@ -389,7 +389,18 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
             if (!opcode.isEmpty()) {
                 UUID next = parseUuid(child.getStringOr("next", ""));
                 UUID parent = parseUuid(child.getStringOr("parent", ""));
-                this.brainBlocks.put(parseUuid(child.getStringOr("id", "")), new BrainBlock(opcode, child.getIntOr("x", 0), child.getIntOr("y", 0), parseUuid(child.getStringOr("id", "")), List.of(), next, parent));
+                UUID id = parseUuid(child.getStringOr("id", ""));
+                List<InputSlot> inputs = new ArrayList<>();
+                for (ValueInput savedInput : child.childrenListOrEmpty("Inputs")) {
+                    String name = savedInput.getStringOr("name", "");
+                    ValueType type;
+                    try { type = ValueType.valueOf(savedInput.getStringOr("type", ValueType.ANY.name())); }
+                    catch (IllegalArgumentException ignored) { type = ValueType.ANY; }
+                    String value = savedInput.getStringOr("value", "");
+                    inputs.add(new InputSlot(name, type, value, parseUuid(savedInput.getStringOr("block", ""))));
+                }
+                if (inputs.isEmpty()) inputs = ModuleRegistry.createDefaultInputs(opcode);
+                if (id != null) this.brainBlocks.put(id, new BrainBlock(opcode, child.getIntOr("x", 0), child.getIntOr("y", 0), id, inputs, next, parent));
             }
         }
         LittleAnt.LOGGER.info("[AntEntity] read skin name from save data: {}", getSkinNameAccessor());
@@ -417,6 +428,14 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
             child.putString("id", block.id().toString());
             if (block.next() != null) child.putString("next", block.next().toString());
             if (block.parent() != null) child.putString("parent", block.parent().toString());
+            ValueOutput.ValueOutputList inputList = child.childrenList("Inputs");
+            for (InputSlot input : block.inputs()) {
+                ValueOutput savedInput = inputList.addChild();
+                savedInput.putString("name", input.name());
+                savedInput.putString("type", input.type().name());
+                if (input.value() != null) savedInput.putString("value", input.value());
+                if (input.blockId() != null) savedInput.putString("block", input.blockId().toString());
+            }
         }
         LittleAnt.LOGGER.info("[AntEntity] write skin name to save data: {}", getSkinNameAccessor());
     }
