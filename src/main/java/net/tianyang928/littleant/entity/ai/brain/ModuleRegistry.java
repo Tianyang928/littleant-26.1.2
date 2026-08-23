@@ -21,7 +21,7 @@ public final class ModuleRegistry {
         // event
         add("tick_start", "event", BlockShape.HAT, List.of(),List.of("tick_start"));
         add("ai_start", "event", BlockShape.HAT, List.of(),List.of("ai_start"));
-        add("start_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, ""),new InputDefinition("priority", ValueType.NUMBER, "1"),new InputDefinition("move_flag", ValueType.BOOLEAN, "false"),new InputDefinition("look_flag", ValueType.BOOLEAN, "false"),new InputDefinition("jump_flag", ValueType.BOOLEAN, "false")),List.of("start_goal","()","priority","()","flags","move_flag","<>","look_flag","<>","jump_flag","<>"));
+        add("start_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, ""),new InputDefinition("priority", ValueType.NUMBER, "1"),new InputDefinition("move_flag", ValueType.BOOLEAN, ""),new InputDefinition("look_flag", ValueType.BOOLEAN, ""),new InputDefinition("jump_flag", ValueType.BOOLEAN, "")),List.of("start_goal","()","priority","()","flags","move_flag","<>","look_flag","<>","jump_flag","<>"));
         add("receive_goal", "event", BlockShape.HAT, List.of(new InputDefinition("goal", ValueType.TEXT, "custom_goal")),List.of("receive_goal","()"));
         add("finish_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("finish_goal","()"));
 
@@ -39,9 +39,9 @@ public final class ModuleRegistry {
 
         // control
         add("repeat", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("count", ValueType.NUMBER, "10", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("repeat","times","()","{}"));
-        add("if", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "false", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("if","<>","{}"));
-        add("if_else", "control", BlockShape.E_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "false", true), new InputDefinition("body_if", ValueType.BLOCK, ""),new InputDefinition("body_else", ValueType.BLOCK, "")),List.of("if","<>","{}","else","{}"));
-        add("while", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "false", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("while","<>","{}"));
+        add("if", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("if","<>","{}"));
+        add("if_else", "control", BlockShape.E_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body_if", ValueType.BLOCK, ""),new InputDefinition("body_else", ValueType.BLOCK, "")),List.of("if","<>","{}","else","{}"));
+        add("while", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("while","<>","{}"));
 
         // operators
         add("add", "operators", BlockShape.REPORTER, numbers("a", "b"),List.of("()","add","()"));
@@ -54,9 +54,9 @@ public final class ModuleRegistry {
         add("greater_than", "operators", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","greater_than","()"));
         add("less_than", "operators", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","less_than","()"));
         add("equal", "operators", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","equal","()"));
-        add("not", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "true", true)),List.of("not","<>"));
-        add("and", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "false", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "false", true)),List.of("<>","and","<>"));
-        add("or", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "false", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "false", true)),List.of("<>","or","<>"));
+        add("not", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true)),List.of("not","<>"));
+        add("and", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "", true)),List.of("<>","and","<>"));
+        add("or", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "", true)),List.of("<>","or","<>"));
         add("true", "operators", BlockShape.BOOLEAN, List.of(),List.of("true"));
         add("false", "operators", BlockShape.BOOLEAN, List.of(),List.of("false"));
 
@@ -96,7 +96,7 @@ public final class ModuleRegistry {
         add("find_block_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block_entity", ValueType.TEXT, "minecraft:chest")),List.of("find_block_entity","()"));
         add("find_pheromone", "sense", BlockShape.REPORTER, List.of(new InputDefinition("pheromone", ValueType.TEXT, "home")),List.of("find_pheromone","()"));
         add("get_surrounding_pheromone", "sense", BlockShape.REPORTER, List.of(),List.of("get_surrounding_pheromone"));
-        add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(),List.of("find_nearest_entity","()"));
+        add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(),List.of("find_nearest_entity"));
         add("has_item_in_container", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone"), new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("has_item_in_container","()","slot","()"));
         add("get_item_in_container", "sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","slot","()"));
 

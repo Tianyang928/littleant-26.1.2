@@ -82,6 +82,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     private final LinkedHashMap<UUID, BrainBlock> brainBlocks = new LinkedHashMap<>();
     private boolean isProgrammingBrain = false;
     private Player programmingPlayer = null;
+    public boolean needAiRestart = false;
 
     public boolean tryGettingDownWater = false;
 
@@ -199,7 +200,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     }
 
     public void scriptMoveTo(double x, double y, double z) {
-        getNavigation().moveTo(x, y, z, getAttributeValue(Attributes.MOVEMENT_SPEED));
+        getNavigation().moveTo(x, y, z, 1.0);
     }
 
     public void scriptStepForward(double distance) {
@@ -244,7 +245,10 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     public void tickBrainProgram() {
         if (!level().isClientSide()) {
             antScriptInterpreter.loadProgram(this.brainBlocks);
-            antScriptInterpreter.start();
+            if (needAiRestart) {
+                antScriptInterpreter.start();
+                needAiRestart = false;
+            }
             antScriptInterpreter.tick();
         }
     }
@@ -256,6 +260,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     public void setIsProgrammingBrain(Player player, boolean isProgramming) {
         this.isProgrammingBrain = isProgramming;
         this.programmingPlayer = player;
+        this.needAiRestart = true;
     }
 
     public static AttributeSupplier.Builder createAttributes() {

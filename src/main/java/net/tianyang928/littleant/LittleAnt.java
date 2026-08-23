@@ -9,7 +9,6 @@ import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ModEntities;
 import net.tianyang928.littleant.gui.ModMenus;
 import net.tianyang928.littleant.item.ModItems;
-import net.tianyang928.littleant.network.RemoveAntBrainBlockPayload;
 import net.tianyang928.littleant.server.command.*;
 import org.slf4j.Logger;
 
@@ -24,7 +23,6 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import net.tianyang928.littleant.network.PlaceAntBrainBlockPayload;
 import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
 import net.tianyang928.littleant.network.RunAntScriptPayload;
 import net.tianyang928.littleant.network.SetPheromonePayload;
@@ -71,10 +69,6 @@ public class LittleAnt {
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
         registrar.playToServer(SetPheromonePayload.TYPE, SetPheromonePayload.STREAM_CODEC, SetPheromonePayload::handlePacketFromClient);
-        registrar.playToServer(PlaceAntBrainBlockPayload.TYPE, PlaceAntBrainBlockPayload.STREAM_CODEC,
-                PlaceAntBrainBlockPayload::handlePacketFromClient);
-        registrar.playToServer(RemoveAntBrainBlockPayload.TYPE, RemoveAntBrainBlockPayload.STREAM_CODEC,
-                RemoveAntBrainBlockPayload::handlePacketFromClient);
         registrar.playToServer(UpdateAntBrainProgramPayload.TYPE, UpdateAntBrainProgramPayload.STREAM_CODEC,
                 UpdateAntBrainProgramPayload::handlePacketFromClient);
         registrar.playToServer(RunAntScriptPayload.TYPE, RunAntScriptPayload.STREAM_CODEC,

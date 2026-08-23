@@ -1,6 +1,7 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
 import net.minecraft.core.BlockPos;
+import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
@@ -19,7 +20,7 @@ import java.util.UUID;
 
 /** Runs non-conflicting script goals in parallel and retains preempted goals for resumption. */
 public final class AntGoalScheduler {
-    private final AntEntity ant;
+    public final AntEntity ant;
     private final Deque<Task> queue = new ArrayDeque<>();
     private final List<Task> active = new ArrayList<>();
     //private final Set<UUID> registeredStarts = new HashSet<>();
@@ -55,6 +56,7 @@ public final class AntGoalScheduler {
             if (task.tick(neoGoalRunner)) {
                 active.remove(task);
                 queue.remove(task);
+                LittleAnt.LOGGER.info("[AntGoalScheduler] Task {} completed and removed from active list.", task);
                 //registeredStarts.remove(task.startBlock());
             }
         }
@@ -97,7 +99,9 @@ public final class AntGoalScheduler {
                     return null;
                 }
                 try {
-                    return new VanillaTask(startBlock, priority, order, flags, new BreakBlockGoal(ant, new BlockPos((int) Double.parseDouble(args.get(0)), (int) Double.parseDouble(args.get(1)), (int) Double.parseDouble(args.get(2)))));
+                    BreakBlockGoal goal = new BreakBlockGoal(ant, BlockPos.ZERO);
+                    goal.setTarget(new BlockPos((int) Double.parseDouble(args.get(0)), (int) Double.parseDouble(args.get(1)), (int) Double.parseDouble(args.get(2))));
+                    return new VanillaTask(startBlock, priority, order, flags, goal);
                 } catch (RuntimeException ignored) {
                     return null;
                 }
@@ -135,7 +139,7 @@ public final class AntGoalScheduler {
         }
     }
 
-    private static final class VanillaTask implements Task {
+    private final class VanillaTask implements Task {
         private final UUID startBlock; private final double priority; private final long sequence; private final EnumSet<Flag> flags; private final Goal goal; private boolean started; private int attempts;
         VanillaTask(UUID startBlock, double priority, long sequence, EnumSet<Flag> flags, Goal goal) { this.startBlock = startBlock; this.priority = priority; this.sequence = sequence; this.flags = EnumSet.copyOf(flags); this.goal = goal; }
         public UUID startBlock() { return startBlock; }
@@ -144,16 +148,21 @@ public final class AntGoalScheduler {
         public boolean tick(NeoGoalRunner ignored) {
             if (!started) {
                 if (!goal.canUse()) return ++attempts > 40;
-                goal.start(); started = true;
+                //goal.start();
+                ant.goalSelector.addGoal((int)priority, goal);
+                started = true;
             }
-            goal.tick();
-            if (!goal.canContinueToUse()) { goal.stop(); return true; }
+            //goal.tick();
+            if (!goal.canContinueToUse()) {
+                //goal.stop();
+                return true;
+            }
             return false;
         }
         public void suspend() { if (started) goal.stop(); }
     }
 
-    private static final class CustomTask implements Task {
+    private final class CustomTask implements Task {
         private final UUID startBlock;
         private final double priority;
         private final long sequence;

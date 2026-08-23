@@ -107,7 +107,10 @@ public record BlockRenderLayout(
                             effectiveInputs(nestedBlock, nestedDefinition), blocks, 0, 0, measurer, active);
                     Component value = Component.literal(input.value() == null ? "" : input.value());
                     int elementWidth = nested == null ? Math.max(20, measurer.width(value) + 6) : nested.width();
-                    int elementHeight = nested == null ? 12 : nested.height();
+                    // Reserve the full line box for nested inputs. The nested
+                    // block is drawn inside this slot and vertically centered
+                    // by the screen renderer.
+                    int elementHeight = nested == null ? 12 : Math.max(nested.height(), lineHeight);
                     int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth);
                     cursorX = position[0]; cursorY = position[1]; lineHeight = position[2];
                     elements.add(new Element(ElementKind.INPUT, input.name(), input.type(), value,

@@ -48,6 +48,9 @@ public final class AntScriptInterpreter {
                 .filter(b -> b.parent() == null && !incoming.contains(b.id()) && b.opcode().equals("receive_goal"))
                 .forEach(b -> receiveGoalRoots.computeIfAbsent(inputNumber(b, "goal", "", blocks), ignored -> new ArrayList<>()).add(b.id()));
         isRunning = !aiStarts.isEmpty() || !tickStarts.isEmpty() || !receiveGoalRoots.isEmpty();
+
+
+        ant.needAiRestart = true;
     }
 
     public void start() {
@@ -110,7 +113,7 @@ public final class AntScriptInterpreter {
                 double priority;
                 try {
                     priority = Double.parseDouble(inputNumber(block, "priority", "", blocks));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     break;
                 }
                 EnumSet<AntGoalScheduler.Flag> flags = EnumSet.noneOf(AntGoalScheduler.Flag.class);
@@ -128,14 +131,14 @@ public final class AntScriptInterpreter {
                     ant.scriptMoveTo(Double.parseDouble(inputNumber(block, "x", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "y", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "z", "0", blocks)));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     break;
                 }
             }
             case "step_forward" -> {
                 try {
                     ant.scriptStepForward(Double.parseDouble(inputNumber(block, "distance", "0", blocks)));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     break;
                 }
             }
@@ -144,14 +147,14 @@ public final class AntScriptInterpreter {
                     ant.scriptLookAt(Double.parseDouble(inputNumber(block, "x", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "y", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "z", "0", blocks)));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     break;
                 }
             }
             case "rotate" -> {
                 try {
                     ant.scriptRotate(Double.parseDouble(inputNumber(block, "angle", "0", blocks)));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     break;
                 }
             }
@@ -159,7 +162,7 @@ public final class AntScriptInterpreter {
                 int count;
                 try {
                     count = Math.min(1000, Math.max(0, (int) Double.parseDouble(inputNumber(block, "count", "0", blocks))));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     break;
                 }
                 InputSlot body = input(block, "body");
@@ -225,7 +228,7 @@ public final class AntScriptInterpreter {
                     double a = Double.parseDouble(inputNumber(block, "a", "0", blocks, active));
                     double b = Double.parseDouble(inputNumber(block, "b", "0", blocks, active));
                     return String.valueOf(a + b);
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "0";
                 }
             }
@@ -234,7 +237,7 @@ public final class AntScriptInterpreter {
                     double a = Double.parseDouble(inputNumber(block, "a", "0", blocks, active));
                     double b = Double.parseDouble(inputNumber(block, "b", "0", blocks, active));
                     return String.valueOf(a - b);
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "0";
                 }
             }
@@ -243,7 +246,7 @@ public final class AntScriptInterpreter {
                     double a = Double.parseDouble(inputNumber(block, "a", "0", blocks, active));
                     double b = Double.parseDouble(inputNumber(block, "b", "0", blocks, active));
                     return String.valueOf(a * b);
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "0";
                 }
             }
@@ -252,7 +255,7 @@ public final class AntScriptInterpreter {
                     double a = Double.parseDouble(inputNumber(block, "a", "0", blocks, active));
                     double b = Double.parseDouble(inputNumber(block, "b", "0", blocks, active));
                     return String.valueOf(b == 0 ? 0 : a / b);
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "0";
                 }
             }
@@ -261,7 +264,7 @@ public final class AntScriptInterpreter {
                     double a = Double.parseDouble(inputNumber(block, "a", "0", blocks, active));
                     double b = Double.parseDouble(inputNumber(block, "b", "0", blocks, active));
                     return String.valueOf(b == 0 ? 0 : a % b);
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "0";
                 }
             }
@@ -269,7 +272,7 @@ public final class AntScriptInterpreter {
                 try {
                     double a = Double.parseDouble(inputNumber(block, "number", "0", blocks, active));
                     return String.valueOf(Math.abs(a));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "0";
                 }
             }
@@ -278,7 +281,7 @@ public final class AntScriptInterpreter {
                     double a = Double.parseDouble(inputNumber(block, "min", "0", blocks, active));
                     double b = Double.parseDouble(inputNumber(block, "max", "0", blocks, active));
                     return String.valueOf(Math.random() * (b - a) + a);
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "0";
                 }
             }
@@ -320,7 +323,7 @@ public final class AntScriptInterpreter {
                     String y = inputNumber(block, "y", "0", blocks, active);
                     String z = inputNumber(block, "z", "0", blocks, active);
                     return blackboard.distanceToTarget(Double.parseDouble(x), Double.parseDouble(y), Double.parseDouble(z));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "-1";
                 }
             }
@@ -332,7 +335,7 @@ public final class AntScriptInterpreter {
                 }
                 try{
                     return blackboard.distanceToTarget(Double.parseDouble(posList[0]), Double.parseDouble(posList[1]), Double.parseDouble(posList[2]));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "-1";
                 }
             }
@@ -342,7 +345,7 @@ public final class AntScriptInterpreter {
                     String y = inputNumber(block, "y", "0", blocks, active);
                     String z = inputNumber(block, "z", "0", blocks, active);
                     return blackboard.getBlock(Double.parseDouble(x), Double.parseDouble(y), Double.parseDouble(z));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "";
                 }
             }
@@ -354,7 +357,7 @@ public final class AntScriptInterpreter {
                 }
                 try{
                     return blackboard.getBlock(Double.parseDouble(posList[0]), Double.parseDouble(posList[1]), Double.parseDouble(posList[2]));
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return "";
                 }
             }
@@ -375,7 +378,7 @@ public final class AntScriptInterpreter {
         }
         try {
             return Boolean.parseBoolean(slot.value());
-        } catch (NumberFormatException e) {
+        } catch (RuntimeException e) {
             return fallback;
         }
     }
@@ -393,7 +396,7 @@ public final class AntScriptInterpreter {
                     double aNum = Double.parseDouble(a);
                     double bNum = Double.parseDouble(b);
                     return aNum > bNum;
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return a.compareTo(b) > 0;
                 }
             }
@@ -405,7 +408,7 @@ public final class AntScriptInterpreter {
                     double aNum = Double.parseDouble(a);
                     double bNum = Double.parseDouble(b);
                     return aNum < bNum;
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return a.compareTo(b) < 0;
                 }
             }
@@ -417,7 +420,7 @@ public final class AntScriptInterpreter {
                     double aNum = Double.parseDouble(a);
                     double bNum = Double.parseDouble(b);
                     return aNum == bNum;
-                } catch (NumberFormatException e) {
+                } catch (RuntimeException e) {
                     return a.compareTo(b) == 0;
                 }
             }

@@ -4,6 +4,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -160,17 +161,62 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     private void drawBlock(GuiGraphicsExtractor g, BlockRenderLayout l, int x, int y, boolean floating) {
+        int xd2 = x + l.width() - l.height() / 2;
         int dx = x - l.x(), dy = y - l.y(), color = floating ? fade(l.definition().color()) : l.definition().color();
-        g.fill(x, y, x + l.width(), y + l.height(), color);
-        g.fill(x, y, x + l.width(), y + 1, lighten(color));
+
+        if(l.definition().shape() == BlockShape.BOOLEAN){
+            g.fill(x + l.height()/2, y, xd2, y + l.height(), color);
+            drawTriangle(g, x, y, l.height(), -1, color, 0x00,lighten(color));
+            drawTriangle(g, xd2, y, l.height(), 1, color, 0x00,lighten(color));
+            g.fill(x + l.height()/2,y+l.height()-1,xd2,y+l.height(),lighten(color));
+            g.fill(x + l.height()/2, y, xd2, y + 1, lighten(color));
+        }
+        else if(l.definition().shape() == BlockShape.REPORTER){
+            int xd4 = x + l.width() - l.height() / 4;
+            g.fill(x + l.height()/4, y, xd4, y + l.height(), color);
+            drawSemicircle(g, x, y, l.height(), -1, color, 0x00,lighten(color));
+            drawSemicircle(g, xd4, y, l.height(), 1, color, 0x00,lighten(color));
+            g.fill(x + l.height()/4,y+l.height()-1,xd4,y+l.height(),lighten(color));
+            g.fill(x + l.height()/4, y, xd4, y + 1, lighten(color));
+        }
+        else{
+            g.fill(x , y, x + l.width(), y + l.height(), color);
+            g.fill(x, y, x + l.width(), y + 1, lighten(color));
+            g.fill(x,y,x+1,y+l.height(),lighten(color));
+            g.fill(x,y+l.height()-1,x + l.width(),y+l.height(),lighten(color));
+            g.fill(x + l.width(),y,x+l.width()+1,y+l.height(),lighten(color));
+            if(l.definition().shape() == BlockShape.HAT){
+                drawSemicircle(g, x, y-l.height()/4, l.width()/2, 0, color, 0x00,lighten(color));
+            }
+        }
+        int inputIndex = 0;
         for (BlockRenderLayout.Element e : l.elements()) {
             int ex = x + e.x(), ey = y + e.y();
             if (e.kind() == BlockRenderLayout.ElementKind.INPUT) {
-                if (e.nested() != null) drawBlock(g, e.nested(), ex, ey, floating);
+                if (e.nested() != null) {
+                    // Nested blocks occupy the input slot from its left edge and
+                    // are vertically centered when the slot is taller than the
+                    // nested layout.
+                    int nestedY = ey + Math.max(0, (e.height() - e.nested().height()) / 2);
+                    drawBlock(g, e.nested(), ex, nestedY, floating);
+                }
                 else {
-                    g.fill(ex, ey, ex + e.width(), ey + e.height(), 0xCC202631);
+                    ValueType inputValueType = l.definition().inputs().get(inputIndex).type();
+                    int exd2 = ex + e.width() - e.height() / 2;
+                    int exd4 = ex + e.width() - e.height() / 4;
+                    if(inputValueType == ValueType.BOOLEAN){
+                        g.fill(ex + e.height()/2, ey, exd2, ey + e.height(), 0xCC202631);
+                        drawTriangle(g, ex, ey, e.height(), -1, 0xCC202631, 0x00, 0x00);
+                        drawTriangle(g, exd2, ey, e.height(), 1, 0xCC202631, 0x00, 0x00);
+                    }
+                    else{
+                        g.fill(ex + e.height()/4, ey, exd4, ey + e.height(), 0xCC202631);
+                        drawSemicircle(g, ex, ey, e.height(), -1, 0xCC202631, 0x00, 0x00);
+                        drawSemicircle(g, exd4, ey, e.height(), 1, 0xCC202631, 0x00, 0x00);
+                    }
                     drawScaledText(g, e.text(), ex + 3, ey + 5, TEXT_SCALE,0xFFFFFFFF, false);
                 }
+                inputIndex++;
             } else {
                 drawScaledText(g, e.text(), ex, ey, TEXT_SCALE, 0xFFFFFFFF, false);
             }
@@ -187,6 +233,51 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         g.fill(x - 2, y + h, x + w + 2, y + h + 2, 0xFFFFFFFF);
         g.fill(x - 2, y, x, y + h, 0xFFFFFFFF);
         g.fill(x + w, y, x + w + 2, y + h, 0xFFFFFFFF);
+    }
+    // 画上下对称的等腰45度三角形
+    private void drawTriangle(GuiGraphicsExtractor g, int x, int y, int h, int direction, int triangleColor, int backgroundColor, int borderColor) {
+        // direction 为1时，画右半三角形
+        g.fill(x, y, x + h/2, y + h, backgroundColor);
+        if(direction == -1) {
+            for(int i = 0; i < h/2; i++) {
+                g.fill(x+i,y+h/2-i,x+i+1,y+h/2+i,triangleColor);
+                g.fill(x+i,y+h/2-i,x+i+1,y+h/2-i+1, borderColor);
+                g.fill(x+i,y+h/2+i,x+i+1,y+h/2+i+1, borderColor);
+            }
+        }
+        else if(direction == 1) {
+            for(int i = 0; i < h/2; i++) {
+                g.fill(x+i,y+i,x+i+1,y+h-i,triangleColor);
+                g.fill(x+i,y+i,x+i+1,y+i+1, borderColor);
+                g.fill(x+i,y+h-i-1,x+i+1,y+h-i, borderColor);
+            }
+        }
+    }
+
+    private void drawSemicircle(GuiGraphicsExtractor g, int x, int y, int h, int direction, int circleColor, int backgroundColor, int borderColor) {
+        // direction 为1时，画右半圆
+        g.fill(x, y, x + h/4, y + h, backgroundColor);
+        if(direction == -1) {
+            for(int i = h/4; i < h/2; i++) {
+                g.fill(x+i-h/4,y+h/2-i,x+i+1-h/4,y+h/2+i,circleColor);
+                g.fill(x+i-h/4,y+h/2-i-1,x+i+1-h/4,y+h/2-i, borderColor);
+                g.fill(x+i-h/4,y+h/2+i,x+i+1-h/4,y+h/2+i+1, borderColor);
+            }
+        }
+        else if(direction == 1) {
+            for(int i = 0; i <= h/4; i++) {
+                g.fill(x+i,y+i,x+i+1,y+h-i,circleColor);
+                g.fill(x+i,y+i,x+i+1,y+i+1, borderColor);
+                g.fill(x+i,y+h-i-1,x+i+1,y+h-i, borderColor);
+            }
+        }
+        else if(direction == 0){
+            for(int i = h/4; i <= h/2; i++) {
+                g.fill(x+h/2-i,y+i-h/4,x+h/2+i,y+i-h/4+1,circleColor);
+                g.fill(x+h/2-i,y+i-h/4-1,x+h/2-i,y+i-h/4, borderColor);
+                g.fill(x+h/2+i,y+i-h/4,x+h/2+i,y+i-h/4+1, borderColor);
+            }
+        }
     }
 
     private void drawDraggingChain(GuiGraphicsExtractor g, int x, int y) {
@@ -344,12 +435,15 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         SnapTarget best = null;
         for (BlockRenderLayout.Element e : l.elements()) {
             int ex = lx + e.x(), ey = ly + e.y();
-            if (e.nested() == null && value && compatible(p.definition(), e.type())) {
+            if (e.nested() == null && value && compatible(p.definition().shape(), e.type())) {
                 int dist = distance(px + p.width() / 2, py + p.headerHeight() / 2, ex + e.width() / 2, ey + e.height() / 2);
                 if (dist <= INPUT_SNAP_DISTANCE)
                     best = new SnapTarget(SnapKind.INPUT, l.blockId(), e.inputName(), ex, ey, e.width(), e.height(), dist);
-            } else if (e.nested() != null)
-                best = better(best, findSnapRecursive(e.nested(), p, px, py, value, ex - e.nested().x(), ey - e.nested().y()));
+            } else if (e.nested() != null) {
+                int nestedY = ey + Math.max(0, (e.height() - e.nested().height()) / 2);
+                best = better(best, findSnapRecursive(e.nested(), p, px, py, value,
+                        ex - e.nested().x(), nestedY - e.nested().y()));
+            }
         }
         for (BlockRenderLayout.Body b : l.bodies()) {
             int bx = lx + b.x(), by = ly + b.y();
@@ -368,6 +462,11 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             int above = distance(px, py + dragHeight, lx, ly);
             if (above <= STACK_SNAP_DISTANCE)
                 best = better(best, new SnapTarget(SnapKind.BEFORE, l.blockId(), null, lx, ly - dragHeight, p.width(), dragHeight, above));
+        }
+        else if(!value && stackable(p.definition().shape())&& l.definition().shape() == BlockShape.HAT){
+            int below = distance(px, py, lx, ly + l.height());
+            if(below <= STACK_SNAP_DISTANCE)
+                best = better(best, new SnapTarget(SnapKind.AFTER, l.blockId(), null, lx, ly + l.height(), p.width(), dragHeight, below));
         }
         return best;
     }
@@ -493,18 +592,28 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
 
     private void collectInputBoxes(BlockRenderLayout l, int dx, int dy, Set<InputKey> visible) {
         int lx = l.x() + dx, ly = l.y() + dy;
+        int inputIndex = 0;
         for (BlockRenderLayout.Element e : l.elements()) {
             if(e.kind() == BlockRenderLayout.ElementKind.LABEL){
                 continue;
             }
+            ValueType type = l.definition().inputs().get(inputIndex).type();
+            inputIndex++;
+            if(type == ValueType.BOOLEAN){
+                continue;
+            }
             int ex = lx + e.x(), ey = ly + e.y();
-            if (e.nested() != null) collectInputBoxes(e.nested(), ex - e.nested().x(), ey - e.nested().y(), visible);
+            if (e.nested() != null) {
+                int nestedY = ey + Math.max(0, (e.height() - e.nested().height()) / 2);
+                collectInputBoxes(e.nested(), ex - e.nested().x(), nestedY - e.nested().y(), visible);
+            }
             else if (l.blockId() != null) {
                 InputKey key = new InputKey(l.blockId(), e.inputName());
                 visible.add(key);
                 ScalableEditBox box = inputBoxes.get(key);
                 if (box == null) {
-                    box = new ScalableEditBox(font, ex + 3, ey + 5, (int)(e.width()/TEXT_SCALE), e.height(), Component.literal(e.inputName()));
+                    // EditBox keeps its text metrics in unscaled (logical) pixels.
+                    box = new ScalableEditBox(font, ex + 3, ey + 5, e.width(), e.height(), Component.literal(e.inputName()));
                     box.setMaxLength(256);
                     box.setBordered(false);
                     box.setTextColor(0xFFFFFFFF);
@@ -516,8 +625,8 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                 }
                 box.setX(ex + 3);
                 box.setY(ey + 5);
-                box.setWidth((int)(e.width()/TEXT_SCALE));
-                box.setHeight(e.height());
+                box.setWidth((int) Math.ceil(e.width() / TEXT_SCALE));
+                box.setHeight((int) Math.ceil(e.height() / TEXT_SCALE));
                 box.visible = draggingOpcode == null;
             }
         }
@@ -565,7 +674,8 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         for (BlockRenderLayout.Element e : l.elements())
             if (e.nested() != null) {
                 int nx = lx + e.x(), ny = ly + e.y();
-                LayoutHit h = blockAtRecursive(e.nested(), x, y, nx - e.nested().x(), ny - e.nested().y());
+                int nestedY = ny + Math.max(0, (e.height() - e.nested().height()) / 2);
+                LayoutHit h = blockAtRecursive(e.nested(), x, y, nx - e.nested().x(), nestedY - e.nested().y());
                 if (h != null) return h;
             }
         for (BlockRenderLayout.Body b : l.bodies())
@@ -595,9 +705,22 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         return new BrainBlock(b.opcode(), x, y, b.id(), in, next, parent);
     }
 
-    private static boolean compatible(BlockDefinition d, ValueType t) {
-        ValueType output = ModuleRegistry.outputType(d.opcode());
-        return t == ValueType.ANY || output == t;
+    private static boolean compatible(BlockShape d, ValueType t) {
+        if(t == null){
+            return false;
+        }
+        switch(t){
+            case NUMBER, TEXT, LIST, BLOCK->{
+                return d == BlockShape.REPORTER;
+            }
+            case BOOLEAN->{
+                return d == BlockShape.BOOLEAN;
+            }
+            case ANY->{
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean stackable(BlockShape s) {
@@ -658,8 +781,24 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private class ScalableEditBox extends EditBox {
 
         public ScalableEditBox(Font font, int x, int y, int width, int height, Component narration) {
-            super(font, x, y, (int) (width/TEXT_SCALE), (int)(height/TEXT_SCALE), narration);
+            super(font, x, y, (int) Math.ceil(width / TEXT_SCALE), (int) Math.ceil(height / TEXT_SCALE), narration);
             this.visible = true;
+        }
+
+        /**
+         * The superclass stores logical (unscaled) dimensions, while the screen
+         * receives mouse coordinates in rendered pixels.  Expose the rendered
+         * dimensions to AbstractWidget's hit testing so hovering/clicking stops
+         * at the visible edge of the field.
+         */
+        @Override
+        public int getWidth() {
+            return Math.round(super.getWidth() * TEXT_SCALE);
+        }
+
+        @Override
+        public int getHeight() {
+            return Math.round(super.getHeight() * TEXT_SCALE);
         }
 
         @Override
@@ -679,22 +818,34 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             graphics.pose().scale(TEXT_SCALE, TEXT_SCALE);
             graphics.pose().translate(-x, -y);
 
-            super.extractWidgetRenderState(
-                    graphics,
-                    (int) (mouseX*TEXT_SCALE),
-                    (int) (mouseY*TEXT_SCALE),
-                    partialTick
-            );
+            int logicalMouseX = (int) (x + (mouseX - x) / TEXT_SCALE);
+            int logicalMouseY = (int) (y + (mouseY - y) / TEXT_SCALE);
+            super.extractWidgetRenderState(graphics, logicalMouseX, logicalMouseY, partialTick);
 
             graphics.pose().popMatrix();
         }
 
         @Override
         public boolean mouseClicked(MouseButtonEvent e, boolean d)  {
-            int newX = (int)((e.x()-this.getX()) / TEXT_SCALE + getX());
-            int newY = (int)((e.y()-this.getY()) / TEXT_SCALE + getY());
-            MouseButtonEvent me = new MouseButtonEvent(newX, newY, e.buttonInfo());
-            return super.mouseClicked(me, d);
+            // Hit testing must use rendered coordinates. Only EditBox's cursor
+            // calculation needs the logical, inverse-scaled event.
+            if (!this.isActive() || !this.isValidClickButton(e.buttonInfo()) || !this.isMouseOver(e.x(), e.y())) {
+                return false;
+            }
+            this.playDownSound(Minecraft.getInstance().getSoundManager());
+            this.onClick(toLogical(e), d);
+            return true;
+        }
+
+        @Override
+        public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+            return super.mouseDragged(toLogical(e), dx / TEXT_SCALE, dy / TEXT_SCALE);
+        }
+
+        private MouseButtonEvent toLogical(MouseButtonEvent e) {
+            int logicalX = (int) (this.getX() + (e.x() - this.getX()) / TEXT_SCALE);
+            int logicalY = (int) (this.getY() + (e.y() - this.getY()) / TEXT_SCALE);
+            return new MouseButtonEvent(logicalX, logicalY, e.buttonInfo());
         }
     }
 }

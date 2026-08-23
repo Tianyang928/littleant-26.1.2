@@ -140,9 +140,7 @@ public class BreakBlockGoal extends Goal {
         }
 
         double horizontalDistance = this.mob.distanceToSqr(this.blockPos.getX() + 0.5D, this.mob.getY(), this.blockPos.getZ() + 0.5D);
-        if(this.mob.level().getRandom().nextInt(60) == 0){
-            LittleAnt.LOGGER.info("[BreakBlockGoal] tick, horizontal distance: {}, air supply: {}", horizontalDistance, this.mob.getAirSupply());
-        }
+
         if (this.mob.isInWater() && horizontalDistance <= 2.0D * 2.0D && !isBlockReachable()) {
             if(this.mob.getAirSupply() == 300){
                 if(this.mob instanceof AntEntity antEntity) {
