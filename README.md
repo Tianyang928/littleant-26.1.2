@@ -1,25 +1,29 @@
+<p align="center">
+  <img src="src/main/resources/assets/littleant/doc/img/programming_gui.png" alt="title" width="300" />
+</p>
+<h1>LittleAnt 26.1.2</h1>
+<hr>
+<p align="center">
+    <a href="https://github.com/Tianyang928/littleant-26.1.2/issues">Report Bug</a> 
+    ·
+    <a href="https://github.com/Tianyang928/littleant-26.1.2/releases">View Release</a>
+</p>
 
-Installation information
-=======
+This is a Minecraft 26.1.2 Neoforge mod.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+**Ant** is the new mob added in this mod. It's able to break blocks, set blocks, craft things, operate inventories, just like players. And the most important thing is that its AI can be programmed in-game by players.
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+I tried to make the programming GUI as close as possible to [Scratch](https://scratch.mit.edu/).
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+Press `right-click` to open the Ant Entity's inventory.
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+Press `Shift + right-click` to open the Ant Entity's programming GUI.
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+
+## Future Features
+
+- Add preset of Ant AI using those scratch-like modules.
+- Add more containers that the Ant can operate (anvil, enchanting table, smoker, blast furnace, for example).
+- Improve the programming GUI's appearance.
+- Add carrier that the Ant can use.
+- Add evolution system, so that the Ant population can evolve over time.
