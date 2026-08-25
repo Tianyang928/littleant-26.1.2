@@ -10,6 +10,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
@@ -24,6 +25,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private static final Map<String,List<BlockDefinition>> MODULES_BY_CATEGORY=ModuleRegistry.byCategory();
     private static final List<String> CATEGORIES=List.copyOf(MODULES_BY_CATEGORY.keySet());
     private int selectedCategory,paletteScroll,dragOffsetX,dragOffsetY,dragX,dragY;
+    private int mouseX, mouseY;
     private String draggingOpcode; private UUID draggingId; private boolean draggingFromPalette;
     private final LinkedHashMap<UUID,BrainBlock> placedBlocks=new LinkedHashMap<>();
     private final List<PaletteEntry> paletteEntries=new ArrayList<>();
@@ -57,13 +59,15 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float p) {
+        mouseX = mx;
+        mouseY = my;
         if (draggingOpcode != null) {
             dragX = mx - dragOffsetX;
             dragY = my - dragOffsetY;
         }
         rebuildLayouts();
         drawCategories(g);
-        g.fill(0, 0, width, HEADER_HEIGHT, 0xD91E2430);
+        g.fill(0, 0, width, HEADER_HEIGHT, 0x661E2430);
         drawScaledText(g,Component.translatable("menu.littleant.ant_brain_program"), 12, 10, 1.0f,0xFFFFFFFF, true);
         drawPalette(g);
         drawCanvas(g);
@@ -95,7 +99,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         Set<UUID> laidOut = new HashSet<>();
         for (BrainBlock root : placedBlocks.values())
             if (!nested.contains(root.id()) && !incomingNext.contains(root.id())) {
-                int x = canvasLeft() + root.x(), y = CANVAS_TOP + root.y();
+                int x = canvasLeft() + root.x(), y = HEADER_HEIGHT + root.y();
                 UUID current = root.id();
                 while (current != null && laidOut.add(current) && !nested.contains(current)) {
                     BrainBlock b = placedBlocks.get(current);
@@ -118,6 +122,14 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private Set<UUID> ownedIds(UUID root) {
         Set<UUID> r = new HashSet<>();
         collectOwned(root, r);
+        return r;
+    }
+
+    private Set<UUID> nestedOwnedIds(UUID root) {
+        Set<UUID> r = new HashSet<>();
+        if (root == null || !r.add(root)) return r;
+        BrainBlock b = placedBlocks.get(root);
+        if (b != null) for (InputSlot input : b.inputs()) collectOwned(input.blockId(), r);
         return r;
     }
 
@@ -154,7 +166,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         int left = canvasLeft();
         g.fill(left, HEADER_HEIGHT, width, height, 0x94131A25);
         drawScaledText(g, Component.literal("Canvas"), left + 12, 42, 1.0f, 0xFFDAE2F2, false);
-        g.enableScissor(left, CANVAS_TOP, width, height);
+        g.enableScissor(left, HEADER_HEIGHT, width, height);
         //boolean floating = draggingOpcode != null;
         for (BlockRenderLayout l : canvasLayouts.values()) drawBlock(g, l, l.x(), l.y(), false);
         g.disableScissor();
@@ -186,7 +198,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             g.fill(x,y+l.height()-1,x + l.width(),y+l.height(),lighten(color));
             g.fill(x + l.width(),y,x+l.width()+1,y+l.height(),lighten(color));
             if(l.definition().shape() == BlockShape.HAT){
-                drawSemicircle(g, x, y-l.height()/4, l.width()/2, 0, color, 0x00,lighten(color));
+                drawSemicircle(g, x, y-l.height()/4, l.height(), 0, color, 0x00,lighten(color));
             }
         }
         int inputIndex = 0;
@@ -367,13 +379,18 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     @Override
     public boolean mouseReleased(MouseButtonEvent e) {
         if (e.button() != 0 || draggingOpcode == null) return super.mouseReleased(e);
-        if (dragX >= canvasLeft() && dragY >= CANVAS_TOP) {
+        int x = (int) e.x(), y = (int) e.y();
+        if (inside(x, y, canvasLeft(), HEADER_HEIGHT, width - canvasLeft(), height - HEADER_HEIGHT)) {
             if (draggingId == null) {
                 draggingId = UUID.randomUUID();
                 placedBlocks.put(draggingId, new BrainBlock(draggingOpcode, 0, 0, draggingId, ModuleRegistry.createDefaultInputs(draggingOpcode), null, null));
             }
-            if (snapTarget != null) applySnap(snapTarget);
-            else setBlockPosition(draggingId, Math.max(0, dragX - canvasLeft()), Math.max(0, dragY - CANVAS_TOP), null);
+            if (snapTarget != null) {
+                applySnap(snapTarget);
+            }
+            else {
+                setBlockPosition(draggingId, Math.max(0, dragX - canvasLeft()), Math.max(0, dragY - HEADER_HEIGHT), null);
+            }
             sendProgram();
         } else if (!draggingFromPalette && draggingId != null) {
             for (UUID id : ownedIds(draggingId)) placedBlocks.remove(id);
@@ -394,6 +411,23 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             draggingOpcode = null;
             draggingId = null;
             snapTarget = null;
+            return true;
+        }
+        if (e.key() == 261 && !(getFocused() instanceof EditBox)) {
+            LayoutHit hit = canvasBlockAt(mouseX, mouseY);
+            if (hit != null) {
+                deleteBlockAndNested(hit.id());
+                sendProgram();
+                return true;
+            }
+        }
+        // EditBox handles printable characters in charTyped(), but returns false
+        // here. Consume the inventory key first so AbstractContainerScreen does
+        // not close this menu before the character event arrives.
+        if (getFocused() instanceof EditBox editBox
+                && editBox.isFocused()
+                && minecraft.options.keyInventory.isActiveAndMatches(
+                        com.mojang.blaze3d.platform.InputConstants.getKey(e))) {
             return true;
         }
         return super.keyPressed(e);
@@ -492,6 +526,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         if (t.kind() == SnapKind.INPUT || t.kind() == SnapKind.BODY) {
             BrainBlock o = placedBlocks.get(t.owner());
             ValueType type = t.kind() == SnapKind.BODY ? ValueType.BLOCK : inputType(o, t.input());
+            LittleAnt.LOGGER.info("[AntBrainProgramScreen] applySnap: t.input() {}, draggingId {}",t.input, draggingId);
             placedBlocks.put(o.id(), copy(o, o.x(), o.y(), replaceInput(o.inputs(), t.input(), InputSlot.block(t.input(), type, draggingId)), o.next(), o.parent()));
             setBlockPosition(draggingId, 0, 0, o.id());
             return;
@@ -537,6 +572,40 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
     }
 
+    private void deleteBlockAndNested(UUID id) {
+        BrainBlock removed = placedBlocks.get(id);
+        if (removed == null) return;
+
+        Set<UUID> removedIds = nestedOwnedIds(id);
+        UUID successor = removed.next();
+        for (BrainBlock block : List.copyOf(placedBlocks.values())) {
+            if (removedIds.contains(block.id())) continue;
+            UUID next = block.next();
+            UUID parent = block.parent();
+            boolean changed = false;
+            if (id.equals(next)) {
+                next = successor;
+                changed = true;
+            } else if (removedIds.contains(next)) {
+                next = null;
+                changed = true;
+            }
+            if (removedIds.contains(parent)) {
+                parent = null;
+                changed = true;
+            }
+            List<InputSlot> inputs = new ArrayList<>();
+            for (InputSlot input : block.inputs()) {
+                if (removedIds.contains(input.blockId())) {
+                    inputs.add(InputSlot.literal(input.name(), input.type(), ""));
+                    changed = true;
+                } else inputs.add(input);
+            }
+            if (changed) placedBlocks.put(block.id(), copy(block, block.x(), block.y(), inputs, next, parent));
+        }
+        for (UUID removedId : removedIds) placedBlocks.remove(removedId);
+    }
+
     private void setBlockPosition(UUID id, int x, int y, UUID parent) {
         BrainBlock b = placedBlocks.get(id);
         placedBlocks.put(id, copy(b, x, y, b.inputs(), b.next(), parent));
@@ -571,23 +640,6 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             if (box.visible && box.isMouseOver(x, y)) return box;
         }
         return null;
-    }
-
-    private void drawInputBoxBackgrounds(GuiGraphicsExtractor g) {
-        for (BlockRenderLayout l : canvasLayouts.values()) {
-            for(BlockRenderLayout.Element e : l.elements()){
-                if(e.kind() == BlockRenderLayout.ElementKind.INPUT){
-                    int x = l.x() + e.x(), y = l.y() + e.y(), w = e.width(), h = e.height();
-                    g.fill(x, y, x + w, y + h, 0xE0202631);
-//                    int border = box.isFocused() ? 0xFFFFFFFF : 0xFF596273;
-//                    g.fill(x, y, x + w, y + 1, border);
-//                    g.fill(x, y + h - 1, x + w, y + h, border);
-//                    g.fill(x, y, x + 1, y + h, border);
-//                    g.fill(x + w - 1, y, x + w, y + h, border);
-                }
-            }
-
-        }
     }
 
     private void collectInputBoxes(BlockRenderLayout l, int dx, int dy, Set<InputKey> visible) {

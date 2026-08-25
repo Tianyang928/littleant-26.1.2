@@ -48,7 +48,7 @@ public class SetBlockGoal extends Goal {
 
     public void clearTarget() {
         this.hasTarget = false;
-        this.mob.getNavigation().stop();
+        //this.mob.getNavigation().stop();
         if(this.mob instanceof AntEntity antEntity) {
             antEntity.tryGettingDownWater = false;
         }
@@ -73,7 +73,7 @@ public class SetBlockGoal extends Goal {
             if (isBlockReachable()) {
                 return true;
             }
-            this.path = this.mob.getNavigation().createPath(this.blockPos, 2);
+            this.path = this.mob.getNavigation().createPath(this.blockPos, 2,64);
             return this.path != null && !this.path.isDone();
         }
     }
@@ -142,7 +142,7 @@ public class SetBlockGoal extends Goal {
 
         if (!isBlockReachable()) {
             if (this.mob.getNavigation().isDone()) {
-                this.path = this.mob.getNavigation().createPath(this.blockPos, 2);
+                this.path = this.mob.getNavigation().createPath(this.blockPos, 2,64);
                 if (this.path != null) this.mob.getNavigation().moveTo(this.path, 1.0D);
             }
             return;

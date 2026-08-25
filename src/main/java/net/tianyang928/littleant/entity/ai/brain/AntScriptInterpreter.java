@@ -1,6 +1,9 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
+import net.tianyang928.littleant.entity.ai.sense.FindBlock;
 
 import java.util.*;
 
@@ -102,33 +105,45 @@ public final class AntScriptInterpreter {
         if (executingCustomGoal && customGoalFinished) {
             return;
         }
-        if (!active.add(block.id())) {
-            return;
-        }
+//        if (!active.add(block.id())) {
+//            return;
+//        }
         switch (block.opcode()) {
             case "ai_start", "tick_start", "receive_goal" -> {}
             case "start_goal" -> {
-                List<String> all_param = Arrays.stream(inputNumber(block, "goal", "", blocks).split(",", -1)).map(String::trim).toList();
-                if (all_param.isEmpty() || all_param.getFirst().isBlank()) break;
+                List<String> all_param;
+
                 double priority;
                 try {
+                    all_param = Arrays.stream(inputNumber(block, "goal", "", blocks).split(",", -1)).map(String::trim).toList();
+                    if (all_param.isEmpty() || all_param.getFirst().isBlank()) {
+                        break;
+                    }
                     priority = Double.parseDouble(inputNumber(block, "priority", "", blocks));
                 } catch (RuntimeException e) {
                     break;
                 }
-                EnumSet<AntGoalScheduler.Flag> flags = EnumSet.noneOf(AntGoalScheduler.Flag.class);
-                if (inputBoolean(block, "move_flag", false, blocks)) flags.add(AntGoalScheduler.Flag.MOVE);
-                if (inputBoolean(block, "look_flag", false, blocks)) flags.add(AntGoalScheduler.Flag.LOOK);
-                if (inputBoolean(block, "jump_flag", false, blocks)) flags.add(AntGoalScheduler.Flag.JUMP);
+                EnumSet<Goal.Flag> flags = EnumSet.noneOf(Goal.Flag.class);
+                if (inputBoolean(block, "move_flag", false, blocks)) {
+                    flags.add(Goal.Flag.MOVE);
+                }
+                if (inputBoolean(block, "look_flag", false, blocks)) {
+                    flags.add(Goal.Flag.LOOK);
+                }
+                if (inputBoolean(block, "jump_flag", false, blocks)) {
+                    flags.add(Goal.Flag.JUMP);
+                }
+                LittleAnt.LOGGER.info("[AntScriptInterpreter] start_goal flags {}", flags);
                 goalScheduler.submit(block.id(), all_param.getFirst(), priority, flags, all_param.subList(1, all_param.size()), blocks,
                         //允许多个同名goal模组（gui内的）同时被激活
                         receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()));
+                LittleAnt.LOGGER.info("[AntScriptInterpreter] start_goal name {}, receiveGoalRootsList {}",all_param.getFirst(),receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()));
             }
             case "clear_goal" -> goalScheduler.clear();
             case "finish_goal" -> { if (executingCustomGoal) customGoalFinished = true; }
             case "move_to_xyz" -> {
                 try {
-                    ant.scriptMoveTo(Double.parseDouble(inputNumber(block, "x", "0", blocks)),
+                    blackboard.scriptMoveTo(Double.parseDouble(inputNumber(block, "x", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "y", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "z", "0", blocks)));
                 } catch (RuntimeException e) {
@@ -137,14 +152,14 @@ public final class AntScriptInterpreter {
             }
             case "step_forward" -> {
                 try {
-                    ant.scriptStepForward(Double.parseDouble(inputNumber(block, "distance", "0", blocks)));
+                    blackboard.scriptStepForward(Double.parseDouble(inputNumber(block, "distance", "0", blocks)));
                 } catch (RuntimeException e) {
                     break;
                 }
             }
             case "look_at_xyz" -> {
                 try {
-                    ant.scriptLookAt(Double.parseDouble(inputNumber(block, "x", "0", blocks)),
+                    blackboard.scriptLookAt(Double.parseDouble(inputNumber(block, "x", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "y", "0", blocks)),
                                     Double.parseDouble(inputNumber(block, "z", "0", blocks)));
                 } catch (RuntimeException e) {
@@ -153,24 +168,27 @@ public final class AntScriptInterpreter {
             }
             case "rotate" -> {
                 try {
-                    ant.scriptRotate(Double.parseDouble(inputNumber(block, "angle", "0", blocks)));
+                    blackboard.scriptRotate(Double.parseDouble(inputNumber(block, "angle", "0", blocks)));
                 } catch (RuntimeException e) {
                     break;
                 }
             }
+            case "say" -> {
+                blackboard.scriptSay(inputNumber(block, "message", "0", blocks));
+            }
             case "repeat" -> {
-                int count;
                 try {
-                    count = Math.min(1000, Math.max(0, (int) Double.parseDouble(inputNumber(block, "count", "0", blocks))));
+                    int count = Math.max(0, (int) Double.parseDouble(inputNumber(block, "count", "0", blocks)));
+                    InputSlot body = input(block, "body");
+                    if (body != null && blocks.containsKey(body.blockId())) {
+                        for (int i = 0; i < count; i++) {
+                            executeBlock(blocks.get(body.blockId()), active);
+                        }
+                    }
                 } catch (RuntimeException e) {
                     break;
                 }
-                InputSlot body = input(block, "body");
-                if (body != null && blocks.containsKey(body.blockId())) {
-                    for (int i = 0; i < count; i++) {
-                        executeBlock(blocks.get(body.blockId()), active);
-                    }
-                }
+
             }
             case "if" -> {
                 InputSlot body = input(block, "body");
@@ -188,6 +206,13 @@ public final class AntScriptInterpreter {
                 } else if (!condition && body_else != null && blocks.containsKey(body_else.blockId())) {
                     executeBlock(blocks.get(body_else.blockId()), active);
                 }
+            }
+            case "set_variable" -> {
+                String name = inputNumber(block,"name","0",blocks);
+                if(name.isEmpty()){
+                    break;
+                }
+                blackboard.setVariable(name, inputNumber(block,"value","0",blocks));
             }
             default -> {}
         }
@@ -219,9 +244,9 @@ public final class AntScriptInterpreter {
 
     private String reporterModule(BrainBlock block, Map<UUID, BrainBlock> blocks, Set<UUID> active) {
         // 防止循环引用，如果当前block已经被计算，直接返回0，避免无限递归
-        if (!active.add(block.id())) {
-            return "0";
-        }
+//        if (!active.add(block.id())) {
+//            return "0";
+//        }
         switch (block.opcode()) {
             case "add" -> {
                 try {
@@ -361,6 +386,50 @@ public final class AntScriptInterpreter {
                     return "";
                 }
             }
+            case "x" -> {
+                return blackboard.getX();
+            }
+            case "y" -> {
+                return blackboard.getY();
+            }
+            case "z" -> {
+                return blackboard.getZ();
+            }
+            case "pos" -> {
+                return blackboard.getPos();
+            }
+            case "get_item_in_inventory" -> {
+                try {
+                    double slot = Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
+                    return blackboard.getItemInInventory(slot);
+                }
+                catch (RuntimeException e){
+                    return "";
+                }
+            }
+            case "time" -> {
+                return blackboard.getTime();
+            }
+            case "last_hurt_by_entity" -> {
+                return blackboard.getLastHurtByEntity();
+            }
+            case "find_block" -> {
+                String selectedBlock = inputNumber(block,"block","0",blocks,active);
+                return blackboard.findBlock(selectedBlock);
+            }
+            case "find_entity" -> {
+                String selectedEntity = inputNumber(block,"entity","0",blocks,active);
+                return blackboard.findEntity(selectedEntity);
+            }
+            case "find_block_entity" -> {
+                String selectedBlockEntity = inputNumber(block,"block_entity","0",blocks,active);
+                return blackboard.findBlockEntity(selectedBlockEntity);
+            }
+
+            // variables
+            case "get_variable" -> {
+                return blackboard.getVariable(inputNumber(block,"name","0",blocks,active));
+            }
         }
     }
 
@@ -384,9 +453,9 @@ public final class AntScriptInterpreter {
     }
 
     private boolean booleanModule(BrainBlock block, Map<UUID, BrainBlock> blocks, Set<UUID> active) {
-        if (!active.add(block.id())) {
-            return false;
-        }
+//        if (!active.add(block.id())) {
+//            return false;
+//        }
         switch (block.opcode()) {
             case "greater_than" -> {
                 String a = inputNumber(block, "a", "0", blocks, active);
@@ -438,12 +507,32 @@ public final class AntScriptInterpreter {
                 boolean b = inputBoolean(block, "condition_b", false, blocks, active);
                 return a || b;
             }
+            case "true" -> {
+                return true;
+            }
+            case "false" -> {
+                return false;
+            }
 
             // sense
             case "has_item_in_inventory" -> {
                 String item = inputNumber(block, "item", "0", blocks, active);
                 return blackboard.hasItemInInventory(item);
             }
+            case "is_hurt" -> {
+                return blackboard.isHurt();
+            }
+            case "is_on_fire" -> {
+                return blackboard.isOnFire();
+            }
+            case "is_in_water" -> {
+                return blackboard.isInWater();
+            }
+            case "is_under_water" -> {
+                return blackboard.isUnderWater();
+            }
+
+
             default -> {
                 return false;
             }

@@ -104,5 +104,7 @@
   "opcode.littleant.ant_brain.max": "max",
   "opcode.littleant.ant_brain.slot": "slot",
   "opcode.littleant.ant_brain.value": "value",
-  "opcode.littleant.ant_brain.amount": "amount"
+  "opcode.littleant.ant_brain.amount": "amount",
+  "opcode.littleant.ant_brain.pos": "pos",
+  "opcode.littleant.ant_brain.get_variable": "get variable"
 }

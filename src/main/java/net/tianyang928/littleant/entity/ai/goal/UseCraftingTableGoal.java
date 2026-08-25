@@ -41,7 +41,7 @@ public class UseCraftingTableGoal extends Goal {
         this.input = null;
         this.craftingTablePos = null;
         this.path = null;
-        this.ant.getNavigation().stop();
+        //this.ant.getNavigation().stop();
         this.amountCrafted = 0;
     }
 
@@ -63,7 +63,7 @@ public class UseCraftingTableGoal extends Goal {
         if (isCraftingTableReachable()) {
             return true;
         }
-        this.path = this.ant.getNavigation().createPath(this.craftingTablePos, 4);
+        this.path = this.ant.getNavigation().createPath(this.craftingTablePos, 2,64);
         return this.path != null && !this.path.isDone();
     }
 
@@ -90,7 +90,7 @@ public class UseCraftingTableGoal extends Goal {
         this.ant.getLookControl().setLookAt(this.craftingTablePos.getX() + 0.5D, this.craftingTablePos.getY() + 0.5D, this.craftingTablePos.getZ() + 0.5D);
         if (!isCraftingTableReachable()) {
             if (this.ant.getNavigation().isDone()) {
-                this.path = this.ant.getNavigation().createPath(this.craftingTablePos, 1);
+                this.path = this.ant.getNavigation().createPath(this.craftingTablePos, 2,64);
                 if (this.path != null) this.ant.getNavigation().moveTo(this.path, 1.0D);
             }
             return;

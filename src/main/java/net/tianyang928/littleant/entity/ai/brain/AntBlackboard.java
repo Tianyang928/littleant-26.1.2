@@ -3,22 +3,74 @@ package net.tianyang928.littleant.entity.ai.brain;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
+import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /** Shared, tick-local and persistent-by-runtime facts used by sense, control and goal modules. */
 public final class AntBlackboard {
     private final AntEntity ant;
 
+    private LinkedHashMap<String, String> variables = new LinkedHashMap<>();
+
     public AntBlackboard(AntEntity antEntity) {
         this.ant = antEntity;
     }
+
+    public void scriptMoveTo(double x, double y, double z) {
+        ant.getNavigation().moveTo(this.ant.getNavigation().createPath(new BlockPos((int)x,(int)y,(int)z), 2,64), 1.0);
+    }
+
+    public void scriptStepForward(double distance) {
+        Node node1 = new Node(ant.getBlockX(),ant.getBlockY(),ant.getBlockZ());
+        Vec3 targetPos = ant.position().add(ant.getLookAngle().scale(distance));
+        Node node2 = new Node(Mth.floor(targetPos.x()),
+                Mth.floor(targetPos.y()),
+                Mth.floor(targetPos.z()));
+        node1.type = PathType.WALKABLE;
+        node2.type = PathType.WALKABLE;
+
+        List<Node> nodes = new ArrayList<>();
+        nodes.add(node1);
+        nodes.add(node2);
+        BlockPos target = new BlockPos(node2.x, node2.y, node2.z);
+        Path manualPath = new Path(nodes, target, true);
+        ant.getNavigation().moveTo(manualPath, 1.0);
+    }
+
+    public void scriptLookAt(double x, double y, double z) {
+        ant.getLookControl().setLookAt(x, y, z);
+    }
+
+    public void scriptRotate(double angle) {
+        ant.setYRot(ant.getYRot()+(float)angle);
+    }
+
+    public void scriptSay(String message) {
+        if (message != null && !message.isBlank()) {
+            //LittleAnt.LOGGER.info("[Ant {}] {}", ant.getUUID(), message.substring(0, Math.min(256, message.length())));
+            Component combinedMessage = Component.literal("[Ant "+ Objects.requireNonNull(ant.getCustomName()).getString()+"] "+message);
+            if (ant.level() instanceof ServerLevel serverLevel) {
+                // 广播给服务器所有玩家
+                serverLevel.getServer().getPlayerList().broadcastSystemMessage(combinedMessage, false);
+            }
+        }
+    }
+
+
+
+    // senses
 
     public String getLastHurtByEntity() {
         return String.valueOf(this.ant.lastHurtBy.getId());
@@ -91,6 +143,33 @@ public final class AntBlackboard {
 
     public String findBlock(String block) {
         BlockPos result = this.ant.setFindBlockTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(block)));
+        if(result == null){
+            return "";
+        }
         return result.getX() + "," + result.getY() + "," + result.getZ();
+    }
+
+    public String findEntity(String entity) {
+        BlockPos result = this.ant.setFindEntityTarget(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(entity)));
+        if(result == null){
+            return "";
+        }
+        return result.getX() + "," + result.getY() + "," + result.getZ();
+    }
+
+    public String findBlockEntity(String blockEntity) {
+        BlockPos result = this.ant.setFindBlockEntityTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(blockEntity)));
+        if(result == null){
+            return "";
+        }
+        return result.getX() + "," + result.getY() + "," + result.getZ();
+    }
+
+    public void setVariable(String name, String value){
+        variables.put(name, value);
+    }
+
+    public String getVariable(String name){
+        return variables.getOrDefault(name, "");
     }
 }

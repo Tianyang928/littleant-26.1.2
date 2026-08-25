@@ -28,7 +28,7 @@ public final class AntGoalScheduler {
 
     public AntGoalScheduler(AntEntity ant) { this.ant = ant; }
 
-    public void submit(UUID startBlock, String name, double priority, EnumSet<Flag> flags, List<String> args,
+    public void submit(UUID startBlock, String name, double priority, EnumSet<Goal.Flag> flags, List<String> args,
                        Map<UUID, BrainBlock> blocks, List<UUID> receiveRoots) {
         //if (!registeredStarts.add(startBlock)) return;
         Task task = createTask(startBlock, name, priority, flags, args, blocks, receiveRoots, sequence++);
@@ -36,9 +36,10 @@ public final class AntGoalScheduler {
         if (task == null) return;
 
         List<Task> conflicts = active.stream().filter(task::conflictsWith).toList();
+        LittleAnt.LOGGER.info("[AntGoalScheduler] submit: submitting {}, now active is {}", name, active);
         if (conflicts.isEmpty()) {
             active.add(task);
-        } else if (conflicts.stream().allMatch(running -> priority > running.priority())) {
+        } else if (conflicts.stream().allMatch(running -> priority < running.priority())) {
             for (Task conflict : conflicts) {
                 conflict.suspend();
                 active.remove(conflict);
@@ -56,7 +57,7 @@ public final class AntGoalScheduler {
             if (task.tick(neoGoalRunner)) {
                 active.remove(task);
                 queue.remove(task);
-                LittleAnt.LOGGER.info("[AntGoalScheduler] Task {} completed and removed from active list.", task);
+                LittleAnt.LOGGER.info("[AntGoalScheduler] tick: Task {} completed and removed from active list.", task);
                 //registeredStarts.remove(task.startBlock());
             }
         }
@@ -72,13 +73,14 @@ public final class AntGoalScheduler {
 
     private void promoteAvailable() {
         List<Task> ordered = queue.stream()
-                .sorted(Comparator.comparingDouble(Task::priority).reversed().thenComparingLong(Task::sequence))
+                .sorted(Comparator.comparingDouble(Task::priority).thenComparingLong(Task::sequence))
                 .toList();
         for (Task candidate : ordered) {
             if (active.stream().noneMatch(candidate::conflictsWith)
                     && noEarlierQueuedConflict(candidate, ordered)) {
                 queue.remove(candidate);
                 active.add(candidate);
+                LittleAnt.LOGGER.info("[AntGoalScheduler] promoteAvailable Task {} add to active.", candidate.priority());
             }
         }
     }
@@ -91,7 +93,7 @@ public final class AntGoalScheduler {
         return true;
     }
 
-    private Task createTask(UUID startBlock, String name, double priority, EnumSet<Flag> flags, List<String> args,
+    private Task createTask(UUID startBlock, String name, double priority, EnumSet<Goal.Flag> flags, List<String> args,
                             Map<UUID, BrainBlock> blocks, List<UUID> roots, long order) {
         switch (name) {
             case "break_block" -> {
@@ -123,7 +125,7 @@ public final class AntGoalScheduler {
         return new CustomTask(startBlock, priority, order, flags, roots);
     }
 
-    public enum Flag { MOVE, LOOK, JUMP }
+    //public enum Flag { MOVE, LOOK, JUMP }
 
     public interface NeoGoalRunner { boolean run(List<UUID> receiveRoots); }
 
@@ -131,7 +133,7 @@ public final class AntGoalScheduler {
         UUID startBlock();
         double priority();
         long sequence();
-        EnumSet<Flag> flags();
+        EnumSet<Goal.Flag> flags();
         boolean tick(NeoGoalRunner neoGoalRunner);
         default void suspend() {}
         default boolean conflictsWith(Task other) {
@@ -140,14 +142,24 @@ public final class AntGoalScheduler {
     }
 
     private final class VanillaTask implements Task {
-        private final UUID startBlock; private final double priority; private final long sequence; private final EnumSet<Flag> flags; private final Goal goal; private boolean started; private int attempts;
-        VanillaTask(UUID startBlock, double priority, long sequence, EnumSet<Flag> flags, Goal goal) { this.startBlock = startBlock; this.priority = priority; this.sequence = sequence; this.flags = EnumSet.copyOf(flags); this.goal = goal; }
+        private final UUID startBlock; private final double priority; private final long sequence; private final EnumSet<Goal.Flag> flags; private final Goal goal; private boolean started; private int attempts;
+        VanillaTask(UUID startBlock, double priority, long sequence, EnumSet<Goal.Flag> flags, Goal goal) { this.startBlock = startBlock; this.priority = priority; this.sequence = sequence; this.flags = EnumSet.copyOf(flags); this.goal = goal; }
         public UUID startBlock() { return startBlock; }
         public double priority() { return priority; } public long sequence() { return sequence; }
-        public EnumSet<Flag> flags() { return flags; }
+        public EnumSet<Goal.Flag> flags() { return flags; }
         public boolean tick(NeoGoalRunner ignored) {
             if (!started) {
-                if (!goal.canUse()) return ++attempts > 40;
+                if(goal.getFlags().contains(Goal.Flag.MOVE) && ant.isPathFinding()){
+                    if(ant.level().getGameTime()%40 == 0){
+                        LittleAnt.LOGGER.info("[AntGoalScheduler] goal {} can't execute, ant is path finding {}", goal.getClass(),ant.isPathFinding());
+                    }
+                    return false;
+                }
+                if (!goal.canUse()) {
+                    //如果超过轮到他运行但是两秒内都不符合条件，那就删掉这个goal
+                    return ++attempts > 40;
+                }
+                attempts = 0;
                 //goal.start();
                 ant.goalSelector.addGoal((int)priority, goal);
                 started = true;
@@ -155,7 +167,10 @@ public final class AntGoalScheduler {
             //goal.tick();
             if (!goal.canContinueToUse()) {
                 //goal.stop();
-                return true;
+                if(++attempts > 40) {
+                    ant.goalSelector.removeGoal(goal);
+                    return true;
+                }
             }
             return false;
         }
@@ -166,15 +181,16 @@ public final class AntGoalScheduler {
         private final UUID startBlock;
         private final double priority;
         private final long sequence;
-        private final EnumSet<Flag> flags;
+        private final EnumSet<Goal.Flag> flags;
         private final List<UUID> roots;
 
-        CustomTask(UUID startBlock, double priority, long sequence, EnumSet<Flag> flags, List<UUID> roots) {
+        CustomTask(UUID startBlock, double priority, long sequence, EnumSet<Goal.Flag> flags, List<UUID> roots) {
             this.startBlock = startBlock;
             this.priority = priority;
             this.sequence = sequence;
             this.flags = EnumSet.copyOf(flags);
             this.roots = List.copyOf(roots);
+            LittleAnt.LOGGER.info("[AntGoalScheduler] custom task: create new");
         }
 
         public UUID startBlock() {
@@ -189,7 +205,7 @@ public final class AntGoalScheduler {
             return sequence;
         }
 
-        public EnumSet<Flag> flags() {
+        public EnumSet<Goal.Flag> flags() {
             return flags;
         }
 

@@ -35,7 +35,7 @@ public class FindBlockEntity {
         return this.hasTarget && this.blockEntityToFind != null;
     }
 
-    public void setTarget(Block blockEntityToFind) {
+    public BlockPos setTarget(Block blockEntityToFind) {
         this.blockEntityToFind = blockEntityToFind;
         this.resultBlockPos = null;
         this.hasTarget = true;
@@ -43,6 +43,7 @@ public class FindBlockEntity {
         if(canUse()){
             start();
         }
+        return resultBlockPos;
     }
 
     public void clearTarget() {
@@ -101,5 +102,6 @@ public class FindBlockEntity {
         }
         this.resultBlockPos = null;
         LittleAnt.LOGGER.info("[FindBlockEntity] 未找到目标");
+        clearTarget();
     }
 }

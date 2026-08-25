@@ -199,38 +199,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         this.brainBlocks.putAll(blocks);
     }
 
-    public void scriptMoveTo(double x, double y, double z) {
-        getNavigation().moveTo(x, y, z, 1.0);
-    }
 
-    public void scriptStepForward(double distance) {
-        Node node1 = new Node(this.getBlockX(),this.getBlockY(),this.getBlockZ());
-        Vec3 targetPos = this.position().add(getLookAngle().scale(distance));
-        Node node2 = new Node(Mth.floor(targetPos.x()),
-                                Mth.floor(targetPos.y()),
-                                Mth.floor(targetPos.z()));
-        node1.type = PathType.WALKABLE;
-        node2.type = PathType.WALKABLE;
-
-        List<Node> nodes = new ArrayList<>();
-        nodes.add(node1);
-        nodes.add(node2);
-        BlockPos target = new BlockPos(node2.x, node2.y, node2.z);
-        Path manualPath = new Path(nodes, target, true);
-        this.getNavigation().moveTo(manualPath, 1.0);
-    }
-
-    public void scriptLookAt(double x, double y, double z) {
-        this.getLookControl().setLookAt(x, y, z);
-    }
-
-    public void scriptRotate(double angle) {
-        this.setYRot((float)angle);
-    }
-
-    public void scriptSay(String message) {
-        if (message != null && !message.isBlank()) LittleAnt.LOGGER.info("[Ant {}] {}", getUUID(), message.substring(0, Math.min(256, message.length())));
-    }
 
     public void clearActiveGoals() {
         if (breakBlockGoal != null) breakBlockGoal.clearTarget();
@@ -267,7 +236,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
+                .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.10D)
                 .add(Attributes.MINING_EFFICIENCY, 0.0D);
@@ -346,15 +315,17 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         }
     }
 
-    public void setFindBlockEntityTarget(Block blockEntity) {
-        if(this.findBlockEntity != null){
-            this.findBlockEntity.setTarget(blockEntity);
+    public BlockPos setFindBlockEntityTarget(Block blockEntity) {
+        if(this.findBlockEntity != null && blockEntity.defaultBlockState().hasBlockEntity()){
+            return this.findBlockEntity.setTarget(blockEntity);
         }
+        return null;
     }
-    public void setFindEntityTarget(EntityType<?> entityType) {
+    public BlockPos setFindEntityTarget(EntityType<?> entityType) {
         if(this.findEntity != null){
-            this.findEntity.setTarget(entityType);
+            return this.findEntity.setTarget(entityType);
         }
+        return null;
     }
 
     @Override

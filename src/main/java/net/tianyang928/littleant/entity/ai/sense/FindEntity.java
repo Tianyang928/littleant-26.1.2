@@ -1,5 +1,6 @@
 package net.tianyang928.littleant.entity.ai.sense;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
@@ -29,7 +30,7 @@ public class FindEntity {
         return this.hasTarget && this.entityToFind != null;
     }
 
-    public void setTarget(EntityType<?> entityToFind) {
+    public BlockPos setTarget(EntityType<?> entityToFind) {
         this.entityToFind = entityToFind;
         this.resultEntity = null;
         this.hasTarget = true;
@@ -37,6 +38,7 @@ public class FindEntity {
         if(canUse()){
             start();
         }
+        return resultEntity.blockPosition();
     }
 
     public void clearTarget() {
@@ -72,5 +74,7 @@ public class FindEntity {
         }
         this.resultEntity = null;
         LittleAnt.LOGGER.info("[FindEntity] 未找到目标");
+        clearTarget();
     }
+
 }

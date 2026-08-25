@@ -79,6 +79,7 @@ public final class ModuleRegistry {
         add("x","sense", BlockShape.REPORTER, List.of(),List.of("x"));
         add("y","sense", BlockShape.REPORTER, List.of(),List.of("y"));
         add("z","sense", BlockShape.REPORTER, List.of(),List.of("z"));
+        add("pos","sense", BlockShape.REPORTER, List.of(),List.of("pos"));
         add("distance_to_xyz", "sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("distance_to_xyz","x","()","y","()","z","()"));
         add("distance_to_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("distance_to_blockpos","()"));
         add("get_block_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_block_xyz","x","()","y","()","z","()"));
@@ -101,7 +102,8 @@ public final class ModuleRegistry {
         add("get_item_in_container", "sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","slot","()"));
 
         // variables
-        add("set_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "value"), new InputDefinition("value", ValueType.ANY, "0")),List.of("set_variable","()","value","()"));
+        add("set_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("value", ValueType.NUMBER, "0")),List.of("set_variable","()","value","()"));
+        add("get_variable", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("get_variable","()"));
     }
 
     private static List<InputDefinition> numbers(String a, String b) {
