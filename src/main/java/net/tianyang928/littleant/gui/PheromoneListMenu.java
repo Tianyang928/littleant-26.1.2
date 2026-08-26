@@ -3,19 +3,18 @@ package net.tianyang928.littleant.gui;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.*;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
-import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 
 import java.util.LinkedHashMap;
 
 public class PheromoneListMenu extends AbstractContainerMenu  {
-    private final LinkedHashMap<Integer, Integer> pheromoneMap;
-    ContainerLevelAccess access;
-    PheromoneBlockEntity pheromoneBlockEntity;
-    ContainerData containerData;
+    private final LinkedHashMap<String, Integer> pheromoneMap;
+    private final ContainerLevelAccess access;
+    private final PheromoneBlockEntity pheromoneBlockEntity;
 
     // 客户端构造器
     public PheromoneListMenu(
@@ -24,24 +23,22 @@ public class PheromoneListMenu extends AbstractContainerMenu  {
             RegistryFriendlyByteBuf data
     ) {
         super(ModMenus.PHEROMONE_LIST_MENU.get(), containerId);
-        // deserialize hash
-        LinkedHashMap<Integer, Integer> pheromoneMap_tmp = new LinkedHashMap<>();
-        if(data != null){
-            int index = 0;
-            while(index < data.capacity()){
-                int id = data.readInt();
-                int amount = data.readInt();
-                pheromoneMap_tmp.put(id, amount);
-                index += 8;
-                LittleAnt.LOGGER.info("[PheromoneListMenu] client:read: {} {}", id, amount);
+        LinkedHashMap<String, Integer> pheromoneMap_tmp = new LinkedHashMap<>();
+        if (data != null) {
+            int count = data.readVarInt();
+            if (count < 0 || count > 256) {
+                throw new IllegalArgumentException("Invalid pheromone entry count: " + count);
             }
-            LittleAnt.LOGGER.info("[PheromoneListMenu] client:read map: {}", pheromoneMap_tmp);
+            for (int i = 0; i < count; i++) {
+                String id = data.readUtf(64);
+                int amount = data.readVarInt();
+                pheromoneMap_tmp.put(id, amount);
+            }
         }
 
         this.access = ContainerLevelAccess.NULL;
         this.pheromoneMap = pheromoneMap_tmp;
-        this.containerData = new SimpleContainerData(2);
-        this.addDataSlots(containerData);
+        this.pheromoneBlockEntity = null;
     }
 
     // 服务端构造器
@@ -57,9 +54,6 @@ public class PheromoneListMenu extends AbstractContainerMenu  {
                                 blockEntity.getBlockPos()
                         );
 
-        this.containerData = blockEntity;
-        checkContainerDataCount(containerData, 2);
-        this.addDataSlots(containerData);
         this.pheromoneBlockEntity = blockEntity;
     }
 
@@ -82,32 +76,37 @@ public class PheromoneListMenu extends AbstractContainerMenu  {
         super.removed(player);
     }
 
-    public LinkedHashMap<Integer, Integer> getPheromoneList() {
+    public LinkedHashMap<String, Integer> getPheromoneList() {
         return this.pheromoneMap;
     }
 
-    // called in server side
-    public void addNewPheromone(int id, int amount){
-        if(amount < 0){
-            return;
-        }
-        this.pheromoneMap.put(id, amount);
-        this.pheromoneBlockEntity.set(0, id);
-        this.pheromoneBlockEntity.set(1, amount);
-        broadcastChanges();
-        LittleAnt.LOGGER.info("[PheromoneListMenu] server:addNewPheromone: {} {}", id, amount);
-        LittleAnt.LOGGER.info("[PheromoneListMenu] server:pheromoneMap: {}", this.pheromoneMap);
+    /** Returns whether this server menu displays the supplied block entity. */
+    public boolean isViewing(PheromoneBlockEntity blockEntity) {
+        return this.pheromoneBlockEntity == blockEntity;
     }
 
-    // called in server side
-    public void updatePheromoneList(){
-        int id = this.containerData.get(0);
-        int amount = this.containerData.get(1);
-        if(id == -1 || amount == -1){
+    public PheromoneBlockEntity getPheromoneBlockEntity() {
+        return this.pheromoneBlockEntity;
+    }
+
+    /** Applies a server-authoritative edit. */
+    public boolean setPheromone(String id, int amount) {
+        if (id.isBlank() || id.length() > 64 || amount < 0 || this.pheromoneBlockEntity == null) {
+            return false;
+        }
+        if (this.pheromoneMap.size() >= 256 && !this.pheromoneMap.containsKey(id)) {
+            return false;
+        }
+        this.pheromoneMap.put(id, amount);
+        this.pheromoneBlockEntity.setChanged();
+        return true;
+    }
+
+    /** Applies an update received from the server on the client menu. */
+    public void updatePheromone(String id, int amount) {
+        if (id.isBlank() || amount < 0) {
             return;
         }
         this.pheromoneMap.put(id, amount);
-//        LittleAnt.LOGGER.info("[PheromoneListMenu] client:updatePheromoneList: {} {}", id, amount);
-//        LittleAnt.LOGGER.info("[PheromoneListMenu] client:pheromoneMap: {}", this.pheromoneMap);
     }
 }

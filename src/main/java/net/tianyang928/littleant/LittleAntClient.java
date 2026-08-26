@@ -9,6 +9,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.tianyang928.littleant.entity.ModEntities;
@@ -17,6 +18,7 @@ import net.tianyang928.littleant.gui.screen.PheromoneListScreen;
 import net.tianyang928.littleant.client.renderer.AntRenderer;
 import net.tianyang928.littleant.gui.screen.AntInventoryScreen;
 import net.tianyang928.littleant.gui.screen.AntBrainProgramScreen;
+import net.tianyang928.littleant.network.SyncPheromonePayload;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = LittleAnt.MOD_ID, dist = Dist.CLIENT)
@@ -54,6 +56,13 @@ public class LittleAntClient {
                 AntBrainProgramScreen::new
         );
     }
+
+    @SubscribeEvent
+    static void registerClientPayloadHandlers(RegisterClientPayloadHandlersEvent event) {
+        event.register(SyncPheromonePayload.TYPE, SyncPheromonePayload::handlePheromoneSync);
+    }
+
+
 
     @SubscribeEvent
     static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {

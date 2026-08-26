@@ -1,5 +1,6 @@
 package net.tianyang928.littleant.gui.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -8,6 +9,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
@@ -45,7 +47,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
         this.inventoryLabelY = 500;
     }
 
-    private void sendChangePheromoneData(int pheromoneId, int pheromoneAmount) {
+    private void sendChangePheromoneData(String pheromoneId, int pheromoneAmount) {
         ClientPacketDistributor.sendToServer(
                 new SetPheromonePayload(
                         this.menu.containerId,
@@ -59,10 +61,8 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
 
     // send id and amount to add new pheromone
     private void sendNewPheromoneData() {
-        int id;
-        try {
-            id = Integer.parseInt(this.pheromoneLineEdit[0].getValue());//id
-        } catch (NumberFormatException exception) {
+        String id = this.pheromoneLineEdit[0].getValue().trim();
+        if (id.isEmpty()) {
             return;
         }
 
@@ -99,7 +99,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
                 if (button instanceof PheromoneButton) {
                     //this.selectedItem = (((PheromoneButton)button).getIndex() - 6 + this.scrollOff)*2;
                     int index = ((PheromoneButton)button).getIndex();
-                    int pheromoneId = this.pheromoneTextWidget[index-7].pheromoneId;
+                    String pheromoneId = this.pheromoneTextWidget[index-7].pheromoneId;
                     int pheromoneAmount = this.pheromoneTextWidget[index-7].pheromoneAmount;
                     pheromoneAmount++;
                     this.sendChangePheromoneData(pheromoneId, pheromoneAmount);
@@ -110,7 +110,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
                 if (button instanceof PheromoneButton) {
                     //this.selectedItem = (((PheromoneButton)button).getIndex() - 12 + this.scrollOff)*3;
                     int index = ((PheromoneButton)button).getIndex();
-                    int pheromoneId = this.pheromoneTextWidget[index-13].pheromoneId;
+                    String pheromoneId = this.pheromoneTextWidget[index-13].pheromoneId;
                     int pheromoneAmount = this.pheromoneTextWidget[index-13].pheromoneAmount;
                     pheromoneAmount--;
                     this.sendChangePheromoneData(pheromoneId, pheromoneAmount);
@@ -132,8 +132,8 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
         this.pheromoneLineEdit[0].setTooltip(
                 Tooltip.create(Component.translatable("gui.littleant.pheromone_id_hint"))
         );
-        this.pheromoneLineEdit[0].setFilter(v -> v.isEmpty() || v.matches("\\d+"));
-        this.pheromoneLineEdit[0].setMaxLength(8);
+        this.pheromoneLineEdit[0].setFilter(v -> v.isEmpty() || v.matches("^[a-zA-Z0-9_]+$"));
+        this.pheromoneLineEdit[0].setMaxLength(64);
         this.pheromoneLineEdit[1] = this.addRenderableWidget(new PheromoneLineEdit(this.font, xo + 5 +61, buttonY, 60, 20, 1, Component.translatable("gui.littleant.pheromone_amount")));
         this.pheromoneLineEdit[1].setTooltip(
                 Tooltip.create(Component.translatable("gui.littleant.pheromone_amount_hint"))
@@ -150,7 +150,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
         graphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_LOCATION, xo, yo, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 512, 256);
     }
 
-    private void extractScroller(GuiGraphicsExtractor graphics, int xo, int yo, int mouseX, int mouseY, LinkedHashMap<Integer, Integer> pheromones) {
+    private void extractScroller(GuiGraphicsExtractor graphics, int xo, int yo, int mouseX, int mouseY, LinkedHashMap<String, Integer> pheromones) {
         int steps = pheromones.size() + 1 - 6;
         if (steps > 1) {
             int leftOver = 139 - (27 + (steps - 1) * 139 / steps);
@@ -183,10 +183,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
     @Override
     public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         super.extractContents(graphics, mouseX, mouseY, a);
-        // update the pheromone list
-        this.menu.updatePheromoneList();
-
-        LinkedHashMap<Integer, Integer> pheromones = this.menu.getPheromoneList();
+        LinkedHashMap<String, Integer> pheromones = this.menu.getPheromoneList();
         int xo = (this.width - this.imageWidth) / 2;
         int yo = (this.height - this.imageHeight) / 2;
         int pheromoneY = yo + 16 + 1;
@@ -196,7 +193,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
             int currentPheromoneIndex = 0;
             int textButtonIndex = 0;
 
-            for (Integer pheromone : pheromones.keySet()) {
+            for (String pheromone : pheromones.keySet()) {
                 if (!this.canScroll(pheromones.size()) || currentPheromoneIndex >= this.scrollOff && currentPheromoneIndex < 6 + this.scrollOff) {
                     int decorHeight = pheromoneY + 1;
 
@@ -321,7 +318,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
 
     private class PheromoneStringWidget extends StringWidget {
         final int index;
-        int pheromoneId;
+        String pheromoneId = "";
         int pheromoneAmount;
 
         public PheromoneStringWidget(Font font, int x, int y, int width, int height, int index, Component message) {
@@ -332,5 +329,15 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
         public int getIndex() {
             return this.index;
         }
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent e) {
+        if (getFocused() instanceof EditBox editBox
+                && editBox.isFocused()
+                && minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(e))) {
+            return true;
+        }
+        return super.keyPressed(e);
     }
 }

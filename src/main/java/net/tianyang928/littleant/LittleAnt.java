@@ -26,6 +26,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
 import net.tianyang928.littleant.network.RunAntScriptPayload;
 import net.tianyang928.littleant.network.SetPheromonePayload;
+import net.tianyang928.littleant.network.SyncPheromonePayload;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -69,6 +70,7 @@ public class LittleAnt {
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
         registrar.playToServer(SetPheromonePayload.TYPE, SetPheromonePayload.STREAM_CODEC, SetPheromonePayload::handlePacketFromClient);
+        registrar.playToClient(SyncPheromonePayload.TYPE, SyncPheromonePayload.STREAM_CODEC);
         registrar.playToServer(UpdateAntBrainProgramPayload.TYPE, UpdateAntBrainProgramPayload.STREAM_CODEC,
                 UpdateAntBrainProgramPayload::handlePacketFromClient);
         registrar.playToServer(RunAntScriptPayload.TYPE, RunAntScriptPayload.STREAM_CODEC,

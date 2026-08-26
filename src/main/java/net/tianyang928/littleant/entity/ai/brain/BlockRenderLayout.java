@@ -29,7 +29,7 @@ public record BlockRenderLayout(
     public static final int MIN_COMMAND_HEIGHT = 16;
     public static final int MIN_REPORTER_HEIGHT = 14;
     public static final int EMPTY_BODY_HEIGHT = 28;
-    //public static final int MAX_HEADER_WIDTH = 180;
+    public static final int MAX_HEADER_WIDTH = 188;
 
     public BlockRenderLayout {
         elements = List.copyOf(elements);
@@ -58,19 +58,20 @@ public record BlockRenderLayout(
     public static BlockRenderLayout palette(BlockDefinition definition, TextMeasurer measurer) {
         return build(null, definition, definition.inputs().stream()
                 .map(input -> InputSlot.literal(input.name(), input.type(), input.defaultValue()))
-                .toList(), Map.of(), 0, 0, measurer, new HashSet<>());
+                .toList(), Map.of(), 0, 0, measurer, new HashSet<>(),true);
     }
 
     public static BlockRenderLayout block(BrainBlock block, Map<UUID, BrainBlock> blocks,
                                           int x, int y, TextMeasurer measurer) {
         BlockDefinition definition = ModuleRegistry.get(block.opcode());
         if (definition == null) return null;
-        return build(block.id(), definition, effectiveInputs(block, definition), blocks, x, y, measurer, new HashSet<>());
+        return build(block.id(), definition, effectiveInputs(block, definition), blocks, x, y, measurer, new HashSet<>(),false);
     }
 
     private static BlockRenderLayout build(UUID blockId, BlockDefinition definition, List<InputSlot> inputs,
                                            Map<UUID, BrainBlock> blocks, int x, int y,
-                                           TextMeasurer measurer, Set<UUID> active) {
+                                           TextMeasurer measurer, Set<UUID> active
+                                            , boolean isPalette) {
         if (blockId != null && !active.add(blockId)) return cycleFallback(blockId, definition, x, y);
         Map<String, InputSlot> inputsByName = new HashMap<>();
         for (InputSlot input : inputs) inputsByName.put(input.name(), input);
@@ -104,14 +105,14 @@ public record BlockRenderLayout(
                     BrainBlock nestedBlock = input.blockId() == null ? null : blocks.get(input.blockId());
                     BlockDefinition nestedDefinition = nestedBlock == null ? null : ModuleRegistry.get(nestedBlock.opcode());
                     BlockRenderLayout nested = nestedDefinition == null ? null : build(nestedBlock.id(), nestedDefinition,
-                            effectiveInputs(nestedBlock, nestedDefinition), blocks, 0, 0, measurer, active);
+                            effectiveInputs(nestedBlock, nestedDefinition), blocks, 0, 0, measurer, active, false);
                     Component value = Component.literal(input.value() == null ? "" : input.value());
                     int elementWidth = nested == null ? Math.max(20, measurer.width(value) + 6) : nested.width();
                     // Reserve the full line box for nested inputs. The nested
                     // block is drawn inside this slot and vertically centered
                     // by the screen renderer.
                     int elementHeight = nested == null ? 12 : Math.max(nested.height(), lineHeight);
-                    int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth);
+                    int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth, false);
                     cursorX = position[0]; cursorY = position[1]; lineHeight = position[2];
                     elements.add(new Element(ElementKind.INPUT, input.name(), input.type(), value,
                             cursorX, cursorY, elementWidth, elementHeight, nested));
@@ -140,7 +141,7 @@ public record BlockRenderLayout(
 
             Component text = Component.translatable(token);
             int elementWidth = measurer.width(text);
-            int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth);
+            int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth, isPalette);
             cursorX = position[0]; cursorY = position[1]; lineHeight = position[2];
             elements.add(new Element(ElementKind.LABEL, null, null, text,
                     cursorX, cursorY + 5, elementWidth, 9, null));
@@ -176,10 +177,10 @@ public record BlockRenderLayout(
                 headerHeight, elements, bodies);
     }
 
-    private static int[] wrap(int cursorX, int cursorY, int lineHeight, int elementWidth) {
-//        if (cursorX > PADDING && cursorX + elementWidth + PADDING > MAX_HEADER_WIDTH) {
-//            return new int[]{PADDING, cursorY + lineHeight + GAP, 0};
-//        }
+    private static int[] wrap(int cursorX, int cursorY, int lineHeight, int elementWidth, boolean isPalette) {
+        if (cursorX > PADDING && cursorX + elementWidth + PADDING > MAX_HEADER_WIDTH && isPalette) {
+            return new int[]{PADDING, cursorY + lineHeight + GAP, 0};
+        }
         return new int[]{cursorX, cursorY, lineHeight};
     }
 
@@ -197,7 +198,7 @@ public record BlockRenderLayout(
             BlockDefinition childDefinition = ModuleRegistry.get(child.opcode());
             if (childDefinition == null) break;
             BlockRenderLayout layout = build(child.id(), childDefinition,
-                    effectiveInputs(child, childDefinition), blocks, x, currentY, measurer, active);
+                    effectiveInputs(child, childDefinition), blocks, x, currentY, measurer, active, false);
             layouts.add(layout);
             width = Math.max(width, layout.width());
             currentY += layout.height();

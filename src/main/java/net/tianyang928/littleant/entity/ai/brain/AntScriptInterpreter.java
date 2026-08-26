@@ -180,7 +180,7 @@ public final class AntScriptInterpreter {
                 try {
                     int count = Math.max(0, (int) Double.parseDouble(inputNumber(block, "count", "0", blocks)));
                     InputSlot body = input(block, "body");
-                    if (body != null && blocks.containsKey(body.blockId())) {
+                    if (body != null && body.blockId() != null && blocks.containsKey(body.blockId())) {
                         for (int i = 0; i < count; i++) {
                             executeBlock(blocks.get(body.blockId()), active);
                         }
@@ -205,6 +205,19 @@ public final class AntScriptInterpreter {
                     executeBlock(blocks.get(body_if.blockId()), active);
                 } else if (!condition && body_else != null && blocks.containsKey(body_else.blockId())) {
                     executeBlock(blocks.get(body_else.blockId()), active);
+                }
+            }
+            case "while" -> {
+                InputSlot body = input(block, "body");
+                int repeatTimes = 0;
+                while (inputBoolean(block, "condition", false, blocks)) {
+                    if (body != null && body.blockId() != null && blocks.containsKey(body.blockId())) {
+                        executeBlock(blocks.get(body.blockId()), active);
+                    }
+                    repeatTimes++;
+                    if(repeatTimes > 1000){
+                        break;
+                    }
                 }
             }
             case "set_variable" -> {

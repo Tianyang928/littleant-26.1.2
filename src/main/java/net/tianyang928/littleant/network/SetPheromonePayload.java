@@ -6,13 +6,15 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.gui.PheromoneListMenu;
 
 public record SetPheromonePayload(
         int containerId,
-        int id,
+        String id,
         int amount
 ) implements CustomPacketPayload {
 
@@ -27,7 +29,7 @@ public record SetPheromonePayload(
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT,
                     SetPheromonePayload::containerId,
-                    ByteBufCodecs.VAR_INT,
+                    ByteBufCodecs.stringUtf8(64),
                     SetPheromonePayload::id,
                     ByteBufCodecs.VAR_INT,
                     SetPheromonePayload::amount,
@@ -58,11 +60,22 @@ public record SetPheromonePayload(
             return;
         }
 
-        int id = payload.id();
+        String id = payload.id();
         int amount = payload.amount();
 
-        // 增加新的pheromone到map
-        menu.addNewPheromone(id, amount);
+        if (!menu.setPheromone(id, amount)) {
+            return;
+        }
+        ServerPlayer serverPlayer = (ServerPlayer) player;
+        for (ServerPlayer viewer : serverPlayer.level().players()) {
+            if (viewer.containerMenu instanceof PheromoneListMenu viewerMenu
+                    && viewerMenu.isViewing(menu.getPheromoneBlockEntity())) {
+                PacketDistributor.sendToPlayer(
+                        viewer,
+                        new SyncPheromonePayload(viewerMenu.containerId, id, amount)
+                );
+            }
+        }
         LittleAnt.LOGGER.info("[SetPheromonePayload] handle: {} {}", id, amount);
     }
 }

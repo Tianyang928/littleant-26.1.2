@@ -1,5 +1,6 @@
 package net.tianyang928.littleant.gui.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
@@ -85,10 +86,11 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private void rebuildLayouts() {
         paletteEntries.clear();
         if (!CATEGORIES.isEmpty()) {
+            int yOffset = 8;
             int y = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT - paletteScroll;
             for (BlockDefinition d : MODULES_BY_CATEGORY.getOrDefault(currentCategory(), List.of())) {
                 BlockRenderLayout l = BlockRenderLayout.palette(d, this::textWidth);
-                paletteEntries.add(new PaletteEntry(d, SIDEBAR_WIDTH + 8, y, l));
+                paletteEntries.add(new PaletteEntry(d, SIDEBAR_WIDTH + 8, y + yOffset, l));
                 y += l.height() + LIST_GAP;
             }
         }
@@ -426,8 +428,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         // not close this menu before the character event arrives.
         if (getFocused() instanceof EditBox editBox
                 && editBox.isFocused()
-                && minecraft.options.keyInventory.isActiveAndMatches(
-                        com.mojang.blaze3d.platform.InputConstants.getKey(e))) {
+                && minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(e))) {
             return true;
         }
         return super.keyPressed(e);
@@ -651,15 +652,16 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             }
             ValueType type = l.definition().inputs().get(inputIndex).type();
             inputIndex++;
-            if(type == ValueType.BOOLEAN){
-                continue;
-            }
+
             int ex = lx + e.x(), ey = ly + e.y();
             if (e.nested() != null) {
                 int nestedY = ey + Math.max(0, (e.height() - e.nested().height()) / 2);
                 collectInputBoxes(e.nested(), ex - e.nested().x(), nestedY - e.nested().y(), visible);
             }
             else if (l.blockId() != null) {
+                if(type == ValueType.BOOLEAN){
+                    continue;
+                }
                 InputKey key = new InputKey(l.blockId(), e.inputName());
                 visible.add(key);
                 ScalableEditBox box = inputBoxes.get(key);
