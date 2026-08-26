@@ -70,7 +70,7 @@ public class UseCraftingTableGoal extends Goal {
     @Override
     public void start() {
         if (!isCraftingTableReachable() && this.path != null) {
-            this.ant.getNavigation().moveTo(this.path, 1.0D);
+            this.ant.getNavigation().moveTo(this.path, this.ant.speedModifier);
         }
     }
 
@@ -91,7 +91,7 @@ public class UseCraftingTableGoal extends Goal {
         if (!isCraftingTableReachable()) {
             if (this.ant.getNavigation().isDone()) {
                 this.path = this.ant.getNavigation().createPath(this.craftingTablePos, 2,64);
-                if (this.path != null) this.ant.getNavigation().moveTo(this.path, 1.0D);
+                if (this.path != null) this.ant.getNavigation().moveTo(this.path, this.ant.speedModifier);
             }
             return;
         }

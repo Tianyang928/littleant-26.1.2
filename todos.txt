@@ -1,9 +1,10 @@
 - 增加预设的Ant AI，使用Scratch-like模块
-- 增加Ant可以操作的容器（如安vil、 enchanting table、 smoker、 blast furnace等）
+- 增加Ant可以操作的容器（如anvil、 enchanting table、 smoker、 blast furnace等）
 - 改进编程GUI的外观
 - 增加Ant可以使用的载体（如物品、实体等）
 - 增加进化系统，使Ant种群能够随着时间的推移而进化
 - 增加画布上下左右滑动的功能
 - 增加AI模块导出、保存为结构复用以及加载JSON文件的功能
 - 改善吸附判定，比如换成白框而不是直接渲染brainblock
-- 信息素方块修改成id为任意字符串
+- 信息素方块修改成id为任意字符串 √
+- Ant死亡时掉落物品栏以及装备

@@ -17,7 +17,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Inventory;
@@ -31,14 +30,12 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.pathfinder.Node;
-import net.minecraft.world.level.pathfinder.Path;
-import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.*;
@@ -52,7 +49,7 @@ import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class AntEntity extends PathfinderMob implements InventoryCarrier {
+public class AntEntity extends PathfinderMob implements InventoryCarrier, ContainerUser {
 
     public static final int INVENTORY_SIZE = 9;
     private static final int INVENTORY_SLOT_OFFSET = 300;
@@ -68,6 +65,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     private UseCraftingTableGoal useCraftingTableGoal;
     @Nullable
     private UseInventoryCraftingGoal useInventoryCraftingGoal;
+    @Nullable
+    private UseContainerGoal useContainerGoal;
 
     private final FindBlockEntity findBlockEntity = new FindBlockEntity(this, null);
     private final FindEntity findEntity = new FindEntity(this, null);
@@ -85,6 +84,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
     public boolean needAiRestart = false;
 
     public boolean tryGettingDownWater = false;
+    public double speedModifier = 1.0;
 
     public LivingEntity lastHurtBy = null;
     public long lastHurtTime = -1;
@@ -276,6 +276,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         this.goalSelector.addGoal(1, this.useCraftingTableGoal);
         this.useInventoryCraftingGoal = new UseInventoryCraftingGoal(this);
         this.goalSelector.addGoal(1, this.useInventoryCraftingGoal);
+        this.useContainerGoal = new UseContainerGoal(this);
+        this.goalSelector.addGoal(1, this.useContainerGoal);
 
         //this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
         //this.goalSelector.addGoal(2, new BetterFloatGoal(this));
@@ -295,6 +297,20 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         if (this.setBlockGoal != null) {
             this.setBlockGoal.setTarget(target);
         }
+    }
+
+    public void setContainerTarget(BlockPos target, UseContainerGoal.Operation operation, Item item, int slot, int amount) {
+        if (this.useContainerGoal != null) this.useContainerGoal.setRequest(target, operation, item, slot, amount);
+    }
+
+    @Override
+    public boolean hasContainerOpen(ContainerOpenersCounter container, BlockPos blockPos) {
+        return this.useContainerGoal != null && this.useContainerGoal.isContainerOpenAt(blockPos);
+    }
+
+    @Override
+    public double getContainerInteractionRange() {
+        return 4.0D;
     }
     public BlockPos setFindBlockTarget(Block blockToFind) {
         if (this.findBlock != null) {
@@ -321,11 +337,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier {
         }
         return null;
     }
-    public BlockPos setFindEntityTarget(EntityType<?> entityType) {
+    public int setFindEntityTarget(EntityType<?> entityType) {
         if(this.findEntity != null){
             return this.findEntity.setTarget(entityType);
         }
-        return null;
+        return -1;
     }
 
     @Override

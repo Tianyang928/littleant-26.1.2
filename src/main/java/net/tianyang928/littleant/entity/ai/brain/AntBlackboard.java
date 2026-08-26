@@ -1,19 +1,15 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
-import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.*;
@@ -29,7 +25,7 @@ public final class AntBlackboard {
     }
 
     public void scriptMoveTo(double x, double y, double z) {
-        ant.getNavigation().moveTo(this.ant.getNavigation().createPath(new BlockPos((int)x,(int)y,(int)z), 2,64), 1.0);
+        ant.getNavigation().moveTo(this.ant.getNavigation().createPath(new BlockPos((int)x,(int)y,(int)z), 2,64), ant.speedModifier);
     }
 
     public void scriptStepForward(double distance) {
@@ -68,6 +64,9 @@ public final class AntBlackboard {
         }
     }
 
+    public void scriptSetSpeed(double speed) {
+        ant.speedModifier = speed;
+    }
 
 
     // senses
@@ -150,11 +149,11 @@ public final class AntBlackboard {
     }
 
     public String findEntity(String entity) {
-        BlockPos result = this.ant.setFindEntityTarget(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(entity)));
-        if(result == null){
+        int result = this.ant.setFindEntityTarget(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(entity)));
+        if(result == -1){
             return "";
         }
-        return result.getX() + "," + result.getY() + "," + result.getZ();
+        return String.valueOf(result);
     }
 
     public String findBlockEntity(String blockEntity) {
@@ -164,6 +163,12 @@ public final class AntBlackboard {
         }
         return result.getX() + "," + result.getY() + "," + result.getZ();
     }
+
+    public String getSpeed(){
+        return String.valueOf(this.ant.speedModifier);
+    }
+
+    // variables
 
     public void setVariable(String name, String value){
         variables.put(name, value);

@@ -5,6 +5,17 @@ import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
 import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
+import net.tianyang928.littleant.entity.ai.goal.BetterFloatGoal;
+import net.tianyang928.littleant.entity.ai.goal.UseContainerGoal;
+import net.tianyang928.littleant.entity.ai.goal.UseCraftingTableGoal;
+import net.tianyang928.littleant.entity.ai.goal.UseInventoryCraftingGoal;
+import net.tianyang928.littleant.entity.ai.goal.EntityMeleeAttackGoal;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.ArrayDeque;
@@ -117,6 +128,47 @@ public final class AntGoalScheduler {
                 } catch (RuntimeException ignored) {
                     return null;
                 }
+            }
+            case "better_float" -> { return new VanillaTask(startBlock, priority, order, flags, new BetterFloatGoal(ant)); }
+            case "use_inventory_crafting", "use_crafting_table", "use_crafting_table_blockpos" -> {
+                int slots = name.equals("use_crafting_table") ? 9 : 4;
+                int expected = 0;
+                switch (name) {
+                    case "use_crafting_table" -> expected = 1 + slots + 3;
+                    case "use_inventory_crafting" -> expected = 1 + slots;
+                    case "use_crafting_table_blockpos" -> expected = 1 + slots + 1;
+                }
+                if (args.size() != expected) return null;
+                try {
+                    int amount = Integer.parseInt(args.get(0));
+                    int offset = 1;
+                    BlockPos pos = BlockPos.ZERO;
+                    if (name.equals("use_crafting_table")) { pos = new BlockPos((int)Double.parseDouble(args.get(1)), (int)Double.parseDouble(args.get(2)), (int)Double.parseDouble(args.get(3))); offset = 4; }
+                    List<ItemStack> items = new ArrayList<>(slots);
+                    for (int i = 0; i < slots; i++) { var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(offset + i))).orElse(null); if (item == null) return null; items.add(new ItemStack(item)); }
+                    CraftingInput input = CraftingInput.of(name.equals("use_crafting_table") ? 3 : 2, name.equals("use_crafting_table") ? 3 : 2, items);
+                    if (name.equals("use_crafting_table")) { UseCraftingTableGoal goal = new UseCraftingTableGoal(ant); goal.setInput(input, pos, amount); return new VanillaTask(startBlock, priority, order, flags, goal); }
+                    UseInventoryCraftingGoal goal = new UseInventoryCraftingGoal(ant); goal.setInput(input, amount); return new VanillaTask(startBlock, priority, order, flags, goal);
+                } catch (RuntimeException e) { return null; }
+            }
+            case "use_container" -> {
+                if (args.size() != 7) return null;
+                try {
+                    BlockPos pos = new BlockPos((int)Double.parseDouble(args.get(0)), (int)Double.parseDouble(args.get(1)), (int)Double.parseDouble(args.get(2)));
+                    UseContainerGoal.Operation operation = UseContainerGoal.Operation.valueOf(args.get(3).trim().toUpperCase());
+                    var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(4))).orElse(null);
+                    if (item == null) return null;
+                    UseContainerGoal goal = new UseContainerGoal(ant); goal.setRequest(pos, operation, item, Integer.parseInt(args.get(5)), Integer.parseInt(args.get(6)));
+                    return new VanillaTask(startBlock, priority, order, flags, goal);
+                } catch (RuntimeException e) { return null; }
+            }
+            case "melee_attack" -> {
+                if (args.size() != 1) return null;
+                try {
+                    LivingEntity target = ant.level().getEntity(Integer.parseInt(args.get(0))) instanceof LivingEntity living ? living : null;
+                    if (target == null) return null;
+                    return new VanillaTask(startBlock, priority, order, flags, new EntityMeleeAttackGoal(ant, target, true));
+                } catch (RuntimeException e) { return null; }
             }
         }
         if (roots.isEmpty()) {

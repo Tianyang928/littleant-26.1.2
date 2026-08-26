@@ -40,7 +40,7 @@ logoFile="${mod_id}.png" #optional
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Ant is the new mob added in this mod. It's able to break blocks, set blocks, craft things, operate inventories, just like players. And the most important thing is that its AI can be programmed in-game by players.
+Ant is the new ant added in this mod. It's able to break blocks, set blocks, craft things, operate inventories, just like players. And the most important thing is that its AI can be programmed in-game by players.
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.

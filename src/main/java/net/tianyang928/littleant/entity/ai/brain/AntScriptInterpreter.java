@@ -176,6 +176,13 @@ public final class AntScriptInterpreter {
             case "say" -> {
                 blackboard.scriptSay(inputNumber(block, "message", "0", blocks));
             }
+            case "set_speed" -> {
+                try {
+                    blackboard.scriptSetSpeed(Double.parseDouble(inputNumber(block, "speed", "0", blocks)));
+                } catch (RuntimeException e) {
+                    break;
+                }
+            }
             case "repeat" -> {
                 try {
                     int count = Math.max(0, (int) Double.parseDouble(inputNumber(block, "count", "0", blocks)));
@@ -339,11 +346,59 @@ public final class AntScriptInterpreter {
             }
             case "break_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
+                if(blockpos.split(",").length != 3) {
+                    return "";
+                }
                 return "break_block" + "," + blockpos;
             }
             case "set_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
+                if(blockpos.split(",").length != 3) {
+                    return "";
+                }
                 return "set_block" + "," + blockpos;
+            }
+            case "better_float" -> { return "better_float"; }
+            case "use_container_xyz" -> {
+                return String.join(",", "use_container",
+                                    inputNumber(block, "x", "0", blocks, active),
+                                    inputNumber(block, "y", "0", blocks, active),
+                                    inputNumber(block, "z", "0", blocks, active),
+                                    String.valueOf(inputBoolean(block, "put_in", true, blocks, active)),
+                                    inputNumber(block, "item", "minecraft:stone", blocks, active),
+                                    inputNumber(block, "slot", "0", blocks, active),
+                                    inputNumber(block, "amount", "1", blocks, active));
+            }
+            case "use_container_blockpos" -> {
+                String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
+                if(blockpos.split(",").length != 3) {
+                    return "";
+                }
+                return String.join(",", "use_container",
+                        blockpos,
+                        String.valueOf(inputBoolean(block, "put_in", true, blocks, active)),
+                        inputNumber(block, "item", "minecraft:stone", blocks, active),
+                        inputNumber(block, "slot", "0", blocks, active),
+                        inputNumber(block, "amount", "1", blocks, active));
+            }
+            case "melee_attack" -> {
+                return String.join(",", "melee_attack", inputNumber(block, "target", "-1", blocks, active));
+            }
+            case "use_crafting_table_xyz", "use_inventory_crafting", "use_crafting_table_blockpos" -> {
+                StringBuilder result = new StringBuilder(block.opcode()).append(',').append(inputNumber(block, "amount", "1", blocks, active));
+                if (block.opcode().equals("use_crafting_table_xyz")) {
+                    result.append(',').append(inputNumber(block, "x", "0", blocks, active)).append(',').append(inputNumber(block, "y", "0", blocks, active)).append(',').append(inputNumber(block, "z", "0", blocks, active));
+                }
+                else if(block.opcode().equals("use_crafting_table_blockpos")) {
+                    String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
+                    if(blockpos.split(",").length != 3) {
+                        return "";
+                    }
+                    result.append(',').append(blockpos);
+                }
+                int slots = block.opcode().equals("use_crafting_table_xyz") ? 9 : 4;
+                for (int i = 0; i < slots; i++) result.append(',').append(inputNumber(block, "slot" + i, "minecraft:air", blocks, active));
+                return result.toString();
             }
             default -> {
                 return "";
@@ -437,6 +492,9 @@ public final class AntScriptInterpreter {
             case "find_block_entity" -> {
                 String selectedBlockEntity = inputNumber(block,"block_entity","0",blocks,active);
                 return blackboard.findBlockEntity(selectedBlockEntity);
+            }
+            case "get_speed" -> {
+                return blackboard.getSpeed();
             }
 
             // variables

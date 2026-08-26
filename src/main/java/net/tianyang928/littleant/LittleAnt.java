@@ -104,6 +104,7 @@ public class LittleAnt {
         AntBreakBlockCommand.register(event);
         AntSetBlockCommand.register(event);
         AntGiveCommand.register(event);
+        AntUseContainerCommand.register(event);
         AntFindBlockCommand.register(event);
         AntFindBlockEntityCommand.register(event);
         AntCraftItemCommand.register(event);

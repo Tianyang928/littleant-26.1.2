@@ -9,6 +9,7 @@ import net.minecraft.world.phys.AABB;
 import net.tianyang928.littleant.LittleAnt;
 
 import java.util.List;
+import java.util.UUID;
 
 public class FindEntity {
     // 寻找方块实体和寻找方块一样不能透视
@@ -30,7 +31,7 @@ public class FindEntity {
         return this.hasTarget && this.entityToFind != null;
     }
 
-    public BlockPos setTarget(EntityType<?> entityToFind) {
+    public int setTarget(EntityType<?> entityToFind) {
         this.entityToFind = entityToFind;
         this.resultEntity = null;
         this.hasTarget = true;
@@ -38,7 +39,7 @@ public class FindEntity {
         if(canUse()){
             start();
         }
-        return resultEntity.blockPosition();
+        return resultEntity.getId();
     }
 
     public void clearTarget() {

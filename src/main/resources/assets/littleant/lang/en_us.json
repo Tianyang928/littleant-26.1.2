@@ -106,5 +106,12 @@
   "opcode.littleant.ant_brain.value": "value",
   "opcode.littleant.ant_brain.amount": "amount",
   "opcode.littleant.ant_brain.pos": "pos",
-  "opcode.littleant.ant_brain.get_variable": "get variable"
+  "opcode.littleant.ant_brain.get_variable": "get variable",
+  "opcode.littleant.ant_brain.get_speed": "get speed",
+  "opcode.littleant.ant_brain.put_in": "put in",
+  "opcode.littleant.ant_brain.melee_attack": "melee attack",
+  "opcode.littleant.ant_brain.target": "target",
+  "opcode.littleant.ant_brain.better_float": "float",
+  "opcode.littleant.ant_brain.use_container": "use container",
+  "opcode.littleant.ant_brain.item": "item"
 }

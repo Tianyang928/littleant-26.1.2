@@ -35,7 +35,7 @@ public final class ModuleRegistry {
         add("say", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("message", ValueType.TEXT, "")),List.of("say","()"));
         add("switch_inventory_slot","behavior",BlockShape.COMMAND, List.of(new InputDefinition("slot", ValueType.NUMBER, "0")),List.of("switch_inventory_slot","()"));
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
-        add("set_speed", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("speed", ValueType.NUMBER, "0.3")),List.of("set_speed","()"));
+        add("set_speed", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("speed", ValueType.NUMBER, "1.0")),List.of("set_speed","()"));
 
         // control
         add("repeat", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("count", ValueType.NUMBER, "10", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("repeat","times","()","{}"));
@@ -65,13 +65,18 @@ public final class ModuleRegistry {
         add("break_block_blockpos", "goal", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("break_block_blockpos","()"));
         add("set_block_xyz", "goal", BlockShape.REPORTER, blockPos("x", "y", "z"),List.of("set_block_xyz","x","()","y","()","z","()"));
         add("set_block_blockpos", "goal", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("set_block_blockpos","()"));
-        add("use_crafting_table", "goal", BlockShape.REPORTER, craftItem(9),List.of("use_crafting_table","amount","()","3x3"));
-        add("use_inventory_crafting", "goal", BlockShape.REPORTER, craftItem(4),List.of("use_inventory_crafting","amount","()","2x2"));
+        add("use_crafting_table_xyz", "goal", BlockShape.REPORTER, craftItem(9, true, false),List.of("use_crafting_table","amount","()","pos","()","()","()","3x3"));
+        add("use_crafting_table_blockpos", "goal", BlockShape.REPORTER, craftItem(9, true, true),List.of("use_crafting_table","amount","()","pos","()","3x3"));
+        add("use_inventory_crafting", "goal", BlockShape.REPORTER, craftItem(4, false, false),List.of("use_inventory_crafting","amount","()","2x2"));
+        add("better_float", "goal", BlockShape.REPORTER, List.of(),List.of("better_float"));
+        add("use_container_xyz", "goal", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "true", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","()","()","put_in","<>","item","()","slot","()","amount","()"));
+        add("use_container_blockpos", "goal", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "true", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","put_in","<>","item","()","slot","()","amount","()"));
+        add("melee_attack", "goal", BlockShape.REPORTER, List.of(new InputDefinition("target", ValueType.NUMBER, "", true)),List.of("melee_attack","target","()"));
         add("use_barrel", "goal", BlockShape.REPORTER, List.of(),List.of("use_barrel"));
         add("use_furnace", "goal", BlockShape.REPORTER, List.of(),List.of("use_furnace"));
         add("clear_goal", "goal", BlockShape.COMMAND, List.of(),List.of("clear_goal"));
         add("already_has_goal", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("already_has_goal","()"));
-        add("already_has_goal_at_priority", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, ""), new InputDefinition("priority", ValueType.NUMBER, "1", true)),List.of("already_has_goal_at_priority","()","priority","()"));
+        add("already_has_goal_at_priority", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, ""), new InputDefinition("priority", ValueType.NUMBER, "1", true)),List.of("already_has_goal","()","priority","()"));
 
         // sense
         add("health", "sense", BlockShape.REPORTER, List.of(),List.of("health"));
@@ -100,6 +105,7 @@ public final class ModuleRegistry {
         add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(),List.of("find_nearest_entity"));
         add("has_item_in_container", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone"), new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("has_item_in_container","()","slot","()"));
         add("get_item_in_container", "sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","slot","()"));
+        add("get_speed", "sense", BlockShape.REPORTER, List.of(),List.of("get_speed"));
 
         // variables
         add("set_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("value", ValueType.NUMBER, "0")),List.of("set_variable","()","value","()"));
@@ -114,9 +120,16 @@ public final class ModuleRegistry {
         return List.of(new InputDefinition(x, ValueType.NUMBER, "0", true), new InputDefinition(y, ValueType.NUMBER, "0", true), new InputDefinition(z, ValueType.NUMBER, "0", true));
     }
 
-    private static List<InputDefinition> craftItem(int slot) {
+    private static List<InputDefinition> craftItem(int slot, boolean includePosition, boolean isBlockpos) {
         List<InputDefinition> result = new ArrayList<>(List.of(new InputDefinition("amount", ValueType.NUMBER, "1", true)));
-        result.addAll(blockPos("x", "y", "z"));
+        if (includePosition) {
+            if(isBlockpos) {
+                result.add(new InputDefinition("blockpos", ValueType.LIST, ""));
+            }
+            else {
+                result.addAll(blockPos("x", "y", "z"));
+            }
+        }
         for(int i = 0; i < slot; i++) {
             result.add(new InputDefinition("slot" + i, ValueType.TEXT, "minecraft:air", true));
         }
