@@ -16,11 +16,13 @@ public final class AntScriptInterpreter {
     private final LinkedHashSet<UUID> aiStarts = new LinkedHashSet<>();
     private final LinkedHashSet<UUID> tickStarts = new LinkedHashSet<>();
     private final Map<String, List<UUID>> receiveGoalRoots = new LinkedHashMap<>();
+    private final Map<String, List<UUID>> goalTickRoots = new LinkedHashMap<>();
     private final AntEntity ant;
     private boolean isRunning = false;
     private int loadedSignature;
     private boolean executingCustomGoal;
     private boolean customGoalFinished;
+    private AntGoalScheduler.Task currentTask;
     private final AntGoalScheduler goalScheduler;
     private final AntBlackboard blackboard;
 
@@ -50,7 +52,10 @@ public final class AntScriptInterpreter {
         blocks.values().stream()
                 .filter(b -> b.parent() == null && !incoming.contains(b.id()) && b.opcode().equals("receive_goal"))
                 .forEach(b -> receiveGoalRoots.computeIfAbsent(inputNumber(b, "goal", "", blocks), ignored -> new ArrayList<>()).add(b.id()));
-        isRunning = !aiStarts.isEmpty() || !tickStarts.isEmpty() || !receiveGoalRoots.isEmpty();
+        blocks.values().stream()
+                .filter(b -> b.parent() == null && !incoming.contains(b.id()) && b.opcode().equals("goal_tick_start"))
+                .forEach(b -> goalTickRoots.computeIfAbsent(inputNumber(b, "goal", "", blocks), ignored -> new ArrayList<>()).add(b.id()));
+        isRunning = !aiStarts.isEmpty() || !tickStarts.isEmpty() || !receiveGoalRoots.isEmpty() || !goalTickRoots.isEmpty();
 
 
         ant.needAiRestart = true;
@@ -87,18 +92,35 @@ public final class AntScriptInterpreter {
         return blackboard;
     }
 
-    private boolean tickCustomGoal(List<UUID> roots) {
-        executingCustomGoal = true;
-        customGoalFinished = false;
-        for (UUID root : roots) {
-            BrainBlock hat = blocks.get(root);
-            if (hat != null && hat.next() != null && blocks.containsKey(hat.next())) {
-                executeBlock(blocks.get(hat.next()), new HashSet<>());
+    private boolean tickCustomGoal(AntGoalScheduler.Task task, List<UUID> startRoots, List<UUID> tickRoots) {
+        if(task instanceof AntGoalScheduler.CustomTask customTask) {
+            executingCustomGoal = true;
+            customGoalFinished = false;
+            currentTask = customTask;
+            if (!customTask.started) {
+                customTask.started = true;
+                for (UUID root : startRoots) {
+                    BrainBlock hat = blocks.get(root);
+                    if (hat != null && hat.next() != null && blocks.containsKey(hat.next())) {
+                        executeBlock(blocks.get(hat.next()), new HashSet<>());
+                    }
+                    if (customGoalFinished) break;
+                }
             }
-            if (customGoalFinished) break;
+            customGoalFinished = (customTask.started && tickRoots.isEmpty()) || customGoalFinished;
+            for (UUID root : tickRoots) {
+                BrainBlock hat = blocks.get(root);
+                if (hat != null && hat.next() != null && blocks.containsKey(hat.next())) {
+                    executeBlock(blocks.get(hat.next()), new HashSet<>());
+                }
+                if (customGoalFinished) break;
+            }
+
+            currentTask = null;
+            executingCustomGoal = false;
+            return customGoalFinished;
         }
-        executingCustomGoal = false;
-        return customGoalFinished;
+        return true;
     }
 
     private void executeBlock(BrainBlock block, Set<UUID> active) {
@@ -109,16 +131,25 @@ public final class AntScriptInterpreter {
 //            return;
 //        }
         switch (block.opcode()) {
-            case "ai_start", "tick_start", "receive_goal" -> {}
-            case "start_goal" -> {
+            case "ai_start", "tick_start", "receive_goal", "goal_tick_start" -> {}
+            case "start_foreground_goal", "start_background_goal" -> {
                 List<String> all_param;
-
-                double priority;
                 try {
                     all_param = Arrays.stream(inputNumber(block, "goal", "", blocks).split(",", -1)).map(String::trim).toList();
                     if (all_param.isEmpty() || all_param.getFirst().isBlank()) {
                         break;
                     }
+                } catch (RuntimeException e) {
+                    break;
+                }
+                if (block.opcode().equals("start_foreground_goal")) {
+                    goalScheduler.submitForeground(block.id(), all_param.getFirst(), all_param.subList(1, all_param.size()),
+                            receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()), goalTickRoots.getOrDefault(all_param.getFirst(), List.of()), currentTask);
+                    break;
+                }
+
+                double priority;
+                try {
                     priority = Double.parseDouble(inputNumber(block, "priority", "", blocks));
                 } catch (RuntimeException e) {
                     break;
@@ -133,26 +164,46 @@ public final class AntScriptInterpreter {
                 if (inputBoolean(block, "jump_flag", false, blocks)) {
                     flags.add(Goal.Flag.JUMP);
                 }
-                LittleAnt.LOGGER.info("[AntScriptInterpreter] start_goal flags {}", flags);
-                goalScheduler.submit(block.id(), all_param.getFirst(), priority, flags, all_param.subList(1, all_param.size()), blocks,
-                        //允许多个同名goal模组（gui内的）同时被激活
-                        receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()));
-                LittleAnt.LOGGER.info("[AntScriptInterpreter] start_goal name {}, receiveGoalRootsList {}",all_param.getFirst(),receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()));
+                goalScheduler.submitBackground(block.id(), all_param.getFirst(), priority, flags, all_param.subList(1, all_param.size()),
+                        receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()), goalTickRoots.getOrDefault(all_param.getFirst(), List.of()), currentTask);
             }
             case "clear_goal" -> goalScheduler.clear();
-            case "finish_goal" -> { if (executingCustomGoal) customGoalFinished = true; }
+            case "finish_current_goal" -> {
+                if (executingCustomGoal) customGoalFinished = true;
+                if (currentTask == null) break;
+                goalScheduler.finishTree(currentTask);
+            }
+            case "finish_current_goal_delay" -> {
+                goalScheduler.submitFinishCurrentGoal(block.id(), currentTask);
+            }
             case "move_to_xyz" -> {
                 try {
-                    blackboard.scriptMoveTo(Double.parseDouble(inputNumber(block, "x", "0", blocks)),
-                                    Double.parseDouble(inputNumber(block, "y", "0", blocks)),
-                                    Double.parseDouble(inputNumber(block, "z", "0", blocks)));
+                    goalScheduler.submitMoveTo(block.id(), new net.minecraft.core.BlockPos(
+                            (int) Double.parseDouble(inputNumber(block, "x", "0", blocks)),
+                            (int) Double.parseDouble(inputNumber(block, "y", "0", blocks)),
+                            (int) Double.parseDouble(inputNumber(block, "z", "0", blocks))), currentTask);
+                } catch (RuntimeException e) {
+                    break;
+                }
+            }
+            case "move_to_blockpos" -> {
+                try {
+                    String[] coordinates = inputNumber(block, "blockpos", "", blocks).split(",", -1);
+                    if (coordinates.length != 3) break;
+                    goalScheduler.submitMoveTo(block.id(), new net.minecraft.core.BlockPos(
+                            (int) Double.parseDouble(coordinates[0].trim()),
+                            (int) Double.parseDouble(coordinates[1].trim()),
+                            (int) Double.parseDouble(coordinates[2].trim())), currentTask);
                 } catch (RuntimeException e) {
                     break;
                 }
             }
             case "step_forward" -> {
                 try {
-                    blackboard.scriptStepForward(Double.parseDouble(inputNumber(block, "distance", "0", blocks)));
+                    double distance = Double.parseDouble(inputNumber(block, "distance", "0", blocks));
+                    net.minecraft.world.phys.Vec3 target = ant.position().add(ant.getLookAngle().scale(distance));
+                    goalScheduler.submitMoveTo(block.id(), new net.minecraft.core.BlockPos(
+                            net.minecraft.util.Mth.floor(target.x), net.minecraft.util.Mth.floor(target.y), net.minecraft.util.Mth.floor(target.z)), currentTask);
                 } catch (RuntimeException e) {
                     break;
                 }
@@ -336,31 +387,31 @@ public final class AntScriptInterpreter {
                 String x = inputNumber(block, "x", "0", blocks, active);
                 String y = inputNumber(block, "y", "0", blocks, active);
                 String z = inputNumber(block, "z", "0", blocks, active);
-                return "break_block" + "," + x + "," + y + "," + z;
+                return "vanilla:break_block" + "," + x + "," + y + "," + z;
             }
             case "set_block_xyz" -> {
                 String x = inputNumber(block, "x", "0", blocks, active);
                 String y = inputNumber(block, "y", "0", blocks, active);
                 String z = inputNumber(block, "z", "0", blocks, active);
-                return "set_block" + "," + x + "," + y + "," + z;
+                return "vanilla:set_block" + "," + x + "," + y + "," + z;
             }
             case "break_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
                 if(blockpos.split(",").length != 3) {
                     return "";
                 }
-                return "break_block" + "," + blockpos;
+                return "vanilla:break_block" + "," + blockpos;
             }
             case "set_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
                 if(blockpos.split(",").length != 3) {
                     return "";
                 }
-                return "set_block" + "," + blockpos;
+                return "vanilla:set_block" + "," + blockpos;
             }
-            case "better_float" -> { return "better_float"; }
+            case "better_float" -> { return "vanilla:better_float"; }
             case "use_container_xyz" -> {
-                return String.join(",", "use_container",
+                return String.join(",", "vanilla:use_container",
                                     inputNumber(block, "x", "0", blocks, active),
                                     inputNumber(block, "y", "0", blocks, active),
                                     inputNumber(block, "z", "0", blocks, active),
@@ -374,7 +425,7 @@ public final class AntScriptInterpreter {
                 if(blockpos.split(",").length != 3) {
                     return "";
                 }
-                return String.join(",", "use_container",
+                return String.join(",", "vanilla:use_container",
                         blockpos,
                         String.valueOf(inputBoolean(block, "put_in", true, blocks, active)),
                         inputNumber(block, "item", "minecraft:stone", blocks, active),
@@ -382,10 +433,10 @@ public final class AntScriptInterpreter {
                         inputNumber(block, "amount", "1", blocks, active));
             }
             case "melee_attack" -> {
-                return String.join(",", "melee_attack", inputNumber(block, "target", "-1", blocks, active));
+                return String.join(",", "vanilla:melee_attack", inputNumber(block, "target", "-1", blocks, active));
             }
             case "use_crafting_table_xyz", "use_inventory_crafting", "use_crafting_table_blockpos" -> {
-                StringBuilder result = new StringBuilder(block.opcode()).append(',').append(inputNumber(block, "amount", "1", blocks, active));
+                StringBuilder result = new StringBuilder(block.opcode().equals("use_inventory_crafting")?"vanilla:use_inventory_crafting":"vanilla:use_crafting_table").append(',').append(inputNumber(block, "amount", "1", blocks, active));
                 if (block.opcode().equals("use_crafting_table_xyz")) {
                     result.append(',').append(inputNumber(block, "x", "0", blocks, active)).append(',').append(inputNumber(block, "y", "0", blocks, active)).append(',').append(inputNumber(block, "z", "0", blocks, active));
                 }

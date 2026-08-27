@@ -16,7 +16,7 @@
   "category.littleant.ant_brain.event": "Events",
   "category.littleant.ant_brain.behavior": "Behavior",
   "category.littleant.ant_brain.control": "Control",
-  "category.littleant.ant_brain.operators": "Operators",
+  "category.littleant.ant_brain.operator": "Operator",
   "category.littleant.ant_brain.goal": "Goals",
   "category.littleant.ant_brain.sense": "Sensing",
   "category.littleant.ant_brain.variables": "Variables",
@@ -30,7 +30,8 @@
   "opcode.littleant.ant_brain.set_variable": "set variable",
   "opcode.littleant.ant_brain.tick_start": "tick start",
   "opcode.littleant.ant_brain.ai_start": "ai start",
-  "opcode.littleant.ant_brain.start_goal": "start goal",
+  "opcode.littleant.ant_brain.start_foreground_goal": "start foreground goal",
+  "opcode.littleant.ant_brain.start_background_goal": "start background goal",
   "opcode.littleant.ant_brain.receive_goal": "receive goal",
   "opcode.littleant.ant_brain.step_forward": "step forward",
   "opcode.littleant.ant_brain.look_at_xyz": "look at",
@@ -66,7 +67,8 @@
   "opcode.littleant.ant_brain.use_barrel": "use barrel",
   "opcode.littleant.ant_brain.use_furnace": "use furnace",
   "opcode.littleant.ant_brain.clear_goal": "clear goal",
-  "opcode.littleant.ant_brain.finish_goal": "finish goal",
+  "opcode.littleant.ant_brain.finish_current_goal": "finish current goal",
+  "opcode.littleant.ant_brain.finish_current_goal_delay": "finish current goal delayed",
   "opcode.littleant.ant_brain.already_has_goal": "has goal",
   "opcode.littleant.ant_brain.already_has_goal_at_priority": "has goal at priority",
   "opcode.littleant.ant_brain.health": "health",
@@ -113,5 +115,6 @@
   "opcode.littleant.ant_brain.target": "target",
   "opcode.littleant.ant_brain.better_float": "float",
   "opcode.littleant.ant_brain.use_container": "use container",
-  "opcode.littleant.ant_brain.item": "item"
+  "opcode.littleant.ant_brain.item": "item",
+  "opcode.littleant.ant_brain.goal_tick_start": "goal tick start"
 }

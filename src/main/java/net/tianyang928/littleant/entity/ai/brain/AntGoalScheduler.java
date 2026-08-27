@@ -1,97 +1,136 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
 import net.minecraft.core.BlockPos;
-import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.entity.AntEntity;
-import net.tianyang928.littleant.entity.ai.goal.BreakBlockGoal;
-import net.tianyang928.littleant.entity.ai.goal.SetBlockGoal;
-import net.tianyang928.littleant.entity.ai.goal.BetterFloatGoal;
-import net.tianyang928.littleant.entity.ai.goal.UseContainerGoal;
-import net.tianyang928.littleant.entity.ai.goal.UseCraftingTableGoal;
-import net.tianyang928.littleant.entity.ai.goal.UseInventoryCraftingGoal;
-import net.tianyang928.littleant.entity.ai.goal.EntityMeleeAttackGoal;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.entity.ai.goal.Goal;
+import net.tianyang928.littleant.entity.AntEntity;
+import net.tianyang928.littleant.entity.ai.goal.*;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-/** Runs non-conflicting script goals in parallel and retains preempted goals for resumption. */
+/** Owns long-running script actions. Foreground tasks are FIFO; background tasks use priority arbitration. */
 public final class AntGoalScheduler {
-    public final AntEntity ant;
-    private final Deque<Task> queue = new ArrayDeque<>();
-    private final List<Task> active = new ArrayList<>();
-    //private final Set<UUID> registeredStarts = new HashSet<>();
+    private final AntEntity ant;
+    private final Deque<Task> backgroundQueue = new ArrayDeque<>();
+    private final List<Task> backgroundActive = new ArrayList<>();
+    private final Deque<Task> foregroundQueue = new ArrayDeque<>();
+    private Task foregroundActive;
     private long sequence;
 
     public AntGoalScheduler(AntEntity ant) { this.ant = ant; }
 
-    public void submit(UUID startBlock, String name, double priority, EnumSet<Goal.Flag> flags, List<String> args,
-                       Map<UUID, BrainBlock> blocks, List<UUID> receiveRoots) {
-        //if (!registeredStarts.add(startBlock)) return;
-        Task task = createTask(startBlock, name, priority, flags, args, blocks, receiveRoots, sequence++);
-        //if (task == null) registeredStarts.remove(startBlock);
-        if (task == null) return;
-
-        List<Task> conflicts = active.stream().filter(task::conflictsWith).toList();
-        LittleAnt.LOGGER.info("[AntGoalScheduler] submit: submitting {}, now active is {}", name, active);
-        if (conflicts.isEmpty()) {
-            active.add(task);
-        } else if (conflicts.stream().allMatch(running -> priority < running.priority())) {
-            for (Task conflict : conflicts) {
-                conflict.suspend();
-                active.remove(conflict);
-                queue.add(conflict);
-            }
-            active.add(task);
-        } else {
-            queue.add(task);
-        }
+    public void submitBackground(UUID startBlock, String name, double priority, EnumSet<Goal.Flag> flags, List<String> args,
+                                 List<UUID> startRoots, List<UUID> tickRoots, Task parent) {
+        Task task = createTask(startBlock, name, priority, flags, args, startRoots, tickRoots, parent, false);
+        if (task == null || containsTask(task)) return;
+        attach(task, parent);
+        // A spawned background child participates in the global scheduler, but must
+        // not preempt its own ancestor while that ancestor is still submitting it.
+        List<Task> conflicts = backgroundActive.stream()
+                .filter(running -> !isAncestor(running, task))
+                .filter(task::conflictsWith)
+                .toList();
+        if (conflicts.isEmpty()) backgroundActive.add(task);
+        else if (conflicts.stream().allMatch(running -> task.priority() < running.priority())) {
+            for (Task conflict : conflicts) suspendTree(conflict, true);
+            backgroundActive.add(task);
+        } else backgroundQueue.add(task);
     }
 
-    public void tick(NeoGoalRunner neoGoalRunner) {
-        promoteAvailable();
-        for (Task task : List.copyOf(active)) {
-            if (task.tick(neoGoalRunner)) {
-                active.remove(task);
-                queue.remove(task);
-                LittleAnt.LOGGER.info("[AntGoalScheduler] tick: Task {} completed and removed from active list.", task);
-                //registeredStarts.remove(task.startBlock());
-            }
-        }
-        promoteAvailable();
+    /** Adds a FIFO foreground task. Its resource flags come from the goal implementation. */
+    public void submitForeground(UUID startBlock, String name, List<String> args, List<UUID> startRoots, List<UUID> tickRoots, Task parent) {
+        Task task = createTask(startBlock, name, 0, null, args, startRoots, tickRoots, parent, true);
+        if (task == null || containsTask(task)) return;
+        attach(task, parent);
+        enqueueForeground(task, false);
+    }
+
+    public void submitMoveTo(UUID sourceBlock, BlockPos target, Task parent) {
+        Task task = new MoveToTask(sourceBlock, "vanilla:move_to",sequence++, target, parent);
+        if (containsTask(task)) return;
+        attach(task, parent);
+        enqueueForeground(task, false);
+    }
+
+    public void submitFinishCurrentGoal(UUID sourceBlock, Task target) {
+        if (target == null) return;
+        Task task = new FinishGoalTask(sourceBlock, "vanilla:finish",sequence++, target);
+        if (containsTask(task)) return;
+        attach(task, target);
+        enqueueForeground(task, false);
+    }
+
+    public void tick(NeoGoalRunner runner) {
+        tickForeground(runner);
+        tickBackground(runner);
     }
 
     public void clear() {
-        active.forEach(Task::suspend);
-        active.clear();
-        queue.clear();
-        //registeredStarts.clear();
+        if (foregroundActive != null) suspendTree(foregroundActive, false);
+        foregroundActive = null;
+        List.copyOf(foregroundQueue).forEach(task -> suspendTree(task, false));
+        List.copyOf(backgroundActive).forEach(task -> suspendTree(task, false));
+        List.copyOf(backgroundQueue).forEach(task -> suspendTree(task, false));
+        foregroundQueue.clear(); backgroundActive.clear(); backgroundQueue.clear();
     }
 
-    private void promoteAvailable() {
-        List<Task> ordered = queue.stream()
-                .sorted(Comparator.comparingDouble(Task::priority).thenComparingLong(Task::sequence))
-                .toList();
+    public void finishBackgroundGoal(String goal, double priority) {
+        Task task = backgroundActive.stream()
+                .filter(running -> running.name.equals(goal) && running.priority() == priority)
+                .findFirst()
+                .orElse(null);
+        if (task == null) return;
+        finishTree(task);
+    }
+
+    public void finishForegroundGoal(String goal) {
+        Task task = foregroundActive;
+        if (task == null) return;
+        finishTree(task);
+        foregroundActive = null;
+    }
+
+    private void tickForeground(NeoGoalRunner runner) {
+        if (foregroundActive == null && !foregroundQueue.isEmpty() && isParentActive(foregroundQueue.peekFirst())) {
+            foregroundActive = foregroundQueue.removeFirst();
+            for (Task task : List.copyOf(backgroundActive)) if (foregroundActive.conflictsWith(task)) suspendTree(task, true);
+        }
+        if (foregroundActive != null && foregroundActive.tick(runner)) {
+            finishTree(foregroundActive);
+            foregroundActive = null;
+        }
+    }
+
+    private void tickBackground(NeoGoalRunner runner) {
+        promoteBackground();
+        for (Task task : List.copyOf(backgroundActive)) {
+            if (!isBlockedByForeground(task) && task.tick(runner)) finishTree(task);
+        }
+        promoteBackground();
+    }
+
+    private boolean isBlockedByForeground(Task task) { return foregroundActive != null && foregroundActive.conflictsWith(task); }
+
+    private boolean isParentActive(Task task) {
+        return task.parent == null || isTaskActive(task.parent) && isParentActive(task.parent);
+    }
+
+    private boolean isTaskActive(Task task) {
+        if (backgroundActive.contains(task) || foregroundActive == task) return true;
+        return task.parent != null && task.parent.foregroundActive == task;
+    }
+
+    private void promoteBackground() {
+        List<Task> ordered = backgroundQueue.stream().sorted(Comparator.comparingDouble(Task::priority).thenComparingLong(Task::sequence)).toList();
         for (Task candidate : ordered) {
-            if (active.stream().noneMatch(candidate::conflictsWith)
+            if (isParentActive(candidate) && !isBlockedByForeground(candidate)
+                    && backgroundActive.stream().filter(running -> !isAncestor(running, candidate)).noneMatch(candidate::conflictsWith)
                     && noEarlierQueuedConflict(candidate, ordered)) {
-                queue.remove(candidate);
-                active.add(candidate);
-                LittleAnt.LOGGER.info("[AntGoalScheduler] promoteAvailable Task {} add to active.", candidate.priority());
+                backgroundQueue.remove(candidate); backgroundActive.add(candidate);
             }
         }
     }
@@ -99,170 +138,248 @@ public final class AntGoalScheduler {
     private boolean noEarlierQueuedConflict(Task candidate, List<Task> ordered) {
         for (Task other : ordered) {
             if (other == candidate) return true;
-            if (queue.contains(other) && candidate.conflictsWith(other)) return false;
+            if (backgroundQueue.contains(other) && candidate.conflictsWith(other)) return false;
         }
         return true;
     }
 
-    private Task createTask(UUID startBlock, String name, double priority, EnumSet<Goal.Flag> flags, List<String> args,
-                            Map<UUID, BrainBlock> blocks, List<UUID> roots, long order) {
-        switch (name) {
-            case "break_block" -> {
-                if (args.size() != 3) {
-                    return null;
-                }
-                try {
-                    BreakBlockGoal goal = new BreakBlockGoal(ant, BlockPos.ZERO);
-                    goal.setTarget(new BlockPos((int) Double.parseDouble(args.get(0)), (int) Double.parseDouble(args.get(1)), (int) Double.parseDouble(args.get(2))));
-                    return new VanillaTask(startBlock, priority, order, flags, goal);
-                } catch (RuntimeException ignored) {
-                    return null;
-                }
-            }
-            case "set_block" -> {
-                if (args.size() != 3) {
-                    return null;
-                }
-                try {
-                    return new VanillaTask(startBlock, priority, order, flags, new SetBlockGoal(ant, new BlockPos((int) Double.parseDouble(args.get(0)), (int) Double.parseDouble(args.get(1)), (int) Double.parseDouble(args.get(2)))));
-                } catch (RuntimeException ignored) {
-                    return null;
-                }
-            }
-            case "better_float" -> { return new VanillaTask(startBlock, priority, order, flags, new BetterFloatGoal(ant)); }
-            case "use_inventory_crafting", "use_crafting_table", "use_crafting_table_blockpos" -> {
-                int slots = name.equals("use_crafting_table") ? 9 : 4;
-                int expected = 0;
-                switch (name) {
-                    case "use_crafting_table" -> expected = 1 + slots + 3;
-                    case "use_inventory_crafting" -> expected = 1 + slots;
-                    case "use_crafting_table_blockpos" -> expected = 1 + slots + 1;
-                }
-                if (args.size() != expected) return null;
-                try {
-                    int amount = Integer.parseInt(args.get(0));
-                    int offset = 1;
-                    BlockPos pos = BlockPos.ZERO;
-                    if (name.equals("use_crafting_table")) { pos = new BlockPos((int)Double.parseDouble(args.get(1)), (int)Double.parseDouble(args.get(2)), (int)Double.parseDouble(args.get(3))); offset = 4; }
-                    List<ItemStack> items = new ArrayList<>(slots);
-                    for (int i = 0; i < slots; i++) { var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(offset + i))).orElse(null); if (item == null) return null; items.add(new ItemStack(item)); }
-                    CraftingInput input = CraftingInput.of(name.equals("use_crafting_table") ? 3 : 2, name.equals("use_crafting_table") ? 3 : 2, items);
-                    if (name.equals("use_crafting_table")) { UseCraftingTableGoal goal = new UseCraftingTableGoal(ant); goal.setInput(input, pos, amount); return new VanillaTask(startBlock, priority, order, flags, goal); }
-                    UseInventoryCraftingGoal goal = new UseInventoryCraftingGoal(ant); goal.setInput(input, amount); return new VanillaTask(startBlock, priority, order, flags, goal);
-                } catch (RuntimeException e) { return null; }
-            }
-            case "use_container" -> {
-                if (args.size() != 7) return null;
-                try {
-                    BlockPos pos = new BlockPos((int)Double.parseDouble(args.get(0)), (int)Double.parseDouble(args.get(1)), (int)Double.parseDouble(args.get(2)));
-                    UseContainerGoal.Operation operation = UseContainerGoal.Operation.valueOf(args.get(3).trim().toUpperCase());
-                    var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(4))).orElse(null);
-                    if (item == null) return null;
-                    UseContainerGoal goal = new UseContainerGoal(ant); goal.setRequest(pos, operation, item, Integer.parseInt(args.get(5)), Integer.parseInt(args.get(6)));
-                    return new VanillaTask(startBlock, priority, order, flags, goal);
-                } catch (RuntimeException e) { return null; }
-            }
-            case "melee_attack" -> {
-                if (args.size() != 1) return null;
-                try {
-                    LivingEntity target = ant.level().getEntity(Integer.parseInt(args.get(0))) instanceof LivingEntity living ? living : null;
-                    if (target == null) return null;
-                    return new VanillaTask(startBlock, priority, order, flags, new EntityMeleeAttackGoal(ant, target, true));
-                } catch (RuntimeException e) { return null; }
-            }
-        }
-        if (roots.isEmpty()) {
-            return null;
-        }
-        return new CustomTask(startBlock, priority, order, flags, roots);
+    private void attach(Task task, Task parent) { if (parent != null) parent.children.add(task); }
+
+    private void enqueueForeground(Task task, boolean first) {
+        Deque<Task> queue = task.parent == null ? foregroundQueue : task.parent.foregroundQueue;
+        if (first) queue.addFirst(task); else queue.addLast(task);
     }
 
-    //public enum Flag { MOVE, LOOK, JUMP }
+    private boolean containsTask(Task candidate) {
+        if (candidate.parent != null) return candidate.parent.children.stream().anyMatch(task -> task.sameInvocation(candidate));
+        return allTasks().stream().anyMatch(task -> task.sameInvocation(candidate));
+    }
 
-    public interface NeoGoalRunner { boolean run(List<UUID> receiveRoots); }
+    private List<Task> allTasks() {
+        List<Task> tasks = new ArrayList<>(foregroundQueue);
+        if (foregroundActive != null) tasks.add(foregroundActive);
+        tasks.addAll(backgroundActive); tasks.addAll(backgroundQueue);
+        return tasks;
+    }
 
-    private interface Task {
-        UUID startBlock();
-        double priority();
-        long sequence();
-        EnumSet<Goal.Flag> flags();
-        boolean tick(NeoGoalRunner neoGoalRunner);
-        default void suspend() {}
-        default boolean conflictsWith(Task other) {
-            return flags().stream().anyMatch(other.flags()::contains);
+    /** Suspending a parent recursively stops every submitted descendant and preserves the subtree for resumption. */
+    private void suspendTree(Task task, boolean requeueRoot) {
+        for (Task child : List.copyOf(task.children)) suspendTree(child, true);
+        task.suspend();
+        backgroundActive.remove(task); foregroundQueue.remove(task); backgroundQueue.remove(task);
+        if (task.parent != null) {
+            task.parent.foregroundQueue.remove(task);
+            if (task.parent.foregroundActive == task) task.parent.foregroundActive = null;
+        }
+        if (foregroundActive == task) foregroundActive = null;
+        if (requeueRoot) {
+            if (task.foreground) enqueueForeground(task, true);
+            else backgroundQueue.add(task);
         }
     }
 
-    private final class VanillaTask implements Task {
-        private final UUID startBlock; private final double priority; private final long sequence; private final EnumSet<Goal.Flag> flags; private final Goal goal; private boolean started; private int attempts;
-        VanillaTask(UUID startBlock, double priority, long sequence, EnumSet<Goal.Flag> flags, Goal goal) { this.startBlock = startBlock; this.priority = priority; this.sequence = sequence; this.flags = EnumSet.copyOf(flags); this.goal = goal; }
-        public UUID startBlock() { return startBlock; }
-        public double priority() { return priority; } public long sequence() { return sequence; }
-        public EnumSet<Goal.Flag> flags() { return flags; }
-        public boolean tick(NeoGoalRunner ignored) {
-            if (!started) {
-                if(goal.getFlags().contains(Goal.Flag.MOVE) && ant.isPathFinding()){
-                    if(ant.level().getGameTime()%40 == 0){
-                        LittleAnt.LOGGER.info("[AntGoalScheduler] goal {} can't execute, ant is path finding {}", goal.getClass(),ant.isPathFinding());
-                    }
-                    return false;
-                }
-                if (!goal.canUse()) {
-                    //如果超过轮到他运行但是两秒内都不符合条件，那就删掉这个goal
-                    return ++attempts > 40;
-                }
-                attempts = 0;
-                //goal.start();
-                ant.goalSelector.addGoal((int)priority, goal);
-                started = true;
+    public void finishTree(Task task) {
+        task.stop();
+        backgroundActive.remove(task); backgroundQueue.remove(task); foregroundQueue.remove(task);
+        if (foregroundActive == task) foregroundActive = null;
+        // Background children were spawned, not awaited. Once their owner finishes
+        // they will also finish / re-parent to null parent.
+        for (Task child : List.copyOf(task.children)) {
+            if (!child.foreground) {
+                child.parent = null;
+                //backgroundActive.remove(child); backgroundQueue.remove(child);
+                task.children.remove(child);
             }
-            //goal.tick();
-            if (!goal.canContinueToUse()) {
-                //goal.stop();
-                if(++attempts > 40) {
-                    ant.goalSelector.removeGoal(goal);
-                    return true;
-                }
-            }
-            return false;
         }
-        public void suspend() { if (started) goal.stop(); }
+        if (task.parent != null) {
+            task.parent.foregroundQueue.remove(task);
+            if (task.parent.foregroundActive == task) task.parent.foregroundActive = null;
+            task.parent.children.remove(task);
+        }
     }
 
-    private final class CustomTask implements Task {
+    /** Advances a custom task's foreground child inside its parent's own tick. */
+    private void tickNestedForeground(Task parent, NeoGoalRunner runner) {
+        if (parent.foregroundActive == null && !parent.foregroundQueue.isEmpty()) {
+            parent.foregroundActive = parent.foregroundQueue.removeFirst();
+            Task child = parent.foregroundActive;
+            for (Task background : List.copyOf(backgroundActive)) {
+                if (!isAncestor(background, child) && child.conflictsWith(background)) suspendTree(background, true);
+            }
+        }
+        Task child = parent.foregroundActive;
+        if (child != null && child.tick(runner)) finishTree(child);
+    }
+
+    private boolean isAncestor(Task possibleAncestor, Task task) {
+        for (Task parent = task.parent; parent != null; parent = parent.parent) {
+            if (parent == possibleAncestor) return true;
+        }
+        return false;
+    }
+
+    private Task createTask(UUID startBlock, String name, double priority, EnumSet<Goal.Flag> requestedFlags,
+                            List<String> args, List<UUID> startRoots, List<UUID> tickRoots, Task parent, boolean foreground) {
+        Goal goal = createVanillaGoal(name, args);
+        long order = sequence++;
+        if (goal != null) {
+            EnumSet<Goal.Flag> flags = requestedFlags == null ? EnumSet.copyOf(goal.getFlags()) : EnumSet.copyOf(requestedFlags);
+            return new VanillaTask(startBlock, name, priority, order, flags, goal, parent, foreground);
+        }
+        if (startRoots.isEmpty() && tickRoots.isEmpty()) return null;
+        EnumSet<Goal.Flag> flags = requestedFlags == null ? EnumSet.allOf(Goal.Flag.class) : EnumSet.copyOf(requestedFlags);
+        return new CustomTask(startBlock, name,priority, order, flags, startRoots, tickRoots, parent, foreground);
+    }
+
+    private Goal createVanillaGoal(String name, List<String> args) {
+        try {
+            return switch (name) {
+                case "vanilla:break_block" -> args.size() == 3 ? breakBlock(args) : null;
+                case "vanilla:set_block" -> args.size() == 3 ? new SetBlockGoal(ant, blockPos(args, 0)) : null;
+                case "vanilla:better_float" -> new BetterFloatGoal(ant);
+                case "vanilla:use_inventory_crafting", "vanilla:use_crafting_table" -> craftingGoal(name, args);
+                case "vanilla:use_container" -> containerGoal(args);
+                case "vanilla:melee_attack" -> meleeGoal(args);
+                default -> null;
+            };
+        } catch (RuntimeException ignored) { return null; }
+    }
+
+    private BreakBlockGoal breakBlock(List<String> args) {
+        BreakBlockGoal goal = new BreakBlockGoal(ant, BlockPos.ZERO); goal.setTarget(blockPos(args, 0)); return goal;
+    }
+
+    private BlockPos blockPos(List<String> args, int offset) {
+        return new BlockPos((int) Double.parseDouble(args.get(offset)), (int) Double.parseDouble(args.get(offset + 1)), (int) Double.parseDouble(args.get(offset + 2)));
+    }
+
+    private Goal craftingGoal(String name, List<String> args) {
+        int slots = name.equals("use_crafting_table") ? 9 : 4;
+        int expected = switch (name) { case "use_crafting_table" -> 1 + slots + 3; case "use_inventory_crafting" -> 1 + slots; default -> 1 + slots + 1; };
+        if (args.size() != expected) return null;
+        int amount = Integer.parseInt(args.getFirst()); int offset = 1; BlockPos pos = BlockPos.ZERO;
+        if (name.equals("use_crafting_table")) { pos = blockPos(args, 1); offset = 4; }
+        List<ItemStack> items = new ArrayList<>(slots);
+        for (int i = 0; i < slots; i++) {
+            var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(offset + i))).orElse(null);
+            if (item == null) return null;
+            items.add(new ItemStack(item));
+        }
+        CraftingInput input = CraftingInput.of(name.equals("use_crafting_table") ? 3 : 2, name.equals("use_crafting_table") ? 3 : 2, items);
+        if (name.equals("use_crafting_table")) {
+            UseCraftingTableGoal goal = new UseCraftingTableGoal(ant); goal.setInput(input, pos, amount); return goal;
+        }
+        UseInventoryCraftingGoal goal = new UseInventoryCraftingGoal(ant); goal.setInput(input, amount); return goal;
+    }
+
+    private Goal containerGoal(List<String> args) {
+        if (args.size() != 7) return null;
+        var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(4))).orElse(null);
+        if (item == null) return null;
+        UseContainerGoal goal = new UseContainerGoal(ant);
+        goal.setRequest(blockPos(args, 0), UseContainerGoal.Operation.valueOf(args.get(3).trim().toUpperCase()), item, Integer.parseInt(args.get(5)), Integer.parseInt(args.get(6)));
+        return goal;
+    }
+
+    private Goal meleeGoal(List<String> args) {
+        if (args.size() != 1) return null;
+        LivingEntity target = ant.level().getEntity(Integer.parseInt(args.getFirst())) instanceof LivingEntity living ? living : null;
+        return target == null ? null : new EntityMeleeAttackGoal(ant, target, true);
+    }
+
+    public interface NeoGoalRunner { boolean run(Task task, List<UUID> receiveRoots, List<UUID> tickReceiveRoots); }
+
+    /** Execution context used to bind custom-goal children to the currently running parent. */
+    public abstract static class Task {
         private final UUID startBlock;
         private final double priority;
         private final long sequence;
         private final EnumSet<Goal.Flag> flags;
-        private final List<UUID> roots;
+        protected Task parent;
+        private final boolean foreground;
+        protected final List<Task> children = new ArrayList<>();
+        private final Deque<Task> foregroundQueue = new ArrayDeque<>();
+        private Task foregroundActive;
+        public String name;
 
-        CustomTask(UUID startBlock, double priority, long sequence, EnumSet<Goal.Flag> flags, List<UUID> roots) {
-            this.startBlock = startBlock;
-            this.priority = priority;
-            this.sequence = sequence;
-            this.flags = EnumSet.copyOf(flags);
-            this.roots = List.copyOf(roots);
-            LittleAnt.LOGGER.info("[AntGoalScheduler] custom task: create new");
+        private Task(UUID startBlock, String name, double priority, long sequence, EnumSet<Goal.Flag> flags, Task parent, boolean foreground) {
+            this.startBlock = startBlock; this.name = name; this.priority = priority; this.sequence = sequence; this.flags = flags; this.parent = parent; this.foreground = foreground;
         }
+        public double priority() { return priority; }
+        public long sequence() { return sequence; }
+        private boolean conflictsWith(Task other) { return flags.stream().anyMatch(other.flags::contains); }
+        private boolean sameInvocation(Task other) { return startBlock.equals(other.startBlock) && parent == other.parent && foreground == other.foreground; }
+        protected abstract boolean tick(NeoGoalRunner runner);
+        protected void suspend() {}
+        protected void stop() { suspend(); }
+        protected boolean childrenFinished() { return children.stream().noneMatch(child -> child.foreground); }
+    }
 
-        public UUID startBlock() {
-            return startBlock;
+    private final class VanillaTask extends Task {
+        private final Goal goal;
+        private boolean registered;
+        private int attempts;
+        private VanillaTask(UUID startBlock, String name, double priority, long sequence, EnumSet<Goal.Flag> flags, Goal goal, Task parent, boolean foreground) {
+            super(startBlock, name, priority, sequence, flags, parent, foreground); this.goal = goal;
         }
-
-        public double priority() {
-            return priority;
+        protected boolean tick(NeoGoalRunner ignored) {
+            if (!registered) {
+                if (!goal.canUse()) return ++attempts > 40;
+                attempts = 0; ant.goalSelector.addGoal((int) priority(), goal); registered = true;
+            }
+            return !goal.canContinueToUse() && ++attempts > 40;
         }
+        protected void suspend() { if (registered) ant.goalSelector.removeGoal(goal); goal.stop(); registered = false; }
+    }
 
-        public long sequence() {
-            return sequence;
+    private final class MoveToTask extends Task {
+        private final BlockPos target;
+        private boolean started;
+        private MoveToTask(UUID startBlock, String name, long sequence, BlockPos target, Task parent) {
+            super(startBlock, name, 0, sequence, EnumSet.of(Goal.Flag.MOVE), parent, true); this.target = target.immutable();
         }
-
-        public EnumSet<Goal.Flag> flags() {
-            return flags;
+        protected boolean tick(NeoGoalRunner ignored) {
+            if (!started) {
+                var path = ant.getNavigation().createPath(target, 2, 64);
+                if (path == null) return true;
+                ant.getNavigation().moveTo(path, ant.speedModifier); started = true;
+            }
+            return ant.getNavigation().isDone() || ant.blockPosition().closerThan(target, 2.0D);
         }
+        protected void suspend() { ant.getNavigation().stop(); started = false; }
+    }
 
-        public boolean tick(NeoGoalRunner neoGoalRunner) {
-            return neoGoalRunner.run(roots);
+    private final class FinishGoalTask extends Task {
+        private final Task target;
+        private FinishGoalTask(UUID startBlock, String name, long sequence, Task target) {
+            super(startBlock, name, 0, sequence, EnumSet.of(Goal.Flag.MOVE), target, true); this.target = target;
+        }
+        protected boolean tick(NeoGoalRunner ignored) {
+            if(this.parent == null){
+                return true;
+            }
+            else {
+                target.children.clear();
+                finishTree(target);
+            }
+            return true;
+        }
+    }
+
+    public final class CustomTask extends Task {
+        private final List<UUID> startRoots;
+        private final List<UUID> tickRoots;
+        private boolean bodyFinished;
+        public boolean started = false;
+        private CustomTask(UUID startBlock, String name, double priority, long sequence, EnumSet<Goal.Flag> flags, List<UUID> startRoots, List<UUID> tickRoots, Task parent, boolean foreground) {
+            super(startBlock, name, priority, sequence, flags, parent, foreground);
+            this.startRoots = List.copyOf(startRoots);
+            this.tickRoots = List.copyOf(tickRoots);
+        }
+        protected boolean tick(NeoGoalRunner runner) {
+            if (!bodyFinished) bodyFinished = runner.run(this, startRoots, tickRoots);
+            tickNestedForeground(this, runner);
+            return bodyFinished && childrenFinished();
         }
     }
 }

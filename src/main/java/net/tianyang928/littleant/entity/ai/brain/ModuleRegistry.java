@@ -11,7 +11,7 @@ public final class ModuleRegistry {
         CATEGORY_COLORS.put("event", 0xFFBF00FF );
         CATEGORY_COLORS.put("behavior", 0xFF4C97FF );
         CATEGORY_COLORS.put("control", 0xFFFFAB19 );
-        CATEGORY_COLORS.put("operators", 0xFF59C059 );
+        CATEGORY_COLORS.put("operator", 0xFF59C059 );
         CATEGORY_COLORS.put("goal", 0xFF9966FF );
         CATEGORY_COLORS.put("sense", 0xFF5CB1D6 );
         CATEGORY_COLORS.put("variables", 0xFFFF8C1A );
@@ -21,9 +21,12 @@ public final class ModuleRegistry {
         // event
         add("tick_start", "event", BlockShape.HAT, List.of(),List.of("tick_start"));
         add("ai_start", "event", BlockShape.HAT, List.of(),List.of("ai_start"));
-        add("start_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, ""),new InputDefinition("priority", ValueType.NUMBER, "1"),new InputDefinition("move_flag", ValueType.BOOLEAN, ""),new InputDefinition("look_flag", ValueType.BOOLEAN, ""),new InputDefinition("jump_flag", ValueType.BOOLEAN, "")),List.of("start_goal","()","priority","()","flags","move_flag","<>","look_flag","<>","jump_flag","<>"));
+        add("start_foreground_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("start_foreground_goal", "()"));
+        add("start_background_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, ""),new InputDefinition("priority", ValueType.NUMBER, "1"),new InputDefinition("move_flag", ValueType.BOOLEAN, ""),new InputDefinition("look_flag", ValueType.BOOLEAN, ""),new InputDefinition("jump_flag", ValueType.BOOLEAN, "")),List.of("start_background_goal", "()", "priority", "()", "flags", "move_flag", "<>", "look_flag", "<>", "jump_flag", "<>"));
         add("receive_goal", "event", BlockShape.HAT, List.of(new InputDefinition("goal", ValueType.TEXT, "custom_goal")),List.of("receive_goal","()"));
-        add("finish_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("finish_goal","()"));
+        add("goal_tick_start", "event", BlockShape.HAT, List.of(new InputDefinition("goal", ValueType.TEXT, "custom_goal")),List.of("goal_tick_start","()"));
+        add("finish_current_goal", "event", BlockShape.COMMAND, List.of(),List.of("finish_current_goal"));
+        add("finish_current_goal_delay", "event", BlockShape.COMMAND, List.of(),List.of("finish_current_goal_delay"));
 
         // behavior
         add("move_to_xyz", "behavior", BlockShape.COMMAND, blockPos("x", "y", "z"),List.of("move_to_xyz","x","()","y","()","z","()"));
@@ -43,22 +46,22 @@ public final class ModuleRegistry {
         add("if_else", "control", BlockShape.E_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body_if", ValueType.BLOCK, ""),new InputDefinition("body_else", ValueType.BLOCK, "")),List.of("if","<>","{}","else","{}"));
         add("while", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("while","<>","{}"));
 
-        // operators
-        add("add", "operators", BlockShape.REPORTER, numbers("a", "b"),List.of("()","add","()"));
-        add("subtract", "operators", BlockShape.REPORTER, numbers("a", "b"),List.of("()","subtract","()"));
-        add("multiply", "operators", BlockShape.REPORTER, numbers("a", "b"),List.of("()","multiply","()"));
-        add("divide", "operators", BlockShape.REPORTER, numbers("a", "b"),List.of("()","divide","()"));
-        add("mod", "operators", BlockShape.REPORTER, numbers("a", "b"),List.of("()","mod","()"));
-        add("absolute", "operators", BlockShape.REPORTER, List.of(new InputDefinition("number", ValueType.NUMBER, "0", true)),List.of("absolute","()"));
-        add("random", "operators", BlockShape.REPORTER, numbers("min", "max"),List.of("random","min","()","max","()"));
-        add("greater_than", "operators", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","greater_than","()"));
-        add("less_than", "operators", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","less_than","()"));
-        add("equal", "operators", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","equal","()"));
-        add("not", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true)),List.of("not","<>"));
-        add("and", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "", true)),List.of("<>","and","<>"));
-        add("or", "operators", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "", true)),List.of("<>","or","<>"));
-        add("true", "operators", BlockShape.BOOLEAN, List.of(),List.of("true"));
-        add("false", "operators", BlockShape.BOOLEAN, List.of(),List.of("false"));
+        // operator
+        add("add", "operator", BlockShape.REPORTER, numbers("a", "b"),List.of("()","add","()"));
+        add("subtract", "operator", BlockShape.REPORTER, numbers("a", "b"),List.of("()","subtract","()"));
+        add("multiply", "operator", BlockShape.REPORTER, numbers("a", "b"),List.of("()","multiply","()"));
+        add("divide", "operator", BlockShape.REPORTER, numbers("a", "b"),List.of("()","divide","()"));
+        add("mod", "operator", BlockShape.REPORTER, numbers("a", "b"),List.of("()","mod","()"));
+        add("absolute", "operator", BlockShape.REPORTER, List.of(new InputDefinition("number", ValueType.NUMBER, "0", true)),List.of("absolute","()"));
+        add("random", "operator", BlockShape.REPORTER, numbers("min", "max"),List.of("random","min","()","max","()"));
+        add("greater_than", "operator", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","greater_than","()"));
+        add("less_than", "operator", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","less_than","()"));
+        add("equal", "operator", BlockShape.BOOLEAN, numbers("a", "b"),List.of("()","equal","()"));
+        add("not", "operator", BlockShape.BOOLEAN, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true)),List.of("not","<>"));
+        add("and", "operator", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "", true)),List.of("<>","and","<>"));
+        add("or", "operator", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "", true)),List.of("<>","or","<>"));
+        add("true", "operator", BlockShape.BOOLEAN, List.of(),List.of("true"));
+        add("false", "operator", BlockShape.BOOLEAN, List.of(),List.of("false"));
 
         // goal
         add("break_block_xyz", "goal", BlockShape.REPORTER, blockPos("x", "y", "z"),List.of("break_block_xyz","x","()","y","()","z","()"));
@@ -89,6 +92,9 @@ public final class ModuleRegistry {
         add("distance_to_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("distance_to_blockpos","()"));
         add("get_block_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_block_xyz","x","()","y","()","z","()"));
         add("get_block_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_block_blockpos","()"));
+        add("get_entity_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_entity_xyz","x","()","y","()","z","()"));
+        add("get_entity_pos","sense", BlockShape.REPORTER, List.of(new InputDefinition("id", ValueType.NUMBER, "")),List.of("get_entity_pos","()"));
+        add("get_entity_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_entity_blockpos","()"));
         add("has_item_in_inventory","sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone"), new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("has_item_in_inventory","()","slot","()"));
         add("get_item_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_inventory","()"));
         add("time","sense", BlockShape.REPORTER, List.of(),List.of("time"));
@@ -212,7 +218,7 @@ public final class ModuleRegistry {
     public static Map<String, List<BlockDefinition>> byCategory() {
         Map<String, List<BlockDefinition>> out = new LinkedHashMap<>();
         for (BlockDefinition d : MODULES.values())
-            out.computeIfAbsent(d.category(), k -> new java.util.ArrayList<>()).add(d);
+            out.computeIfAbsent(d.category(), k -> new ArrayList<>()).add(d);
         return out;
     }
 
