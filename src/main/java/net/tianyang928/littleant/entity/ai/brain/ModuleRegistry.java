@@ -38,7 +38,9 @@ public final class ModuleRegistry {
         add("say", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("message", ValueType.TEXT, "")),List.of("say","()"));
         add("switch_inventory_slot","behavior",BlockShape.COMMAND, List.of(new InputDefinition("slot", ValueType.NUMBER, "0")),List.of("switch_inventory_slot","()"));
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
-        add("set_speed", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("speed", ValueType.NUMBER, "1.0")),List.of("set_speed","()"));
+        add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "true")),List.of("set_run","()"));
+        add("set_sneaking", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("sneaking", ValueType.BOOLEAN, "true")),List.of("set_sneaking","()"));
+        add("eat", "behavior", BlockShape.COMMAND, List.of(),List.of("eat"));
 
         // control
         add("repeat", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("count", ValueType.NUMBER, "10", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("repeat","times","()","{}"));

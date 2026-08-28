@@ -37,6 +37,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.entity.ai.goal.*;
@@ -45,6 +46,8 @@ import net.tianyang928.littleant.entity.ai.sense.FindBlockEntity;
 import net.tianyang928.littleant.entity.ai.sense.FindEntity;
 import net.tianyang928.littleant.gui.AntInventoryMenu;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
+import net.tianyang928.littleant.entity.ai.debug.TaskDebugCodec;
+import net.tianyang928.littleant.network.SyncAntTaskDebugPayload;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -82,6 +85,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     private boolean isProgrammingBrain = false;
     private Player programmingPlayer = null;
     public boolean needAiRestart = false;
+    private int lastTaskDebugHash;
+    private int lastTaskDebugSyncTick = Integer.MIN_VALUE;
 
     public boolean tryGettingDownWater = false;
     public double speedModifier = 1.0;
@@ -219,6 +224,21 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
                 needAiRestart = false;
             }
             antScriptInterpreter.tick();
+            // 每5个tick同步一次任务调试信息
+            if (this.tickCount % 5 == 0 && this.level() instanceof ServerLevel serverLevel) {
+                String foreground = TaskDebugCodec.encode(antScriptInterpreter.debugForeground());
+                String background = TaskDebugCodec.encode(antScriptInterpreter.debugBackground());
+                int debugHash = Objects.hash(foreground, background);
+                if (debugHash != lastTaskDebugHash || this.tickCount - lastTaskDebugSyncTick >= 20) {
+                    lastTaskDebugHash = debugHash;
+                    lastTaskDebugSyncTick = this.tickCount;
+                    SyncAntTaskDebugPayload payload = new SyncAntTaskDebugPayload(getId(), getName().getString(), foreground, background);
+                    LittleAnt.LOGGER.info("[AntEntity] tickBrainProgram, entityId: {}, name: {}, foreground: {}, background: {}", getId(), getName().getString(), foreground, background);
+                    for (ServerPlayer player : serverLevel.players()) {
+                        if (player.distanceToSqr(this) <= 32 * 32) PacketDistributor.sendToPlayer(player, payload);
+                    }
+                }
+            }
         }
     }
 

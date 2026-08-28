@@ -1,4 +1,6 @@
 {
+  "key.category.littleant.main": "Little Ant",
+  "key.littleant.toggle_debug": "Toggle task debug HUD",
   "item.littleant.ant_spawn_egg": "Ant Spawn Egg",
   "item.littleant.pheromone_block": "Pheromone Block",
   "creative_mode_tab.littleant.ant_items_tab": "Ant Items",
@@ -40,7 +42,9 @@
   "opcode.littleant.ant_brain.say": "say",
   "opcode.littleant.ant_brain.switch_inventory_slot": "switch inventory slot",
   "opcode.littleant.ant_brain.jump": "jump",
-  "opcode.littleant.ant_brain.set_speed": "set speed",
+  "opcode.littleant.ant_brain.set_run": "set run",
+  "opcode.littleant.ant_brain.set_sneaking": "set sneaking",
+  "opcode.littleant.ant_brain.eat": "eat",
   "opcode.littleant.ant_brain.if_else": "if else",
   "opcode.littleant.ant_brain.while": "while",
   "opcode.littleant.ant_brain.add": "+",

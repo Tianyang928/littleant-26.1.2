@@ -10,6 +10,8 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.goal.*;
+import net.tianyang928.littleant.entity.ai.debug.TaskDebugEntry;
+import net.tianyang928.littleant.entity.ai.debug.TaskDebugState;
 
 import java.util.*;
 
@@ -21,6 +23,7 @@ public final class AntGoalScheduler {
     private final Deque<Task> foregroundQueue = new ArrayDeque<>();
     private Task foregroundActive;
     private long sequence;
+    private final Deque<TaskDebugEntry> finishedHistory = new ArrayDeque<>();
 
     public AntGoalScheduler(AntEntity ant) { this.ant = ant; }
 
@@ -77,11 +80,52 @@ public final class AntGoalScheduler {
         List.copyOf(backgroundActive).forEach(task -> suspendTree(task, false));
         List.copyOf(backgroundQueue).forEach(task -> suspendTree(task, false));
         foregroundQueue.clear(); backgroundActive.clear(); backgroundQueue.clear();
+        finishedHistory.clear();
+    }
+
+    /** Returns a bounded, render/network-safe view of scheduler state. */
+    public List<TaskDebugEntry> debugForeground() {
+        List<TaskDebugEntry> result = new ArrayList<>();
+        finishedHistory.stream().filter(TaskDebugEntry::foreground).forEach(result::add);
+        appendDebug(result, foregroundActive, true, TaskDebugState.RUNNING, 0);
+        appendDebug(result, foregroundQueue, true, TaskDebugState.QUEUED, 0);
+        return List.copyOf(result);
+    }
+
+    public List<TaskDebugEntry> debugBackground() {
+        List<TaskDebugEntry> result = new ArrayList<>();
+        finishedHistory.stream().filter(entry -> !entry.foreground()).forEach(result::add);
+        appendDebug(result, backgroundActive, false, TaskDebugState.RUNNING, 0);
+        appendDebug(result, backgroundQueue, false, TaskDebugState.QUEUED, 0);
+        return List.copyOf(result);
+    }
+
+    private void appendDebug(List<TaskDebugEntry> result, Task task, boolean foreground, TaskDebugState state, int depth) {
+        if (task == null || task.foreground != foreground || result.size() >= 64) return;
+        result.add(new TaskDebugEntry(foreground, task.debugState(state), depth, task.name, task.priority()));
+        for (Task child : task.children) appendDebug(result, child, foreground, stateOf(child), depth + 1);
+    }
+
+    private void appendDebug(List<TaskDebugEntry> result, Collection<Task> tasks, boolean foreground, TaskDebugState state, int depth) {
+        for (Task task : tasks) {
+            if (task.foreground != foreground || task.parent != null && task.parent.foreground == foreground) continue;
+            int actualDepth = depth;
+            for (Task parent = task.parent; parent != null; parent = parent.parent) actualDepth++;
+            appendDebug(result, task, foreground, state, actualDepth);
+        }
+    }
+
+    private TaskDebugState stateOf(Task task) {
+        if (task.suspended) return TaskDebugState.SUSPENDED;
+        if (task == foregroundActive || backgroundActive.contains(task)
+                || task.parent != null && task.parent.foregroundActive == task) return TaskDebugState.RUNNING;
+        return TaskDebugState.QUEUED;
     }
 
     private void tickForeground(NeoGoalRunner runner) {
         if (foregroundActive == null && !foregroundQueue.isEmpty() && isParentActive(foregroundQueue.peekFirst())) {
             foregroundActive = foregroundQueue.removeFirst();
+            foregroundActive.suspended = false;
             for (Task task : List.copyOf(backgroundActive)) {
                 if (foregroundActive.conflictsWith(task)) {
                     suspendTree(task, true);
@@ -120,7 +164,7 @@ public final class AntGoalScheduler {
             if (isParentActive(candidate) && !isBlockedByForeground(candidate)
                     && backgroundActive.stream().filter(running -> !isAncestor(running, candidate)).noneMatch(candidate::conflictsWith)
                     && noEarlierQueuedConflict(candidate, ordered)) {
-                backgroundQueue.remove(candidate); backgroundActive.add(candidate);
+                backgroundQueue.remove(candidate); candidate.suspended = false; backgroundActive.add(candidate);
             }
         }
     }
@@ -161,6 +205,7 @@ public final class AntGoalScheduler {
     private void suspendTree(Task task, boolean requeueRoot) {
         for (Task child : List.copyOf(task.children)) suspendTree(child, true);
         task.suspend();
+        task.suspended = requeueRoot;
         backgroundActive.remove(task); foregroundQueue.remove(task); backgroundQueue.remove(task);
         if (task.parent != null) {
             task.parent.foregroundQueue.remove(task);
@@ -176,6 +221,9 @@ public final class AntGoalScheduler {
     public void finishTree(Task task) {
         if (task == null) return;
         task.stop();
+        task.suspended = false;
+        int finishedDepth = 0;
+        for (Task parent = task.parent; parent != null; parent = parent.parent) finishedDepth++;
         backgroundActive.remove(task); backgroundQueue.remove(task); foregroundQueue.remove(task);
         if (foregroundActive == task) {
 
@@ -202,6 +250,8 @@ public final class AntGoalScheduler {
             if (task.parent.foregroundActive == task) task.parent.foregroundActive = null;
             task.parent.children.remove(task);
         }
+        finishedHistory.addFirst(new TaskDebugEntry(task.foreground, TaskDebugState.FINISHED, finishedDepth, task.name, task.priority()));
+        while (finishedHistory.size() > 10) finishedHistory.removeLast();
     }
 
     /** Advances a custom task's foreground child inside its parent's own tick. */
@@ -209,6 +259,7 @@ public final class AntGoalScheduler {
         if (parent.finishNow) return;
         if (parent.foregroundActive == null && !parent.foregroundQueue.isEmpty()) {
             parent.foregroundActive = parent.foregroundQueue.removeFirst();
+            parent.foregroundActive.suspended = false;
             Task child = parent.foregroundActive;
             for (Task background : List.copyOf(backgroundActive)) {
                 if (!isAncestor(background, child) && child.conflictsWith(background)) suspendTree(background, true);
@@ -306,6 +357,7 @@ public final class AntGoalScheduler {
         private final boolean foreground;
         protected boolean finishNow;
         protected boolean finishAfterForeground;
+        private boolean suspended;
         protected final List<Task> children = new ArrayList<>();
         private final Deque<Task> foregroundQueue = new ArrayDeque<>();
         private Task foregroundActive;
@@ -316,6 +368,7 @@ public final class AntGoalScheduler {
         }
         public double priority() { return priority; }
         public long sequence() { return sequence; }
+        private TaskDebugState debugState(TaskDebugState fallback) { return suspended ? TaskDebugState.SUSPENDED : fallback; }
         private boolean conflictsWith(Task other) {
             if (flags == null || other.flags == null) return false;
             return flags.stream().anyMatch(other.flags::contains);

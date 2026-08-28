@@ -64,8 +64,12 @@ public final class AntBlackboard {
         }
     }
 
-    public void scriptSetSpeed(double speed) {
-        ant.speedModifier = speed;
+    public void scriptSetRun(Boolean run) {
+        if(run) {
+            ant.speedModifier = 1.25F;
+        } else {
+            ant.speedModifier = 0.0F;
+        }
     }
 
 

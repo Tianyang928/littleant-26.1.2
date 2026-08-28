@@ -6,6 +6,7 @@ import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.sense.FindBlock;
 
 import java.util.*;
+import net.tianyang928.littleant.entity.ai.debug.TaskDebugEntry;
 
 /**
  * Small, deterministic interpreter for Python-like command scripts; no Python runtime is required.
@@ -34,7 +35,7 @@ public final class AntScriptInterpreter {
 
     public void loadProgram(Map<UUID, BrainBlock> program) {
         int signature = program.hashCode();
-        if (loadedSignature == signature) {
+        if (loadedSignature == signature && !ant.needAiRestart) {
             return;
         }
         loadedSignature = signature;
@@ -91,6 +92,9 @@ public final class AntScriptInterpreter {
     public AntBlackboard blackboard() {
         return blackboard;
     }
+
+    public List<TaskDebugEntry> debugForeground() { return goalScheduler.debugForeground(); }
+    public List<TaskDebugEntry> debugBackground() { return goalScheduler.debugBackground(); }
 
     private boolean tickCustomGoal(AntGoalScheduler.Task task, List<UUID> startRoots, List<UUID> tickRoots) {
         if(task instanceof AntGoalScheduler.CustomTask customTask) {
@@ -231,9 +235,9 @@ public final class AntScriptInterpreter {
             case "say" -> {
                 blackboard.scriptSay(inputNumber(block, "message", "0", blocks));
             }
-            case "set_speed" -> {
+            case "set_run" -> {
                 try {
-                    blackboard.scriptSetSpeed(Double.parseDouble(inputNumber(block, "speed", "0", blocks)));
+                    blackboard.scriptSetRun(inputBoolean(block, "run", false, blocks));
                 } catch (RuntimeException e) {
                     break;
                 }
