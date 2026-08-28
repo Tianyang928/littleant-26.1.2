@@ -171,10 +171,14 @@ public final class AntScriptInterpreter {
             case "finish_current_goal" -> {
                 if (executingCustomGoal) customGoalFinished = true;
                 if (currentTask == null) break;
-                goalScheduler.finishTree(currentTask);
+                LittleAnt.LOGGER.info("[AntGoalScheduler] Request immediate finish: {}", currentTask.name);
+                goalScheduler.requestFinishCurrentGoal(currentTask);
             }
             case "finish_current_goal_delay" -> {
-                goalScheduler.submitFinishCurrentGoal(block.id(), currentTask);
+                if (executingCustomGoal) customGoalFinished = true;
+                if (currentTask == null) break;
+                LittleAnt.LOGGER.info("[AntGoalScheduler] Request finish after foreground: {}", currentTask.name);
+                goalScheduler.requestFinishCurrentGoalDelay(currentTask);
             }
             case "move_to_xyz" -> {
                 try {

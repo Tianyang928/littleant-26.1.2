@@ -7,6 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.goal.*;
 
@@ -56,12 +57,12 @@ public final class AntGoalScheduler {
         enqueueForeground(task, false);
     }
 
-    public void submitFinishCurrentGoal(UUID sourceBlock, Task target) {
-        if (target == null) return;
-        Task task = new FinishGoalTask(sourceBlock, "vanilla:finish",sequence++, target);
-        if (containsTask(task)) return;
-        attach(task, target);
-        enqueueForeground(task, false);
+    public void requestFinishCurrentGoal(Task target) {
+        if (target != null) target.finishNow = true;
+    }
+
+    public void requestFinishCurrentGoalDelay(Task target) {
+        if (target != null) target.finishAfterForeground = true;
     }
 
     public void tick(NeoGoalRunner runner) {
@@ -78,26 +79,15 @@ public final class AntGoalScheduler {
         foregroundQueue.clear(); backgroundActive.clear(); backgroundQueue.clear();
     }
 
-    public void finishBackgroundGoal(String goal, double priority) {
-        Task task = backgroundActive.stream()
-                .filter(running -> running.name.equals(goal) && running.priority() == priority)
-                .findFirst()
-                .orElse(null);
-        if (task == null) return;
-        finishTree(task);
-    }
-
-    public void finishForegroundGoal(String goal) {
-        Task task = foregroundActive;
-        if (task == null) return;
-        finishTree(task);
-        foregroundActive = null;
-    }
-
     private void tickForeground(NeoGoalRunner runner) {
         if (foregroundActive == null && !foregroundQueue.isEmpty() && isParentActive(foregroundQueue.peekFirst())) {
             foregroundActive = foregroundQueue.removeFirst();
-            for (Task task : List.copyOf(backgroundActive)) if (foregroundActive.conflictsWith(task)) suspendTree(task, true);
+            for (Task task : List.copyOf(backgroundActive)) {
+                if (foregroundActive.conflictsWith(task)) {
+                    suspendTree(task, true);
+                    LittleAnt.LOGGER.info("[AntGoalScheduler] tickForeground: suspend background task {}, because of conflict with foreground task {}", task.name, foregroundActive.name);
+                }
+            }
         }
         if (foregroundActive != null && foregroundActive.tick(runner)) {
             finishTree(foregroundActive);
@@ -143,7 +133,12 @@ public final class AntGoalScheduler {
         return true;
     }
 
-    private void attach(Task task, Task parent) { if (parent != null) parent.children.add(task); }
+    private void attach(Task task, Task parent) {
+        if (parent != null) {
+            parent.children.add(task);
+            LittleAnt.LOGGER.info("[AntGoalScheduler] attach task {} to parent {}", task.name, parent.name);
+        }
+    }
 
     private void enqueueForeground(Task task, boolean first) {
         Deque<Task> queue = task.parent == null ? foregroundQueue : task.parent.foregroundQueue;
@@ -179,16 +174,27 @@ public final class AntGoalScheduler {
     }
 
     public void finishTree(Task task) {
+        if (task == null) return;
         task.stop();
         backgroundActive.remove(task); backgroundQueue.remove(task); foregroundQueue.remove(task);
-        if (foregroundActive == task) foregroundActive = null;
+        if (foregroundActive == task) {
+
+            foregroundActive = null;
+        }
         // Background children were spawned, not awaited. Once their owner finishes
         // they will also finish / re-parent to null parent.
+        LittleAnt.LOGGER.info("[AntGoalScheduler] finishTree: stop task {}", task.name);
         for (Task child : List.copyOf(task.children)) {
             if (!child.foreground) {
                 child.parent = null;
                 //backgroundActive.remove(child); backgroundQueue.remove(child);
                 task.children.remove(child);
+            }
+            else {
+                // Foreground descendants belong to the parent's sequential work.
+                // Cancelling the parent must remove them, not merely stop them,
+                // or tickNestedForeground can start them again later this tick.
+                finishTree(child);
             }
         }
         if (task.parent != null) {
@@ -200,6 +206,7 @@ public final class AntGoalScheduler {
 
     /** Advances a custom task's foreground child inside its parent's own tick. */
     private void tickNestedForeground(Task parent, NeoGoalRunner runner) {
+        if (parent.finishNow) return;
         if (parent.foregroundActive == null && !parent.foregroundQueue.isEmpty()) {
             parent.foregroundActive = parent.foregroundQueue.removeFirst();
             Task child = parent.foregroundActive;
@@ -227,7 +234,7 @@ public final class AntGoalScheduler {
             return new VanillaTask(startBlock, name, priority, order, flags, goal, parent, foreground);
         }
         if (startRoots.isEmpty() && tickRoots.isEmpty()) return null;
-        EnumSet<Goal.Flag> flags = requestedFlags == null ? EnumSet.allOf(Goal.Flag.class) : EnumSet.copyOf(requestedFlags);
+        EnumSet<Goal.Flag> flags = requestedFlags == null ? null : EnumSet.copyOf(requestedFlags);
         return new CustomTask(startBlock, name,priority, order, flags, startRoots, tickRoots, parent, foreground);
     }
 
@@ -297,6 +304,8 @@ public final class AntGoalScheduler {
         private final EnumSet<Goal.Flag> flags;
         protected Task parent;
         private final boolean foreground;
+        protected boolean finishNow;
+        protected boolean finishAfterForeground;
         protected final List<Task> children = new ArrayList<>();
         private final Deque<Task> foregroundQueue = new ArrayDeque<>();
         private Task foregroundActive;
@@ -307,7 +316,10 @@ public final class AntGoalScheduler {
         }
         public double priority() { return priority; }
         public long sequence() { return sequence; }
-        private boolean conflictsWith(Task other) { return flags.stream().anyMatch(other.flags::contains); }
+        private boolean conflictsWith(Task other) {
+            if (flags == null || other.flags == null) return false;
+            return flags.stream().anyMatch(other.flags::contains);
+        }
         private boolean sameInvocation(Task other) { return startBlock.equals(other.startBlock) && parent == other.parent && foreground == other.foreground; }
         protected abstract boolean tick(NeoGoalRunner runner);
         protected void suspend() {}
@@ -327,7 +339,16 @@ public final class AntGoalScheduler {
                 if (!goal.canUse()) return ++attempts > 40;
                 attempts = 0; ant.goalSelector.addGoal((int) priority(), goal); registered = true;
             }
-            return !goal.canContinueToUse() && ++attempts > 40;
+            if(!goal.canContinueToUse()){
+                attempts++;
+            }
+            else {
+                attempts --;
+                if(attempts <= 0){
+                    attempts = 0;
+                }
+            }
+            return attempts > 40;
         }
         protected void suspend() { if (registered) ant.goalSelector.removeGoal(goal); goal.stop(); registered = false; }
     }
@@ -349,23 +370,6 @@ public final class AntGoalScheduler {
         protected void suspend() { ant.getNavigation().stop(); started = false; }
     }
 
-    private final class FinishGoalTask extends Task {
-        private final Task target;
-        private FinishGoalTask(UUID startBlock, String name, long sequence, Task target) {
-            super(startBlock, name, 0, sequence, EnumSet.of(Goal.Flag.MOVE), target, true); this.target = target;
-        }
-        protected boolean tick(NeoGoalRunner ignored) {
-            if(this.parent == null){
-                return true;
-            }
-            else {
-                target.children.clear();
-                finishTree(target);
-            }
-            return true;
-        }
-    }
-
     public final class CustomTask extends Task {
         private final List<UUID> startRoots;
         private final List<UUID> tickRoots;
@@ -378,8 +382,9 @@ public final class AntGoalScheduler {
         }
         protected boolean tick(NeoGoalRunner runner) {
             if (!bodyFinished) bodyFinished = runner.run(this, startRoots, tickRoots);
+            if (finishNow) return true;
             tickNestedForeground(this, runner);
-            return bodyFinished && childrenFinished();
+            return (bodyFinished || finishAfterForeground) && childrenFinished();
         }
     }
 }

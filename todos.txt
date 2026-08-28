@@ -10,3 +10,4 @@
 - Ant死亡时掉落物品栏以及装备
 - 将finish goal和say等behavior 添加到scheduler中
 - finish current goal 照理来说应该瞬间结束所有goal，但是现在会放过第一个执行的goal
+- breakblockgoal 会尝试挖掘水、岩浆等方块

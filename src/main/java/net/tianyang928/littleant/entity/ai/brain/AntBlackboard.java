@@ -125,15 +125,15 @@ public final class AntBlackboard {
     }
 
     public String getX() {
-        return String.valueOf(this.ant.getX());
+        return String.valueOf(this.ant.getBlockX());
     }
 
     public String getY() {
-        return String.valueOf(this.ant.getY());
+        return String.valueOf(Math.ceil(this.ant.getY()));
     }
 
     public String getZ() {
-        return String.valueOf(this.ant.getZ());
+        return String.valueOf(this.ant.getBlockZ());
     }
 
     public String getPos() {
