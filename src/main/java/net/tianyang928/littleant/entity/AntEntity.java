@@ -238,7 +238,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
                     lastTaskDebugHash = debugHash;
                     lastTaskDebugSyncTick = this.tickCount;
                     SyncAntTaskDebugPayload payload = new SyncAntTaskDebugPayload(getId(), getName().getString(), foreground, background);
-                    LittleAnt.LOGGER.info("[AntEntity] tickBrainProgram, entityId: {}, name: {}, foreground: {}, background: {}", getId(), getName().getString(), foreground, background);
+                    //LittleAnt.LOGGER.info("[AntEntity] tickBrainProgram, entityId: {}, name: {}, foreground: {}, background: {}", getId(), getName().getString(), foreground, background);
                     for (ServerPlayer player : serverLevel.players()) {
                         if (player.distanceToSqr(this) <= 32 * 32) PacketDistributor.sendToPlayer(player, payload);
                     }

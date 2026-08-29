@@ -32,6 +32,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private final List<PaletteEntry> paletteEntries=new ArrayList<>();
     private final LinkedHashMap<UUID,BlockRenderLayout> canvasLayouts=new LinkedHashMap<>();
     private final Map<InputKey,ScalableEditBox> inputBoxes=new LinkedHashMap<>(); private SnapTarget snapTarget;
+    private int canvasScrollX = 0, canvasScrollY = 0;
     //private int scaledMouseX, scaledMouseY;
 
     public AntBrainProgramScreen(AntBrainProgramMenu menu, Inventory inventory, Component title) {
@@ -71,6 +72,9 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         g.fill(0, 0, width, HEADER_HEIGHT, 0x661E2430);
         drawScaledText(g,Component.translatable("menu.littleant.ant_brain_program"), 12, 10, 1.0f,0xFFFFFFFF, true);
         drawPalette(g);
+        // Edit boxes remain Screen children for focus/input handling, but are
+        // rendered by drawBlock so their z-order matches their owning block.
+        syncInputBoxes();
         drawCanvas(g);
         BlockRenderLayout preview = draggingLayout();
         snapTarget = preview == null ? null : findSnapTarget(preview, dragX, dragY);
@@ -78,9 +82,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         if (preview != null)
             drawDraggingChain(g, snapTarget == null ? dragX : snapTarget.x(), snapTarget == null ? dragY : snapTarget.y());
 
-        //drawInputBoxBackgrounds(g);
         super.extractRenderState(g, mx, my, p);
-        syncInputBoxes();
     }
 
     private void rebuildLayouts() {
@@ -101,7 +103,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         Set<UUID> laidOut = new HashSet<>();
         for (BrainBlock root : placedBlocks.values())
             if (!nested.contains(root.id()) && !incomingNext.contains(root.id())) {
-                int x = canvasLeft() + root.x(), y = HEADER_HEIGHT + root.y();
+                int x = canvasLeft() + root.x() + canvasScrollX, y = HEADER_HEIGHT + root.y() + canvasScrollY;
                 UUID current = root.id();
                 while (current != null && laidOut.add(current) && !nested.contains(current)) {
                     BrainBlock b = placedBlocks.get(current);
@@ -228,7 +230,14 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                         drawSemicircle(g, ex, ey, e.height(), -1, 0xCC202631, 0x00, 0x00);
                         drawSemicircle(g, exd4, ey, e.height(), 1, 0xCC202631, 0x00, 0x00);
                     }
-                    drawScaledText(g, e.text(), ex + 3, ey + 5, TEXT_SCALE,0xFFFFFFFF, false);
+                    ScalableEditBox box = l.blockId() == null
+                            ? null
+                            : inputBoxes.get(new InputKey(l.blockId(), e.inputName()));
+                    if (box != null && box.visible) {
+                        box.extractRenderState(g, mouseX, mouseY, 0.0F);
+                    } else {
+                        drawScaledText(g, e.text(), ex + 3, ey + 5, TEXT_SCALE,0xFFFFFFFF, false);
+                    }
                 }
                 inputIndex++;
             } else {
@@ -391,7 +400,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                 applySnap(snapTarget);
             }
             else {
-                setBlockPosition(draggingId, Math.max(0, dragX - canvasLeft()), Math.max(0, dragY - HEADER_HEIGHT), null);
+                setBlockPosition(draggingId, Math.max(-canvasScrollX, dragX - canvasLeft() - canvasScrollX), Math.max(-canvasScrollY, dragY - HEADER_HEIGHT - canvasScrollY), null);
             }
             sendProgram();
         } else if (!draggingFromPalette && draggingId != null) {
@@ -439,6 +448,11 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         if (x >= SIDEBAR_WIDTH && x < canvasLeft()) {
             int ch = paletteEntries.isEmpty() ? 0 : paletteEntries.getLast().y() + paletteEntries.getLast().layout().height() + paletteScroll, vh = height - HEADER_HEIGHT - PALETTE_HEADER_HEIGHT;
             paletteScroll = Math.max(0, Math.min(Math.max(0, ch - (HEADER_HEIGHT + PALETTE_HEADER_HEIGHT) - vh), paletteScroll - (int) (sy * 16)));
+            return true;
+        }
+        else if (x >= canvasLeft() && x < width && y >= HEADER_HEIGHT && y < height) {
+            canvasScrollX += (int) (sx * 16);
+            canvasScrollY += (int) (sy * 16);
             return true;
         }
         return super.mouseScrolled(x, y, sx, sy);
@@ -675,7 +689,10 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                     box.setValue(initial == null ? "" : initial);
                     InputKey captured = key;
                     box.setResponder(v -> updateLiteral(captured, v));
-                    inputBoxes.put(key, addRenderableWidget(box));
+                    // Register for input/focus/narration only. Rendering it via
+                    // Screen.renderables would put every field above every
+                    // canvas block, irrespective of the block draw order.
+                    inputBoxes.put(key, addWidget(box));
                 }
                 box.setX(ex + 3);
                 box.setY(ey + 5);

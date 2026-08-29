@@ -34,12 +34,12 @@ public final class ModuleRegistry {
         add("step_forward", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("distance", ValueType.NUMBER, "1")),List.of("step_forward","()"));
         add("look_at_xyz", "behavior", BlockShape.COMMAND, blockPos("x", "y", "z"),List.of("look_at_xyz","x","()","y","()","z","()"));
         add("look_at_blockpos", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("look_at_blockpos","()"));
-        add("rotate", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("angle", ValueType.NUMBER, "1")),List.of("rotate","()"));
+        add("rotate", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("angle", ValueType.NUMBER, "45")),List.of("rotate","()"));
         add("say", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("message", ValueType.TEXT, "")),List.of("say","()"));
         add("switch_inventory_slot","behavior",BlockShape.COMMAND, List.of(new InputDefinition("slot", ValueType.NUMBER, "0")),List.of("switch_inventory_slot","()"));
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
-        add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "true")),List.of("set_run","()"));
-        add("set_crouching", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("crouching", ValueType.BOOLEAN, "true")),List.of("set_crouching","()"));
+        add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "")),List.of("set_run","()"));
+        add("set_crouching", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("crouching", ValueType.BOOLEAN, "")),List.of("set_crouching","()"));
         add("eat", "behavior", BlockShape.COMMAND, List.of(),List.of("eat"));
 
         // control

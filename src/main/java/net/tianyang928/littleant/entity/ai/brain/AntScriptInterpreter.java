@@ -264,33 +264,45 @@ public final class AntScriptInterpreter {
 
             }
             case "if" -> {
-                InputSlot body = input(block, "body");
-                boolean condition = inputBoolean(block, "condition", false, blocks);
-                if (condition && body != null && blocks.containsKey(body.blockId())) {
-                    executeBlock(blocks.get(body.blockId()), active);
+                try {
+                    InputSlot body = input(block, "body");
+                    boolean condition = inputBoolean(block, "condition", false, blocks);
+                    if (condition && body != null && blocks.containsKey(body.blockId())) {
+                        executeBlock(blocks.get(body.blockId()), active);
+                    }
+                } catch (RuntimeException e) {
+                    break;
                 }
             }
             case "if_else" -> {
-                InputSlot body_if = input(block, "body_if");
-                InputSlot body_else = input(block, "body_else");
-                boolean condition = inputBoolean(block, "condition", false, blocks);
-                if (condition && body_if != null && blocks.containsKey(body_if.blockId())) {
-                    executeBlock(blocks.get(body_if.blockId()), active);
-                } else if (!condition && body_else != null && blocks.containsKey(body_else.blockId())) {
-                    executeBlock(blocks.get(body_else.blockId()), active);
+                try {
+                    InputSlot body_if = input(block, "body_if");
+                    InputSlot body_else = input(block, "body_else");
+                    boolean condition = inputBoolean(block, "condition", false, blocks);
+                    if (condition && body_if != null && blocks.containsKey(body_if.blockId())) {
+                        executeBlock(blocks.get(body_if.blockId()), active);
+                    } else if (!condition && body_else != null && blocks.containsKey(body_else.blockId())) {
+                        executeBlock(blocks.get(body_else.blockId()), active);
+                    }
+                } catch (RuntimeException e) {
+                    break;
                 }
             }
             case "while" -> {
-                InputSlot body = input(block, "body");
-                int repeatTimes = 0;
-                while (inputBoolean(block, "condition", false, blocks)) {
-                    if (body != null && body.blockId() != null && blocks.containsKey(body.blockId())) {
-                        executeBlock(blocks.get(body.blockId()), active);
+                try {
+                    InputSlot body = input(block, "body");
+                    int repeatTimes = 0;
+                    while (inputBoolean(block, "condition", false, blocks)) {
+                        if (body != null && body.blockId() != null && blocks.containsKey(body.blockId())) {
+                            executeBlock(blocks.get(body.blockId()), active);
+                        }
+                        repeatTimes++;
+                        if(repeatTimes > 1000){
+                            break;
+                        }
                     }
-                    repeatTimes++;
-                    if(repeatTimes > 1000){
-                        break;
-                    }
+                } catch (RuntimeException e) {
+                    break;
                 }
             }
             case "set_variable" -> {
