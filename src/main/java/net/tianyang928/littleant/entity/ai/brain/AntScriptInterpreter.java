@@ -136,7 +136,7 @@ public final class AntScriptInterpreter {
 //        }
         switch (block.opcode()) {
             case "ai_start", "tick_start", "receive_goal", "goal_tick_start" -> {}
-            case "start_foreground_goal", "start_background_goal" -> {
+            case "submit_foreground_goal", "submit_background_goal" -> {
                 List<String> all_param;
                 try {
                     all_param = Arrays.stream(inputNumber(block, "goal", "", blocks).split(",", -1)).map(String::trim).toList();
@@ -146,7 +146,7 @@ public final class AntScriptInterpreter {
                 } catch (RuntimeException e) {
                     break;
                 }
-                if (block.opcode().equals("start_foreground_goal")) {
+                if (block.opcode().equals("submit_foreground_goal")) {
                     goalScheduler.submitForeground(block.id(), all_param.getFirst(), all_param.subList(1, all_param.size()),
                             receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()), goalTickRoots.getOrDefault(all_param.getFirst(), List.of()), currentTask);
                     break;
@@ -238,6 +238,13 @@ public final class AntScriptInterpreter {
             case "set_run" -> {
                 try {
                     blackboard.scriptSetRun(inputBoolean(block, "run", false, blocks));
+                } catch (RuntimeException e) {
+                    break;
+                }
+            }
+            case "set_crouching" -> {
+                try {
+                    blackboard.scriptSetCrouching(inputBoolean(block, "crouching", false, blocks));
                 } catch (RuntimeException e) {
                     break;
                 }

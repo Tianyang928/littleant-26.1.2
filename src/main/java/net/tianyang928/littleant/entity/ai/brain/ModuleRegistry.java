@@ -21,8 +21,8 @@ public final class ModuleRegistry {
         // event
         add("tick_start", "event", BlockShape.HAT, List.of(),List.of("tick_start"));
         add("ai_start", "event", BlockShape.HAT, List.of(),List.of("ai_start"));
-        add("start_foreground_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("start_foreground_goal", "()"));
-        add("start_background_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, ""),new InputDefinition("priority", ValueType.NUMBER, "1"),new InputDefinition("move_flag", ValueType.BOOLEAN, ""),new InputDefinition("look_flag", ValueType.BOOLEAN, ""),new InputDefinition("jump_flag", ValueType.BOOLEAN, "")),List.of("start_background_goal", "()", "priority", "()", "flags", "move_flag", "<>", "look_flag", "<>", "jump_flag", "<>"));
+        add("submit_foreground_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("submit_foreground_goal", "()"));
+        add("submit_background_goal", "event", BlockShape.COMMAND, List.of(new InputDefinition("goal", ValueType.TEXT, ""),new InputDefinition("priority", ValueType.NUMBER, "1"),new InputDefinition("move_flag", ValueType.BOOLEAN, ""),new InputDefinition("look_flag", ValueType.BOOLEAN, ""),new InputDefinition("jump_flag", ValueType.BOOLEAN, "")),List.of("submit_background_goal", "()", "priority", "()", "flags", "move_flag", "<>", "look_flag", "<>", "jump_flag", "<>"));
         add("receive_goal", "event", BlockShape.HAT, List.of(new InputDefinition("goal", ValueType.TEXT, "custom_goal")),List.of("receive_goal","()"));
         add("goal_tick_start", "event", BlockShape.HAT, List.of(new InputDefinition("goal", ValueType.TEXT, "custom_goal")),List.of("goal_tick_start","()"));
         add("finish_current_goal", "event", BlockShape.COMMAND, List.of(),List.of("finish_current_goal"));
@@ -39,7 +39,7 @@ public final class ModuleRegistry {
         add("switch_inventory_slot","behavior",BlockShape.COMMAND, List.of(new InputDefinition("slot", ValueType.NUMBER, "0")),List.of("switch_inventory_slot","()"));
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
         add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "true")),List.of("set_run","()"));
-        add("set_sneaking", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("sneaking", ValueType.BOOLEAN, "true")),List.of("set_sneaking","()"));
+        add("set_crouching", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("crouching", ValueType.BOOLEAN, "true")),List.of("set_crouching","()"));
         add("eat", "behavior", BlockShape.COMMAND, List.of(),List.of("eat"));
 
         // control

@@ -71,7 +71,7 @@ public class BreakBlockGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.hasTarget || this.getBlockBreakTime() < 0L) {
+        if (!this.hasTarget || this.getBlockBreakTime() < 0L || !isBlockBreakable()) {
             this.clearTarget();
             return false;
         }
@@ -102,7 +102,7 @@ public class BreakBlockGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return !this.ant.level().getBlockState(this.blockPos).isAir()
+        return isBlockBreakable()
                 && (isBlockReachable() || !this.ant.getNavigation().isDone())
                 && this.breakTime <= getBlockBreakTime()
                 && this.hasTarget;
@@ -185,6 +185,12 @@ public class BreakBlockGoal extends Goal {
     // 够不着方块
     private boolean isBlockReachable() {
         return this.ant.distanceToSqr(this.blockPos.getX() + 0.5D, this.blockPos.getY() + 0.5D - 1.0D, this.blockPos.getZ() + 0.5D) <= 4.0D * 4.0D;
+    }
+
+    private boolean isBlockBreakable() {
+        BlockState state = this.ant.level().getBlockState(this.blockPos);
+        return !state.isAir()
+                && !state.liquid();
     }
 
     private boolean hasCorrectToolForDrops() {

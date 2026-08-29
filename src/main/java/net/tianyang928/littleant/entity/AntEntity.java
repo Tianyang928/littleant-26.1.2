@@ -56,6 +56,10 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
 
     public static final int INVENTORY_SIZE = 9;
     private static final int INVENTORY_SLOT_OFFSET = 300;
+    private static final EntityDimensions CROUCHING_DIMENSIONS =
+            EntityDimensions.scalable(0.6F, 1.5F).withEyeHeight(1.27F);
+    private static final EntityDimensions SWIMMING_DIMENSIONS =
+            EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F);
 
     AntEntityGlobalData antEntityGlobalData = new AntEntityGlobalData();
     AntScriptInterpreter antScriptInterpreter = new AntScriptInterpreter(this);
@@ -90,6 +94,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
 
     public boolean tryGettingDownWater = false;
     public double speedModifier = 1.0;
+    public boolean isCrouching = false;
 
     public LivingEntity lastHurtBy = null;
     public long lastHurtTime = -1;
@@ -613,6 +618,58 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         // 执行脚本
         if(!this.isProgrammingBrain){
             tickBrainProgram();
+        }
+
+        // 更新姿势
+        if (!this.level().isClientSide()) {
+            this.updatePlayerPose();
+        }
+    }
+
+    private void updatePlayerPose() {
+//        if (forcedPose != null) {
+//            this.setPose(forcedPose);
+//            return;
+//        }
+        if (this.canAntFitWithinBlocksAndEntitiesWhen(Pose.SWIMMING)) {
+            Pose desiredPose = this.getDesiredPose();
+            Pose actualPose;
+            if (this.isSpectator() || this.isPassenger() || this.canAntFitWithinBlocksAndEntitiesWhen(desiredPose)) {
+                actualPose = desiredPose;
+            } else if (this.canAntFitWithinBlocksAndEntitiesWhen(Pose.CROUCHING)) {
+                actualPose = Pose.CROUCHING;
+            } else {
+                actualPose = Pose.SWIMMING;
+            }
+
+            this.setPose(actualPose);
+        }
+    }
+
+    private boolean canAntFitWithinBlocksAndEntitiesWhen(Pose newPose) {
+        return this.level().noCollision(this, this.getDimensions(newPose).makeBoundingBox(this.position()).deflate(1.0E-7));
+    }
+
+    @Override
+    protected EntityDimensions getDefaultDimensions(Pose pose) {
+        return switch (pose) {
+            case CROUCHING -> CROUCHING_DIMENSIONS;
+            case SWIMMING, FALL_FLYING, SPIN_ATTACK -> SWIMMING_DIMENSIONS;
+            default -> super.getDefaultDimensions(pose);
+        };
+    }
+
+    private Pose getDesiredPose() {
+        if (this.isSleeping()) {
+            return Pose.SLEEPING;
+        } else if (this.isSwimming()) {
+            return Pose.SWIMMING;
+        } else if (this.isFallFlying()) {
+            return Pose.FALL_FLYING;
+        } else if (this.isAutoSpinAttack()) {
+            return Pose.SPIN_ATTACK;
+        } else {
+            return this.isCrouching ? Pose.CROUCHING : Pose.STANDING;
         }
     }
 }

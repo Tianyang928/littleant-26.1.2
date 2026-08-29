@@ -1,5 +1,7 @@
 package net.tianyang928.littleant.client.renderer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
@@ -7,6 +9,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.client.renderstate.AntRenderState;
 import net.tianyang928.littleant.entity.AntEntity;
@@ -36,6 +39,18 @@ public class AntRenderer extends HumanoidMobRenderer<AntEntity, AntRenderState, 
 
         // 从 entity 读取实体皮肤，写入 state
         state.skinName = entity.getSkinNameAccessor();
+    }
+
+    @Override
+    protected void setupRotations(AntRenderState state, PoseStack poseStack, float bodyRot, float entityScale) {
+        super.setupRotations(state, poseStack, bodyRot, entityScale);
+        if (state.swimAmount > 0.0F) {
+            float targetXRot = state.isInWater ? -90.0F - state.xRot : -90.0F;
+            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(state.swimAmount, 0.0F, targetXRot)));
+            if (state.isVisuallySwimming) {
+                poseStack.translate(0.0F, -1.0F, 0.3F);
+            }
+        }
     }
 
     @Override

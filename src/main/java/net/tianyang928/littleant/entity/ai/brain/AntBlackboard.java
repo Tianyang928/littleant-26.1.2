@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathType;
@@ -69,6 +70,15 @@ public final class AntBlackboard {
             ant.speedModifier = 1.25F;
         } else {
             ant.speedModifier = 0.0F;
+        }
+    }
+
+    public void scriptSetCrouching(Boolean crouching) {
+        ant.isCrouching = crouching;
+        if(crouching) {
+            ant.speedModifier = 0.5F;
+        } else {
+            ant.speedModifier = 1.0F;
         }
     }
 
