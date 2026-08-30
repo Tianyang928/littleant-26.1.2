@@ -115,5 +115,6 @@ public class LittleAnt {
         CodeToModuleCommand.register(event);
         AntRunJsonCommand.register(event);
         AntFindPheromoneCommand.register(event);
+        AntAttackCommand.register(event);
     }
 }

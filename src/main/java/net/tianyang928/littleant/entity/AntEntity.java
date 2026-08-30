@@ -74,6 +74,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     private UseInventoryCraftingGoal useInventoryCraftingGoal;
     @Nullable
     private UseContainerGoal useContainerGoal;
+    @Nullable
+    private EntityMeleeAttackGoal meleeAttackGoal;
 
     private final FindBlockEntity findBlockEntity = new FindBlockEntity(this, null);
     private final FindEntity findEntity = new FindEntity(this, null);
@@ -305,6 +307,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         this.goalSelector.addGoal(1, this.useInventoryCraftingGoal);
         this.useContainerGoal = new UseContainerGoal(this);
         this.goalSelector.addGoal(1, this.useContainerGoal);
+        this.meleeAttackGoal = new EntityMeleeAttackGoal(this, null, true);
+        this.goalSelector.addGoal(1, this.meleeAttackGoal);
 
         //this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
         //this.goalSelector.addGoal(2, new BetterFloatGoal(this));
@@ -330,15 +334,6 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         if (this.useContainerGoal != null) this.useContainerGoal.setRequest(target, operation, item, slot, amount);
     }
 
-    @Override
-    public boolean hasContainerOpen(ContainerOpenersCounter container, BlockPos blockPos) {
-        return this.useContainerGoal != null && this.useContainerGoal.isContainerOpenAt(blockPos);
-    }
-
-    @Override
-    public double getContainerInteractionRange() {
-        return 4.0D;
-    }
     public BlockPos setFindBlockTarget(Block blockToFind) {
         if (this.findBlock != null) {
             return this.findBlock.setTarget(blockToFind);
@@ -370,6 +365,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         }
         return -1;
     }
+    public void setMeleeAttackTarget(LivingEntity target) {
+        if (this.meleeAttackGoal != null) {
+            this.meleeAttackGoal.setTarget(target);
+        }
+    }
     public BlockPos setFindPheromoneTarget(String pheromoneType) {
         if(this.findPheromone != null){
             return this.findPheromone.setTarget(pheromoneType);
@@ -383,6 +383,15 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         return Set.of();
     }
 
+    @Override
+    public boolean hasContainerOpen(ContainerOpenersCounter container, BlockPos blockPos) {
+        return this.useContainerGoal != null && this.useContainerGoal.isContainerOpenAt(blockPos);
+    }
+
+    @Override
+    public double getContainerInteractionRange() {
+        return 4.0D;
+    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
