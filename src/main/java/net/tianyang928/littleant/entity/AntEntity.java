@@ -27,6 +27,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -402,6 +404,27 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
 
     private void setLastHurtBy(LivingEntity attacker) {
         this.lastHurtBy = attacker;
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean killedByPlayer) {
+        // 自定义掉落逻辑
+        for(int i = 0; i<inventory.getContainerSize(); i++){
+            ItemStack itemStack = inventory.getItem(i);
+            if(!itemStack.isEmpty()){
+                this.spawnAtLocation(level, itemStack);
+            }
+        }
+        inventory.clearContent();
+
+        for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+            ItemStack itemStack = this.getItemBySlot(slot);
+            if (!itemStack.isEmpty()
+                    && !EnchantmentHelper.has(itemStack, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP)) {
+                this.spawnAtLocation(level, itemStack);
+                this.setItemSlot(slot, ItemStack.EMPTY);
+            }
+        }
     }
 
     @Override

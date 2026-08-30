@@ -114,7 +114,7 @@ public final class ModuleRegistry {
         add("has_item_in_container_xyz", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","x","()","y","()","z","()","item","()"));
         add("has_item_in_container_blockpos", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("blockpos", ValueType.LIST, ""), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","pos","()","item","()"));
         add("get_item_in_container_xyz", "sense", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","x","()","y","()","z","()","slot","()"));
-        add("get_item_in_container_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, ""),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","x","()","y","()","z","()","slot","()"));
+        add("get_item_in_container_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, ""),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","pos","()","slot","()"));
         add("get_speed", "sense", BlockShape.REPORTER, List.of(),List.of("get_speed"));
 
         // variables

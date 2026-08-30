@@ -9,13 +9,14 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class GetSurroundingPheromoneType {
     private final int SEARCH_RADIUS = 64;
     private boolean hasTarget;
-    public Set<String> resultPheromoneTypes = Set.of();
+    public Set<String> resultPheromoneTypes = new HashSet<>();
     private final PathfinderMob mob;
     private final Block blockEntityToFind = ModBlocks.PHEROMONE_BLOCK.get();
 

@@ -312,19 +312,19 @@ public final class AntGoalScheduler {
     }
 
     private Goal craftingGoal(String name, List<String> args) {
-        int slots = name.equals("use_crafting_table") ? 9 : 4;
-        int expected = switch (name) { case "use_crafting_table" -> 1 + slots + 3; case "use_inventory_crafting" -> 1 + slots; default -> 1 + slots + 1; };
+        int slots = name.equals("vanilla:use_crafting_table") ? 9 : 4;
+        int expected = switch (name) { case "vanilla:use_crafting_table" -> 1 + slots + 3; case "vanilla:use_inventory_crafting" -> 1 + slots; default -> 1 + slots + 1; };
         if (args.size() != expected) return null;
         int amount = Integer.parseInt(args.getFirst()); int offset = 1; BlockPos pos = BlockPos.ZERO;
-        if (name.equals("use_crafting_table")) { pos = blockPos(args, 1); offset = 4; }
+        if (name.equals("vanilla:use_crafting_table")) { pos = blockPos(args, 1); offset = 4; }
         List<ItemStack> items = new ArrayList<>(slots);
         for (int i = 0; i < slots; i++) {
             var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(offset + i))).orElse(null);
             if (item == null) return null;
             items.add(new ItemStack(item));
         }
-        CraftingInput input = CraftingInput.of(name.equals("use_crafting_table") ? 3 : 2, name.equals("use_crafting_table") ? 3 : 2, items);
-        if (name.equals("use_crafting_table")) {
+        CraftingInput input = CraftingInput.of(name.equals("vanilla:use_crafting_table") ? 3 : 2, name.equals("vanilla:use_crafting_table") ? 3 : 2, items);
+        if (name.equals("vanilla:use_crafting_table")) {
             UseCraftingTableGoal goal = new UseCraftingTableGoal(ant); goal.setInput(input, pos, amount); return goal;
         }
         UseInventoryCraftingGoal goal = new UseInventoryCraftingGoal(ant); goal.setInput(input, amount); return goal;
