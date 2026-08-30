@@ -6,11 +6,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.level.pathfinder.Node;
-import net.minecraft.world.level.pathfinder.Path;
-import net.minecraft.world.level.pathfinder.PathType;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.Container;
+import net.minecraft.world.WorldlyContainerHolder;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.*;
@@ -25,25 +27,23 @@ public final class AntBlackboard {
         this.ant = antEntity;
     }
 
-    public void scriptMoveTo(double x, double y, double z) {
-        ant.getNavigation().moveTo(this.ant.getNavigation().createPath(new BlockPos((int)x,(int)y,(int)z), 2,64), ant.speedModifier);
+    public void scriptSwitchInventorySlot(int slot) {
+        ant.setSelectedSlot(slot);
     }
 
-    public void scriptStepForward(double distance) {
-        Node node1 = new Node(ant.getBlockX(),ant.getBlockY(),ant.getBlockZ());
-        Vec3 targetPos = ant.position().add(ant.getLookAngle().scale(distance));
-        Node node2 = new Node(Mth.floor(targetPos.x()),
-                Mth.floor(targetPos.y()),
-                Mth.floor(targetPos.z()));
-        node1.type = PathType.WALKABLE;
-        node2.type = PathType.WALKABLE;
-
-        List<Node> nodes = new ArrayList<>();
-        nodes.add(node1);
-        nodes.add(node2);
-        BlockPos target = new BlockPos(node2.x, node2.y, node2.z);
-        Path manualPath = new Path(nodes, target, true);
-        ant.getNavigation().moveTo(manualPath, 1.0);
+    public void scriptJump() {
+        if(ant.onGround()) {
+            ant.jumpFromGround();
+        }
+        else if(ant.isInLiquid())
+        {
+            if (ant.isInLava()) {
+                ant.jumpInFluid(Blocks.LAVA.defaultBlockState().getFluidState().getFluidType());
+            }
+            else {
+                ant.jumpInFluid(Blocks.WATER.defaultBlockState().getFluidState().getFluidType());
+            }
+        }
     }
 
     public void scriptLookAt(double x, double y, double z) {
@@ -178,6 +178,46 @@ public final class AntBlackboard {
         return result.getX() + "," + result.getY() + "," + result.getZ();
     }
 
+    public String findPheromone(String pheromone) {
+        BlockPos result = this.ant.setFindPheromoneTarget(pheromone);
+        if(result == null){
+            return "";
+        }
+        return result.getX() + "," + result.getY() + "," + result.getZ();
+    }
+
+    public String getSurroundingPheromoneTypes() {
+        return String.join(",", this.ant.getSurroundingPheromoneTypes());
+    }
+
+    public Boolean hasItemInContainer(String item, double x, double y, double z) {
+        BlockPos containerPos = new BlockPos((int) x, (int) y, (int) z);
+        Container container = getContainer(containerPos);
+        if(container == null) {
+            return false;
+        }
+        Item selectedItem = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(item));
+        for(int i = 0; i < container.getContainerSize(); i++) {
+            if(container.getItem(i).getItem().equals(selectedItem)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public String getItemInContainer(int slot, double x, double y, double z) {
+        BlockPos containerPos = new BlockPos((int) x, (int) y, (int) z);
+        Container container = getContainer(containerPos);
+        if(container == null) {
+            return "";
+        }
+        if(slot < 0 || slot >= container.getContainerSize()) {
+            return "";
+        }
+        return BuiltInRegistries.ITEM.getKey(container.getItem(slot).getItem()).toString();
+    }
+
+
+
     public String getSpeed(){
         return String.valueOf(this.ant.speedModifier);
     }
@@ -190,5 +230,18 @@ public final class AntBlackboard {
 
     public String getVariable(String name){
         return variables.getOrDefault(name, "");
+    }
+
+    private Container getContainer(BlockPos containerPos) {
+        if (containerPos == null || !this.ant.level().hasChunkAt(containerPos)) return null;
+        BlockState state = this.ant.level().getBlockState(containerPos);
+        if (state.getBlock() instanceof ChestBlock chestBlock) {
+            return ChestBlock.getContainer(chestBlock, state, this.ant.level(), containerPos, false);
+        }
+        if (state.getBlock() instanceof WorldlyContainerHolder holder) {
+            return holder.getContainer(state, this.ant.level(), containerPos);
+        }
+        BlockEntity blockEntity = this.ant.level().getBlockEntity(containerPos);
+        return blockEntity instanceof Container container ? container : null;
     }
 }

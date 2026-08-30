@@ -235,6 +235,20 @@ public final class AntScriptInterpreter {
             case "say" -> {
                 blackboard.scriptSay(inputNumber(block, "message", "0", blocks));
             }
+            case "switch_inventory_slot" -> {
+                try {
+                    blackboard.scriptSwitchInventorySlot((int)Double.parseDouble(inputNumber(block, "slot", "0", blocks)));
+                } catch (RuntimeException e) {
+                    break;
+                }
+            }
+            case "jump" -> {
+                try {
+                    blackboard.scriptJump();
+                } catch (RuntimeException e) {
+                    break;
+                }
+            }
             case "set_run" -> {
                 try {
                     blackboard.scriptSetRun(inputBoolean(block, "run", false, blocks));
@@ -571,6 +585,36 @@ public final class AntScriptInterpreter {
                 String selectedBlockEntity = inputNumber(block,"block_entity","0",blocks,active);
                 return blackboard.findBlockEntity(selectedBlockEntity);
             }
+            case "find_pheromone" -> {
+                String selectedPheromone = inputNumber(block,"pheromone","0",blocks,active);
+                return blackboard.findPheromone(selectedPheromone);
+            }
+            case "get_surrounding_pheromone_types" -> {
+                return blackboard.getSurroundingPheromoneTypes();
+            }
+            case "get_item_in_container_xyz" -> {
+                try{
+                    int slot = Integer.parseInt(inputNumber(block, "slot", "0", blocks, active));
+                    double x = Double.parseDouble(inputNumber(block, "x", "0", blocks, active));
+                    double y = Double.parseDouble(inputNumber(block, "y", "0", blocks, active));
+                    double z = Double.parseDouble(inputNumber(block, "z", "0", blocks, active));
+                    return blackboard.getItemInContainer(slot, x, y, z);
+                } catch (RuntimeException e) {
+                    return "";
+                }
+            }
+            case "get_item_in_container_blockpos" -> {
+                try{
+                    int slot = Integer.parseInt(inputNumber(block, "slot", "0", blocks, active));
+                    String[] blockposStr = inputNumber(block, "blockpos", "", blocks, active).split(",");
+                    double x = Double.parseDouble(blockposStr[0]);
+                    double y = Double.parseDouble(blockposStr[1]);
+                    double z = Double.parseDouble(blockposStr[2]);
+                    return blackboard.getItemInContainer(slot, x, y, z);
+                } catch (RuntimeException e) {
+                    return "";
+                }
+            }
             case "get_speed" -> {
                 return blackboard.getSpeed();
             }
@@ -663,6 +707,22 @@ public final class AntScriptInterpreter {
                 return false;
             }
 
+            // goal
+            case "already_has_goal" -> {
+                String name = inputNumber(block, "goal", "", blocks);
+                List<TaskDebugEntry> foregroundGoal = debugForeground();
+                List<TaskDebugEntry> backgroundGoal = debugBackground();
+                return foregroundGoal.stream().anyMatch(entry -> entry.name().equals(name)) ||
+                        backgroundGoal.stream().anyMatch(entry -> entry.name().equals(name));
+            }
+
+            case "already_has_goal_at_priority" -> {
+                String name = inputNumber(block, "goal", "", blocks);
+                double priority = Double.parseDouble(inputNumber(block, "priority", "0", blocks, active));
+                List<TaskDebugEntry> backgroundGoal = debugBackground();
+                return backgroundGoal.stream().anyMatch(entry -> entry.name().equals(name) && entry.priority() == priority);
+            }
+
             // sense
             case "has_item_in_inventory" -> {
                 String item = inputNumber(block, "item", "0", blocks, active);
@@ -679,6 +739,29 @@ public final class AntScriptInterpreter {
             }
             case "is_under_water" -> {
                 return blackboard.isUnderWater();
+            }
+            case "has_item_in_container_xyz" -> {
+                try{
+                    double x = Double.parseDouble(inputNumber(block, "x", "0", blocks, active));
+                    double y = Double.parseDouble(inputNumber(block, "y", "0", blocks, active));
+                    double z = Double.parseDouble(inputNumber(block, "z", "0", blocks, active));
+                    String item = inputNumber(block, "item", "0", blocks, active);
+                    return blackboard.hasItemInContainer(item, x, y, z);
+                } catch (RuntimeException e) {
+                    return false;
+                }
+            }
+            case "has_item_in_container_blockpos" -> {
+                String item = inputNumber(block, "item", "0", blocks, active);
+                String[] blockposStr = inputNumber(block, "blockpos", "", blocks, active).split(",");
+                try{
+                    double x = Double.parseDouble(blockposStr[0]);
+                    double y = Double.parseDouble(blockposStr[1]);
+                    double z = Double.parseDouble(blockposStr[2]);
+                    return blackboard.hasItemInContainer(item, x, y, z);
+                } catch (RuntimeException e) {
+                    return false;
+                }
             }
 
 

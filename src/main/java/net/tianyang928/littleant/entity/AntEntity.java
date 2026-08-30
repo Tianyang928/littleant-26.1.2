@@ -41,9 +41,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.entity.ai.goal.*;
-import net.tianyang928.littleant.entity.ai.sense.FindBlock;
-import net.tianyang928.littleant.entity.ai.sense.FindBlockEntity;
-import net.tianyang928.littleant.entity.ai.sense.FindEntity;
+import net.tianyang928.littleant.entity.ai.sense.*;
 import net.tianyang928.littleant.gui.AntInventoryMenu;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 import net.tianyang928.littleant.entity.ai.debug.TaskDebugCodec;
@@ -78,6 +76,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     private final FindBlockEntity findBlockEntity = new FindBlockEntity(this, null);
     private final FindEntity findEntity = new FindEntity(this, null);
     private final FindBlock findBlock = new FindBlock(this, null);
+    private final FindPheromone findPheromone = new FindPheromone(this, "");
+    private final GetSurroundingPheromoneType getSurroundingPheromoneTypes = new GetSurroundingPheromoneType(this);
 
 
     private final SimpleContainer inventory = new SimpleContainer(INVENTORY_SIZE);
@@ -368,6 +368,19 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         }
         return -1;
     }
+    public BlockPos setFindPheromoneTarget(String pheromoneType) {
+        if(this.findPheromone != null){
+            return this.findPheromone.setTarget(pheromoneType);
+        }
+        return null;
+    }
+    public Set<String> getSurroundingPheromoneTypes() {
+        if(this.getSurroundingPheromoneTypes != null){
+            return this.getSurroundingPheromoneTypes.setTarget();
+        }
+        return Set.of();
+    }
+
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {

@@ -34,13 +34,15 @@ public final class ModuleRegistry {
         add("step_forward", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("distance", ValueType.NUMBER, "1")),List.of("step_forward","()"));
         add("look_at_xyz", "behavior", BlockShape.COMMAND, blockPos("x", "y", "z"),List.of("look_at_xyz","x","()","y","()","z","()"));
         add("look_at_blockpos", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("look_at_blockpos","()"));
+        //TODO: rotate (can't rotate a specific direction)
         add("rotate", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("angle", ValueType.NUMBER, "45")),List.of("rotate","()"));
         add("say", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("message", ValueType.TEXT, "")),List.of("say","()"));
         add("switch_inventory_slot","behavior",BlockShape.COMMAND, List.of(new InputDefinition("slot", ValueType.NUMBER, "0")),List.of("switch_inventory_slot","()"));
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
         add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "")),List.of("set_run","()"));
         add("set_crouching", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("crouching", ValueType.BOOLEAN, "")),List.of("set_crouching","()"));
-        add("eat", "behavior", BlockShape.COMMAND, List.of(),List.of("eat"));
+        //TODO: use item (very complicated)
+        //add("use_item", "behavior", BlockShape.COMMAND, List.of(),List.of("use_item"));
 
         // control
         add("repeat", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("count", ValueType.NUMBER, "10", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("repeat","times","()","{}"));
@@ -77,8 +79,6 @@ public final class ModuleRegistry {
         add("use_container_xyz", "goal", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "true", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","()","()","put_in","<>","item","()","slot","()","amount","()"));
         add("use_container_blockpos", "goal", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "true", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","put_in","<>","item","()","slot","()","amount","()"));
         add("melee_attack", "goal", BlockShape.REPORTER, List.of(new InputDefinition("target", ValueType.NUMBER, "", true)),List.of("melee_attack","target","()"));
-        add("use_barrel", "goal", BlockShape.REPORTER, List.of(),List.of("use_barrel"));
-        add("use_furnace", "goal", BlockShape.REPORTER, List.of(),List.of("use_furnace"));
         add("clear_goal", "goal", BlockShape.COMMAND, List.of(),List.of("clear_goal"));
         add("already_has_goal", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("already_has_goal","()"));
         add("already_has_goal_at_priority", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, ""), new InputDefinition("priority", ValueType.NUMBER, "1", true)),List.of("already_has_goal","()","priority","()"));
@@ -94,9 +94,9 @@ public final class ModuleRegistry {
         add("distance_to_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("distance_to_blockpos","()"));
         add("get_block_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_block_xyz","x","()","y","()","z","()"));
         add("get_block_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_block_blockpos","()"));
-        add("get_entity_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_entity_xyz","x","()","y","()","z","()"));
+        add("get_entity_at_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_entity_at_xyz","x","()","y","()","z","()"));
+        add("get_entity_at_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_entity_at_blockpos","()"));
         add("get_entity_pos","sense", BlockShape.REPORTER, List.of(new InputDefinition("id", ValueType.NUMBER, "")),List.of("get_entity_pos","()"));
-        add("get_entity_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_entity_blockpos","()"));
         add("has_item_in_inventory","sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone"), new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("has_item_in_inventory","()","slot","()"));
         add("get_item_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_inventory","()"));
         add("time","sense", BlockShape.REPORTER, List.of(),List.of("time"));
@@ -109,15 +109,20 @@ public final class ModuleRegistry {
         add("find_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("entity", ValueType.TEXT, "minecraft:pig")),List.of("find_entity","()"));
         add("find_block_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block_entity", ValueType.TEXT, "minecraft:chest")),List.of("find_block_entity","()"));
         add("find_pheromone", "sense", BlockShape.REPORTER, List.of(new InputDefinition("pheromone", ValueType.TEXT, "home")),List.of("find_pheromone","()"));
-        add("get_surrounding_pheromone", "sense", BlockShape.REPORTER, List.of(),List.of("get_surrounding_pheromone"));
-        add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(),List.of("find_nearest_entity"));
-        add("has_item_in_container", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone"), new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("has_item_in_container","()","slot","()"));
-        add("get_item_in_container", "sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","slot","()"));
+        add("get_surrounding_pheromone_types", "sense", BlockShape.REPORTER, List.of(),List.of("get_surrounding_pheromone_types"));
+        //add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(),List.of("find_nearest_entity"));
+        add("has_item_in_container_xyz", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","x","()","y","()","z","()","item","()"));
+        add("has_item_in_container_blockpos", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("blockpos", ValueType.LIST, ""), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","pos","()","item","()"));
+        add("get_item_in_container_xyz", "sense", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","x","()","y","()","z","()","slot","()"));
+        add("get_item_in_container_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, ""),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","x","()","y","()","z","()","slot","()"));
         add("get_speed", "sense", BlockShape.REPORTER, List.of(),List.of("get_speed"));
 
         // variables
         add("set_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("value", ValueType.NUMBER, "0")),List.of("set_variable","()","value","()"));
         add("get_variable", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("get_variable","()"));
+        //TODO: for memory of ant
+        //add("set_permanent_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("value", ValueType.NUMBER, "0")),List.of("set_permanent_variable","()","value","()"));
+        //add("get_permanent_variable", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("get_permanent_variable","()"));
     }
 
     private static List<InputDefinition> numbers(String a, String b) {

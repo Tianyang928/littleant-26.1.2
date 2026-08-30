@@ -44,7 +44,7 @@
   "opcode.littleant.ant_brain.jump": "jump",
   "opcode.littleant.ant_brain.set_run": "set run",
   "opcode.littleant.ant_brain.set_crouching": "set crouching",
-  "opcode.littleant.ant_brain.eat": "eat",
+  "opcode.littleant.ant_brain.use_item": "use item",
   "opcode.littleant.ant_brain.if_else": "if else",
   "opcode.littleant.ant_brain.while": "while",
   "opcode.littleant.ant_brain.add": "+",
@@ -96,7 +96,7 @@
   "opcode.littleant.ant_brain.find_entity": "find entity",
   "opcode.littleant.ant_brain.find_block_entity": "find block entity",
   "opcode.littleant.ant_brain.find_pheromone": "find pheromone",
-  "opcode.littleant.ant_brain.get_surrounding_pheromone": "get surrounding pheromone",
+  "opcode.littleant.ant_brain.get_surrounding_pheromone_types": "get surrounding pheromone types",
   "opcode.littleant.ant_brain.has_item_in_container": "has item in container",
   "opcode.littleant.ant_brain.get_item_in_container": "get item in container",
   "opcode.littleant.ant_brain.priority": "priority",
@@ -120,5 +120,8 @@
   "opcode.littleant.ant_brain.better_float": "float",
   "opcode.littleant.ant_brain.use_container": "use container",
   "opcode.littleant.ant_brain.item": "item",
-  "opcode.littleant.ant_brain.goal_tick_start": "goal tick start"
+  "opcode.littleant.ant_brain.goal_tick_start": "goal tick start",
+  "opcode.littleant.ant_brain.get_entity_at_xyz": "get entity at",
+  "opcode.littleant.ant_brain.get_entity_at_blockpos": "get entity at",
+  "opcode.littleant.ant_brain.get_entity_pos": "get entity position"
 }

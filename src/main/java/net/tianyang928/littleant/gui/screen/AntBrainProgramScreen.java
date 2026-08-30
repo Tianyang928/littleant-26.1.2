@@ -854,6 +854,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         public ScalableEditBox(Font font, int x, int y, int width, int height, Component narration) {
             super(font, x, y, (int) Math.ceil(width / TEXT_SCALE), (int) Math.ceil(height / TEXT_SCALE), narration);
             this.visible = true;
+            this.setFilter(v -> v.isEmpty() || v.matches("^[a-zA-Z0-9_]+$"));
         }
 
         /**

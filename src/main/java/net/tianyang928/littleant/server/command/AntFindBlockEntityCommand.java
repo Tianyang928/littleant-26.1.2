@@ -4,12 +4,15 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.tianyang928.littleant.entity.AntEntity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class AntFindBlockEntityCommand {
@@ -31,12 +34,16 @@ public class AntFindBlockEntityCommand {
                                                 context.getSource().sendFailure(Component.literal("该块没有实体"));
                                                 return 0;
                                             }
+                                            List<BlockPos> resultPos = new ArrayList<>();
                                             int count = 0;
                                             for (var entity : level.getEntities().getAll()) {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    ant.setFindBlockEntityTarget(blockState.getBlock());
+                                                    BlockPos result = ant.setFindBlockEntityTarget(blockState.getBlock());
+                                                    if(result != null) {
+                                                        resultPos.add(result);
+                                                    }
                                                     count++;
                                                 }
                                             }
@@ -44,9 +51,13 @@ public class AntFindBlockEntityCommand {
                                                 context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
                                                 return 0;
                                             }
+                                            if(resultPos.isEmpty()){
+                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + blockState.getBlock().getName() + "\" 的方块实体"));
+                                                return 0;
+                                            }
                                             int matched = count;
                                             context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 查找 " + blockState.getBlock().getName()), true);
+                                                    () -> Component.literal("已让 " + matched + " 个 Ant 查找 " + blockState.getBlock().getName() + " 在 " + resultPos), true);
                                             return count;
                                         }))));
     }
