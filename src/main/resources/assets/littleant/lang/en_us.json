@@ -132,5 +132,7 @@
   "opcode.littleant.ant_brain.get_list_value": "get list value",
   "opcode.littleant.ant_brain.set_list_permanent": "set list permanent",
   "opcode.littleant.ant_brain.key": "key",
-  "opcode.littleant.ant_brain.clear_list": "clear list"
+  "opcode.littleant.ant_brain.clear_list": "clear list",
+  "tip.littleant.debug.f8_to_close": "press F8 to close",
+  "menu.littleant.show_debug_overlay": "show debug"
 }

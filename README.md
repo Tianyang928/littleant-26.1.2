@@ -11,7 +11,7 @@
 
 This is a Minecraft 26.1.2 Neoforge mod.
 
-**Ant** is the new ant added in this mod. It's able to break blocks, set blocks, craft things, operate inventories, just like players. And the most important thing is that its AI can be programmed in-game by players.
+**Ant** is the new entity added in this mod. It's able to break blocks, set blocks, craft things, operate inventories, just like players. And the most important thing is that its AI can be programmed in-game by players.
 
 I tried to make the programming GUI as close as possible to [Scratch](https://scratch.mit.edu/).
 

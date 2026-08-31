@@ -9,6 +9,7 @@ import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ModEntities;
 import net.tianyang928.littleant.gui.ModMenus;
 import net.tianyang928.littleant.item.ModItems;
+import net.tianyang928.littleant.network.*;
 import net.tianyang928.littleant.server.command.*;
 import org.slf4j.Logger;
 
@@ -23,11 +24,6 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
-import net.tianyang928.littleant.network.RunAntScriptPayload;
-import net.tianyang928.littleant.network.SetPheromonePayload;
-import net.tianyang928.littleant.network.SyncPheromonePayload;
-import net.tianyang928.littleant.network.SyncAntTaskDebugPayload;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -77,6 +73,7 @@ public class LittleAnt {
                 UpdateAntBrainProgramPayload::handlePacketFromClient);
         registrar.playToServer(RunAntScriptPayload.TYPE, RunAntScriptPayload.STREAM_CODEC,
                 RunAntScriptPayload::handlePacketFromClient);
+        registrar.playToServer(SetDebugOverlayVisiblePayload.TYPE, SetDebugOverlayVisiblePayload.STREAM_CODEC, SetDebugOverlayVisiblePayload::handlePacketFromClient);
     }
 
     // Add the example block item to the building blocks tab

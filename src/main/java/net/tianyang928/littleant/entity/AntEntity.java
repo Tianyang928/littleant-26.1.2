@@ -41,6 +41,7 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
+import net.tianyang928.littleant.client.debug.AntDebugClientState;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.entity.ai.goal.*;
 import net.tianyang928.littleant.entity.ai.sense.*;
@@ -163,6 +164,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
 
     /** Sends the program snapshot when the dedicated brain menu is opened. */
     public void writeBrainProgramClientData(RegistryFriendlyByteBuf buf) {
+        buf.writeBoolean(AntDebugClientState.enabled());
         buf.writeVarInt(this.getId());
         buf.writeVarInt(this.brainBlocks.size());
         for (BrainBlock block : this.brainBlocks.values()) {

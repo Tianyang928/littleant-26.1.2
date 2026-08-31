@@ -3,6 +3,7 @@ package net.tianyang928.littleant.client.debug;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.EntityHitResult;
 import net.tianyang928.littleant.entity.ai.debug.TaskDebugEntry;
 import net.tianyang928.littleant.entity.ai.debug.TaskDebugSnapshot;
@@ -32,6 +33,7 @@ public final class AntDebugOverlay {
         int sectionHeight = enlarged ? SECTION_HEIGHT * 2 : SECTION_HEIGHT;
         drawSection(graphics, 5, 5, width, sectionHeight, "Foreground goal", snapshot.foreground(), snapshot.hasRunningForeground(), false);
         drawSection(graphics, 5, 5 + sectionHeight, width, sectionHeight, "Background goal", snapshot.background(), snapshot.hasRunningBackground(), true);
+        graphics.text(Minecraft.getInstance().font, Component.translatable("tip.littleant.debug.f8_to_close"), 5, 5 + sectionHeight*2 + 4, 0xFFFFFFFF, false);
     }
 
     private static TaskDebugSnapshot selectSnapshot(Minecraft minecraft) {

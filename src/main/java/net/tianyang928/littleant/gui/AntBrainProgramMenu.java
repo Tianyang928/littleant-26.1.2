@@ -5,6 +5,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.tianyang928.littleant.client.debug.AntDebugClientState;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.brain.BrainBlock;
 import net.tianyang928.littleant.entity.ai.brain.InputSlot;
@@ -23,10 +24,12 @@ public class AntBrainProgramMenu extends AbstractContainerMenu {
     @Nullable
     public final AntEntity ant;
     private final LinkedHashMap<UUID, BrainBlock> placedBlocks;
+    public boolean debugOverlayEnabled;
 
     /** Client factory. The complete immutable editing snapshot follows the entity id. */
     public AntBrainProgramMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf data) {
         super(ModMenus.ANT_BRAIN_PROGRAM_MENU.get(), containerId);
+        this.debugOverlayEnabled = data.readBoolean();
         int entityId = data.readVarInt();
         this.ant = inventory.player.level().getEntity(entityId) instanceof AntEntity found ? found : null;
         int count = data.readVarInt();
@@ -58,6 +61,7 @@ public class AntBrainProgramMenu extends AbstractContainerMenu {
         super(ModMenus.ANT_BRAIN_PROGRAM_MENU.get(), containerId);
         this.ant = ant;
         this.placedBlocks = ant.getBrainBlocks();
+        this.debugOverlayEnabled = AntDebugClientState.enabled();
 
         ant.setIsProgrammingBrain(inventory.player, true);
     }

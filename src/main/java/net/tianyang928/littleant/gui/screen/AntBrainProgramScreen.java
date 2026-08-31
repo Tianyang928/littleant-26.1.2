@@ -3,17 +3,20 @@ package net.tianyang928.littleant.gui.screen;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
+import net.tianyang928.littleant.network.SetDebugOverlayVisiblePayload;
 import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
 
 import java.util.*;
@@ -37,6 +40,8 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private final Map<InputKey,ScalableEditBox> inputBoxes=new LinkedHashMap<>(); private SnapTarget snapTarget;
     private int canvasScrollX = 0, canvasScrollY = 0;
     //private int scaledMouseX, scaledMouseY;
+    private AntBrainProgramButton debugOverlayButton;
+    private boolean debugOverlayVisible;
 
     public AntBrainProgramScreen(AntBrainProgramMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 1, 1);
@@ -49,6 +54,17 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         super.init();
         leftPos = topPos = 0;
         titleLabelY = -1000;
+        debugOverlayVisible = menu.debugOverlayEnabled;
+
+        debugOverlayButton = this.addRenderableWidget(new AntBrainProgramButton(width-68, HEADER_HEIGHT+5, 63, 25, button -> {
+            debugOverlayVisible = !debugOverlayVisible;
+            ClientPacketDistributor.sendToServer(
+                    new SetDebugOverlayVisiblePayload(
+                            this.menu.containerId,
+                            debugOverlayVisible?1:0
+                    )
+            );
+        }));
     }
 
     @Override
@@ -86,6 +102,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             drawDraggingChain(g, snapTarget == null ? dragX : snapTarget.x(), snapTarget == null ? dragY : snapTarget.y());
 
         super.extractRenderState(g, mx, my, p);
+        drawScaledText(g,Component.translatable("menu.littleant.show_debug_overlay"), width-65, HEADER_HEIGHT+5+7, 1.0f,debugOverlayVisible?0xFFFFFFFF:0x661E2430, true);
     }
 
     private void rebuildLayouts() {
@@ -348,7 +365,12 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         // AbstractContainerScreen consumes every left click, even when no child widget was hit.
         // Only delegate when the pointer is actually over a visible literal input.
         int x = (int) e.x(), y = (int) e.y();
-        if (inputBoxAt(x, y) != null) return super.mouseClicked(e, d);
+        if (inputBoxAt(x, y) != null) {
+            return super.mouseClicked(e, d);
+        }
+        if (inside(x, y, width-55, HEADER_HEIGHT+5, 50, 25)) {
+            return super.mouseClicked(e, d);
+        }
         clearFocus();
         for (int i = 0; i < CATEGORIES.size(); i++) {
             if (inside(x, y, 3, 42 + i * 32, SIDEBAR_WIDTH - 12, 26)) {
@@ -1049,6 +1071,13 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             int logicalX = (int) (this.getX() + (e.x() - this.getX()) / TEXT_SCALE);
             int logicalY = (int) (this.getY() + (e.y() - this.getY()) / TEXT_SCALE);
             return new MouseButtonEvent(logicalX, logicalY, e.buttonInfo());
+        }
+    }
+
+    private class AntBrainProgramButton extends Button.Plain {
+        public AntBrainProgramButton(int x, int y, int width, int height, Button.OnPress onPress) {
+            super(x, y, width, height, CommonComponents.EMPTY, onPress, DEFAULT_NARRATION);
+            this.visible = true;
         }
     }
 }
