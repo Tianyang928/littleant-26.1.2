@@ -326,6 +326,38 @@ public final class AntScriptInterpreter {
                 }
                 blackboard.setVariable(name, inputNumber(block,"value","0",blocks));
             }
+            case "set_variable_permanent" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                if (!name.isEmpty()) {
+                    blackboard.setVariablePermanent(name);
+                }
+            }
+            case "new_list" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                if (!name.isEmpty()) {
+                    blackboard.newList(name);
+                }
+            }
+            case "set_list" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                try {
+                    int key = (int) Double.parseDouble(inputNumber(block, "key", "-1", blocks));
+                    blackboard.setListValue(name, key, inputNumber(block, "value", "", blocks));
+                } catch (RuntimeException ignored) {
+                }
+            }
+            case "set_list_permanent" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                if (!name.isEmpty()) {
+                    blackboard.setListPermanent(name);
+                }
+            }
+            case "clear_list" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                if (!name.isEmpty()) {
+                    blackboard.clearList(name);
+                }
+            }
             default -> {}
         }
         if ((!executingCustomGoal || !customGoalFinished) && block.next() != null && blocks.containsKey(block.next())) {
@@ -360,6 +392,14 @@ public final class AntScriptInterpreter {
 //            return "0";
 //        }
         switch (block.opcode()) {
+            case "join_string_list" -> {
+                String[] strings = inputNumber(block, "strings", "", blocks, active).split(",", -1);
+                return String.join("", strings);
+            }
+            case "join_string_str" -> {
+                return inputNumber(block, "string1", "", blocks, active)
+                        + inputNumber(block, "string2", "", blocks, active);
+            }
             case "add" -> {
                 try {
                     double a = Double.parseDouble(inputNumber(block, "a", "0", blocks, active));
@@ -622,6 +662,18 @@ public final class AntScriptInterpreter {
             // variables
             case "get_variable" -> {
                 return blackboard.getVariable(inputNumber(block,"name","0",blocks,active));
+            }
+            case "get_list" -> {
+                return blackboard.getList(inputNumber(block, "name", "", blocks, active));
+            }
+            case "get_list_value" -> {
+                try {
+                    String name = inputNumber(block, "name", "", blocks, active);
+                    int key = (int) Double.parseDouble(inputNumber(block, "key", "-1", blocks, active));
+                    return blackboard.getListValue(name, key);
+                } catch (RuntimeException ignored) {
+                    return "";
+                }
             }
         }
     }

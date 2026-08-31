@@ -123,5 +123,14 @@
   "opcode.littleant.ant_brain.goal_tick_start": "goal tick start",
   "opcode.littleant.ant_brain.get_entity_at_xyz": "get entity at",
   "opcode.littleant.ant_brain.get_entity_at_blockpos": "get entity at",
-  "opcode.littleant.ant_brain.get_entity_pos": "get entity position"
+  "opcode.littleant.ant_brain.get_entity_pos": "get entity position",
+  "opcode.littleant.ant_brain.join_string": "join string",
+  "opcode.littleant.ant_brain.set_variable_permanent": "set variable permanent",
+  "opcode.littleant.ant_brain.new_list": "new list",
+  "opcode.littleant.ant_brain.get_list": "get list",
+  "opcode.littleant.ant_brain.set_list": "set list",
+  "opcode.littleant.ant_brain.get_list_value": "get list value",
+  "opcode.littleant.ant_brain.set_list_permanent": "set list permanent",
+  "opcode.littleant.ant_brain.key": "key",
+  "opcode.littleant.ant_brain.clear_list": "clear list"
 }

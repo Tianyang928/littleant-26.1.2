@@ -13,6 +13,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.*;
@@ -21,7 +23,10 @@ import java.util.*;
 public final class AntBlackboard {
     private final AntEntity ant;
 
-    private LinkedHashMap<String, String> variables = new LinkedHashMap<>();
+    private final LinkedHashMap<String, String> variables = new LinkedHashMap<>();
+    private final LinkedHashMap<String, List<String>> lists = new LinkedHashMap<>();
+    private final LinkedHashMap<String, String> permanentVariables = new LinkedHashMap<>();
+    private final LinkedHashMap<String, List<String>> permanentLists = new LinkedHashMap<>();
 
     public AntBlackboard(AntEntity antEntity) {
         this.ant = antEntity;
@@ -230,6 +235,102 @@ public final class AntBlackboard {
 
     public String getVariable(String name){
         return variables.getOrDefault(name, "");
+    }
+
+    /** Saves the variable's current value as the value restored with this entity. */
+    public void setVariablePermanent(String name) {
+        if (!name.isEmpty() && variables.containsKey(name)) {
+            permanentVariables.put(name, variables.get(name));
+        }
+    }
+
+    public void newList(String name) {
+        if (!name.isEmpty()) {
+            lists.put(name, new ArrayList<>());
+        }
+    }
+
+    /** Returns the list in the comma-separated representation used by LIST inputs. */
+    public String getList(String name) {
+        List<String> list = lists.get(name);
+        return list == null ? "" : String.join(",", list);
+    }
+
+    public void setListValue(String name, int key, String value) {
+        if (name.isEmpty() || key < 0) {
+            return;
+        }
+        List<String> list = lists.computeIfAbsent(name, ignored -> new ArrayList<>());
+        while (list.size() <= key) {
+            list.add("");
+        }
+        list.set(key, value);
+    }
+
+    public String getListValue(String name, int key) {
+        List<String> list = lists.get(name);
+        return list == null || key < 0 || key >= list.size() ? "" : list.get(key);
+    }
+
+    /** Saves a defensive snapshot, so later set_list calls do not silently alter persistence. */
+    public void setListPermanent(String name) {
+        List<String> list = lists.get(name);
+        if (!name.isEmpty() && list != null) {
+            permanentLists.put(name, new ArrayList<>(list));
+        }
+    }
+
+    public void clearList(String name) {
+        if (!name.isEmpty()) {
+            lists.remove(name);
+        }
+    }
+
+    public void readPermanentData(ValueInput input) {
+        variables.clear();
+        lists.clear();
+        permanentVariables.clear();
+        permanentLists.clear();
+
+        for (ValueInput savedVariable : input.childrenListOrEmpty("PermanentVariables")) {
+            String name = savedVariable.getStringOr("name", "");
+            if (!name.isEmpty()) {
+                String value = savedVariable.getStringOr("value", "");
+                permanentVariables.put(name, value);
+                variables.put(name, value);
+            }
+        }
+        for (ValueInput savedList : input.childrenListOrEmpty("PermanentLists")) {
+            String name = savedList.getStringOr("name", "");
+            if (name.isEmpty()) {
+                continue;
+            }
+            List<String> values = new ArrayList<>();
+            for (ValueInput savedValue : savedList.childrenListOrEmpty("Values")) {
+                values.add(savedValue.getStringOr("value", ""));
+            }
+            permanentLists.put(name, new ArrayList<>(values));
+            lists.put(name, values);
+        }
+    }
+
+    public void writePermanentData(ValueOutput output) {
+        ValueOutput.ValueOutputList savedVariables = output.childrenList("PermanentVariables");
+        permanentVariables.forEach((name, v) -> {
+            ValueOutput child = savedVariables.addChild();
+            child.putString("name", name);
+            child.putString("value", v);
+        });
+
+        ValueOutput.ValueOutputList savedLists = output.childrenList("PermanentLists");
+        permanentLists.forEach((name, values) -> {
+            ValueOutput child = savedLists.addChild();
+            child.putString("name", name);
+            ValueOutput.ValueOutputList savedValues = child.childrenList("Values");
+            for (String v : values) {
+                savedValues.addChild().putString("value", v);
+            }
+        });
     }
 
     private Container getContainer(BlockPos containerPos) {

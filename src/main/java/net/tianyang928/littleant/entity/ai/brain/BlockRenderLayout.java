@@ -128,7 +128,7 @@ public record BlockRenderLayout(
                     InputSlot input = inputsByName.get("slot" + i);
                     if (input == null) continue;
                     Component value = Component.literal(shortValue(input.value()));
-                    int elementWidth = 12;
+                    int elementWidth = 36;
                     if (i % grid == 0) { cursorX = PADDING; cursorY += lineHeight + GAP; lineHeight = 0; }
                     elements.add(new Element(ElementKind.INPUT, input.name(), input.type(), value,
                             cursorX, cursorY, elementWidth, 12, null));

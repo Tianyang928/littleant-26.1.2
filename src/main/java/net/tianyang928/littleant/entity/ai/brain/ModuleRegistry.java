@@ -66,6 +66,8 @@ public final class ModuleRegistry {
         add("or", "operator", BlockShape.BOOLEAN, List.of(new InputDefinition("condition_a", ValueType.BOOLEAN, "", true), new InputDefinition("condition_b", ValueType.BOOLEAN, "", true)),List.of("<>","or","<>"));
         add("true", "operator", BlockShape.BOOLEAN, List.of(),List.of("true"));
         add("false", "operator", BlockShape.BOOLEAN, List.of(),List.of("false"));
+        add("join_string_list", "operator", BlockShape.REPORTER, List.of(new InputDefinition("strings", ValueType.LIST, "")),List.of("join_string","()"));
+        add("join_string_str", "operator", BlockShape.REPORTER, List.of(new InputDefinition("string1", ValueType.TEXT, ""), new InputDefinition("string2", ValueType.TEXT, "")),List.of("join_string","()","and","()"));
 
         // goal
         add("break_block_xyz", "goal", BlockShape.REPORTER, blockPos("x", "y", "z"),List.of("break_block_xyz","x","()","y","()","z","()"));
@@ -76,8 +78,8 @@ public final class ModuleRegistry {
         add("use_crafting_table_blockpos", "goal", BlockShape.REPORTER, craftItem(9, true, true),List.of("use_crafting_table","amount","()","pos","()","3x3"));
         add("use_inventory_crafting", "goal", BlockShape.REPORTER, craftItem(4, false, false),List.of("use_inventory_crafting","amount","()","2x2"));
         add("better_float", "goal", BlockShape.REPORTER, List.of(),List.of("better_float"));
-        add("use_container_xyz", "goal", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "true", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","()","()","put_in","<>","item","()","slot","()","amount","()"));
-        add("use_container_blockpos", "goal", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "true", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","put_in","<>","item","()","slot","()","amount","()"));
+        add("use_container_xyz", "goal", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","()","()","put_in","<>","item","()","slot","()","amount","()"));
+        add("use_container_blockpos", "goal", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.NUMBER, "0", true), new InputDefinition("put_in", ValueType.BOOLEAN, "", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone", true), new InputDefinition("slot", ValueType.NUMBER, "0", true), new InputDefinition("amount", ValueType.NUMBER, "1", true)),List.of("use_container","pos","()","put_in","<>","item","()","slot","()","amount","()"));
         add("melee_attack", "goal", BlockShape.REPORTER, List.of(new InputDefinition("target", ValueType.NUMBER, "", true)),List.of("melee_attack","target","()"));
         add("clear_goal", "goal", BlockShape.COMMAND, List.of(),List.of("clear_goal"));
         add("already_has_goal", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("already_has_goal","()"));
@@ -121,8 +123,13 @@ public final class ModuleRegistry {
         add("set_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("value", ValueType.NUMBER, "0")),List.of("set_variable","()","value","()"));
         add("get_variable", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("get_variable","()"));
         //TODO: for memory of ant
-        //add("set_permanent_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("value", ValueType.NUMBER, "0")),List.of("set_permanent_variable","()","value","()"));
-        //add("get_permanent_variable", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("get_permanent_variable","()"));
+        add("set_variable_permanent", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("set_variable_permanent","()"));
+        add("new_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("new_list","()"));
+        add("get_list", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("get_list","()"));
+        add("set_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("key", ValueType.NUMBER, ""), new InputDefinition("value", ValueType.TEXT, "")),List.of("set_list","()","key","()","value","()"));
+        add("get_list_value", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("key", ValueType.NUMBER, "")),List.of("get_list_value","()","key","()"));
+        add("set_list_permanent", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("set_list_permanent","()"));
+        add("clear_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("clear_list","()"));
     }
 
     private static List<InputDefinition> numbers(String a, String b) {

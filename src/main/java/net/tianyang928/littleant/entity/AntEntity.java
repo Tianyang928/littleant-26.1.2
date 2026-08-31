@@ -445,6 +445,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         this.selectedSlot = Mth.clamp(this.selectedSlot, 0, INVENTORY_SIZE - 1);
         this.syncSelectedItem();
         this.foodData.readAdditionalSaveData(input);
+        this.antScriptInterpreter.blackboard().readPermanentData(input);
         this.brainBlocks.clear();
         for (ValueInput child : input.childrenListOrEmpty("BrainBlocks")) {
             String opcode = child.getStringOr("opcode", "");
@@ -481,6 +482,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         this.writeInventoryToTag(output);
         output.putInt("selected_slot", this.selectedSlot);
         this.foodData.addAdditionalSaveData(output);
+        this.antScriptInterpreter.blackboard().writePermanentData(output);
         ValueOutput.ValueOutputList brainBlockList = output.childrenList("BrainBlocks");
         for (BrainBlock block : this.brainBlocks.values()) {
             ValueOutput child = brainBlockList.addChild();
