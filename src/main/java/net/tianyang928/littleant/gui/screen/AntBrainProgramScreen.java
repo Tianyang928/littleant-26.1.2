@@ -28,7 +28,10 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private int selectedCategory,paletteScroll,dragOffsetX,dragOffsetY,dragX,dragY;
     private int mouseX, mouseY;
     private String draggingOpcode; private UUID draggingId; private boolean draggingFromPalette;
+    private String selectedOpcode; private UUID selectedId; private boolean selectedCopied = false;
     private final LinkedHashMap<UUID,BrainBlock> placedBlocks=new LinkedHashMap<>();
+    private final Deque<DeleteUndo> deleteUndoHistory = new ArrayDeque<>();
+    private LinkedHashMap<UUID, BrainBlock> beforeDragSnapshot;
     private final List<PaletteEntry> paletteEntries=new ArrayList<>();
     private final LinkedHashMap<UUID,BlockRenderLayout> canvasLayouts=new LinkedHashMap<>();
     private final Map<InputKey,ScalableEditBox> inputBoxes=new LinkedHashMap<>(); private SnapTarget snapTarget;
@@ -357,7 +360,9 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         PaletteEntry pe = paletteEntryAt(x, y);
         if (pe != null) {
             draggingOpcode = pe.definition().opcode();
+            selectedOpcode = draggingOpcode;
             draggingId = null;
+            selectedId = null;
             draggingFromPalette = true;
             dragX = x - pe.layout().width() / 2;
             dragY = y - pe.layout().headerHeight() / 2;
@@ -368,8 +373,11 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
         LayoutHit hit = canvasBlockAt(x, y);
         if (hit != null) {
+            beforeDragSnapshot = snapshotProgram();
             draggingId = hit.id();
+            selectedId = draggingId;
             draggingOpcode = placedBlocks.get(hit.id()).opcode();
+            selectedOpcode = draggingOpcode;
             draggingFromPalette = false;
             dragX = hit.x();
             dragY = hit.y();
@@ -394,6 +402,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         if (inside(x, y, canvasLeft(), HEADER_HEIGHT, width - canvasLeft(), height - HEADER_HEIGHT)) {
             if (draggingId == null) {
                 draggingId = UUID.randomUUID();
+                selectedId = draggingId;
                 placedBlocks.put(draggingId, new BrainBlock(draggingOpcode, 0, 0, draggingId, ModuleRegistry.createDefaultInputs(draggingOpcode), null, null));
             }
             if (snapTarget != null) {
@@ -403,35 +412,22 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                 setBlockPosition(draggingId, Math.max(-canvasScrollX, dragX - canvasLeft() - canvasScrollX), Math.max(-canvasScrollY, dragY - HEADER_HEIGHT - canvasScrollY), null);
             }
             sendProgram();
+            beforeDragSnapshot = null;
         } else if (!draggingFromPalette && draggingId != null) {
             for (UUID id : ownedIds(draggingId)) placedBlocks.remove(id);
+            recordDelete(beforeDragSnapshot);
             sendProgram();
         }
         draggingOpcode = null;
         draggingId = null;
         snapTarget = null;
         draggingFromPalette = false;
+        beforeDragSnapshot = null;
         return true;
     }
 
     @Override
     public boolean keyPressed(KeyEvent e) {
-        if (e.key() == 261 && draggingId != null) {
-            for (UUID id : ownedIds(draggingId)) placedBlocks.remove(id);
-            sendProgram();
-            draggingOpcode = null;
-            draggingId = null;
-            snapTarget = null;
-            return true;
-        }
-        if (e.key() == 261 && !(getFocused() instanceof EditBox)) {
-            LayoutHit hit = canvasBlockAt(mouseX, mouseY);
-            if (hit != null) {
-                deleteBlockAndNested(hit.id());
-                sendProgram();
-                return true;
-            }
-        }
         // EditBox handles printable characters in charTyped(), but returns false
         // here. Consume the inventory key first so AbstractContainerScreen does
         // not close this menu before the character event arrives.
@@ -440,6 +436,32 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                 && minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(e))) {
             return true;
         }
+
+        if (e.key() == 261 && selectedId != null) {
+            for (UUID id : ownedIds(selectedId)) placedBlocks.remove(id);
+            recordDelete(beforeDragSnapshot);
+            sendProgram();
+            draggingOpcode = null;
+            draggingId = null;
+            selectedId = null;
+            selectedCopied = false;
+            selectedOpcode = null;
+            snapTarget = null;
+            draggingFromPalette = false;
+            beforeDragSnapshot = null;
+            return true;
+        }
+        if (e.key() == 90 && e.hasControlDown() && !(getFocused() instanceof EditBox)) {
+            undoLastDelete();
+            return true;
+        }
+        if (e.key() == 67 && selectedId != null && e.hasControlDown()) {
+            selectedCopied = true;
+        }
+        if (e.key() == 86 && selectedId != null && e.hasControlDown()) {
+            pasteSelectedBlocks();
+        }
+
         return super.keyPressed(e);
     }
 
@@ -461,6 +483,108 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     @Override
     public void mouseMoved(double x, double y) {
         super.mouseMoved(x, y);
+    }
+
+    private void pasteSelectedBlocks() {
+        if (selectedCopied && selectedId != null) {
+            int x = mouseX, y = mouseY;
+            if (inside(x, y, canvasLeft(), HEADER_HEIGHT, width - canvasLeft(), height - HEADER_HEIGHT)) {
+                BrainBlock sourceRoot = placedBlocks.get(selectedId);
+                if (sourceRoot == null || !sourceRoot.opcode().equals(selectedOpcode)) return;
+
+                Set<UUID> sourceIds = ownedIds(selectedId);
+                Map<UUID, UUID> copiedIds = new HashMap<>();
+                for (UUID sourceId : sourceIds) {
+                    if (placedBlocks.containsKey(sourceId)) copiedIds.put(sourceId, UUID.randomUUID());
+                }
+
+                UUID copiedRootId = copiedIds.get(selectedId);
+                if (copiedRootId == null) return;
+                int copiedRootX = Math.max(-canvasScrollX, x - canvasLeft() - canvasScrollX);
+                int copiedRootY = Math.max(-canvasScrollY, y - HEADER_HEIGHT - canvasScrollY);
+
+                for (UUID sourceId : sourceIds) {
+                    BrainBlock source = placedBlocks.get(sourceId);
+                    UUID copiedId = copiedIds.get(sourceId);
+                    if (source == null || copiedId == null) continue;
+
+                    List<InputSlot> copiedInputs = new ArrayList<>();
+                    for (InputSlot input : source.inputs()) {
+                        UUID copiedInputId = copiedIds.get(input.blockId());
+                        copiedInputs.add(copiedInputId == null
+                                ? InputSlot.literal(input.name(), input.type(), input.value())
+                                : InputSlot.block(input.name(), input.type(), copiedInputId));
+                    }
+
+                    UUID copiedNext = copiedIds.get(source.next());
+                    UUID copiedParent = sourceId.equals(selectedId) ? null : copiedIds.get(source.parent());
+                    int copiedX = sourceId.equals(selectedId) ? copiedRootX : source.x();
+                    int copiedY = sourceId.equals(selectedId) ? copiedRootY : source.y();
+                    placedBlocks.put(copiedId, new BrainBlock(source.opcode(), copiedX, copiedY,
+                            copiedId, copiedInputs, copiedNext, copiedParent));
+                }
+
+                selectedId = copiedRootId;
+                selectedOpcode = sourceRoot.opcode();
+                sendProgram();
+            }
+        }
+    }
+
+    private LinkedHashMap<UUID, BrainBlock> snapshotProgram() {
+        return new LinkedHashMap<>(placedBlocks);
+    }
+
+    private void recordDelete(LinkedHashMap<UUID, BrainBlock> beforeDelete) {
+        if (beforeDelete == null) return;
+        LinkedHashMap<UUID, BrainBlock> removed = new LinkedHashMap<>();
+        LinkedHashMap<UUID, ChangedBlock> changed = new LinkedHashMap<>();
+        for (BrainBlock before : beforeDelete.values()) {
+            BrainBlock after = placedBlocks.get(before.id());
+            if (after == null) {
+                removed.put(before.id(), before);
+            } else if (!before.equals(after)) {
+                changed.put(before.id(), new ChangedBlock(before, after));
+            }
+        }
+        if (!removed.isEmpty()) deleteUndoHistory.push(new DeleteUndo(removed, changed));
+    }
+
+    private void undoLastDelete() {
+        if (deleteUndoHistory.isEmpty()) return;
+        DeleteUndo undo = deleteUndoHistory.pop();
+        placedBlocks.putAll(undo.removed());
+        for (ChangedBlock change : undo.changed().values()) restoreDeletedConnections(change);
+        draggingOpcode = null;
+        draggingId = null;
+        draggingFromPalette = false;
+        beforeDragSnapshot = null;
+        snapTarget = null;
+        selectedId = null;
+        selectedOpcode = null;
+        selectedCopied = false;
+        clearFocus();
+        hideInputBoxes();
+        sendProgram();
+    }
+
+    /** Restores only links changed by the deletion, preserving unrelated later edits. */
+    private void restoreDeletedConnections(ChangedBlock change) {
+        BrainBlock current = placedBlocks.get(change.before().id());
+        if (current == null) return;
+
+        UUID next = Objects.equals(current.next(), change.after().next())
+                ? change.before().next() : current.next();
+        UUID parent = Objects.equals(current.parent(), change.after().parent())
+                ? change.before().parent() : current.parent();
+        List<InputSlot> inputs = new ArrayList<>(current.inputs());
+        int count = Math.min(inputs.size(), Math.min(change.before().inputs().size(), change.after().inputs().size()));
+        for (int i = 0; i < count; i++) {
+            if (Objects.equals(inputs.get(i), change.after().inputs().get(i))) {
+                inputs.set(i, change.before().inputs().get(i));
+            }
+        }
+        placedBlocks.put(current.id(), copy(current, current.x(), current.y(), inputs, next, parent));
     }
 
     private BlockRenderLayout draggingLayout() {
@@ -847,6 +971,13 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     private record InputKey(UUID block, String input) {
+    }
+
+    private record ChangedBlock(BrainBlock before, BrainBlock after) {
+    }
+
+    private record DeleteUndo(LinkedHashMap<UUID, BrainBlock> removed,
+                              LinkedHashMap<UUID, ChangedBlock> changed) {
     }
 
     private class ScalableEditBox extends EditBox {
