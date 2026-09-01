@@ -89,7 +89,6 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     private final FoodData foodData = new FoodData();
     private int selectedSlot = 0;
     private BlockPos lastTimePos = null;
-    private long lastUpdateTime = 0;
     private final LinkedHashMap<UUID, BrainBlock> brainBlocks = new LinkedHashMap<>();
     private boolean isProgrammingBrain = false;
     private Player programmingPlayer = null;
@@ -520,6 +519,30 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         return this.foodData;
     }
 
+    /** Keeps interaction services independent from the private sync implementation. */
+    public void syncSelectedItemNow() {
+        this.syncSelectedItem();
+    }
+
+    @Override
+    public void setItemInHand(InteractionHand hand, ItemStack stack) {
+        if (hand == InteractionHand.MAIN_HAND) {
+            this.inventory.setItem(this.selectedSlot, stack);
+            this.syncSelectedItem();
+        } else {
+            super.setItemInHand(hand, stack);
+        }
+    }
+
+    /** FoodProperties feeds Player only; apply nutrition after the ant really finishes eating. */
+    @Override
+    protected void completeUsingItem() {
+        FoodProperties food = this.getUseItem().get(DataComponents.FOOD);
+        super.completeUsingItem();
+        if (food != null) this.foodData.eat(food);
+        this.syncSelectedItem();
+    }
+
     @Override
     public @Nullable SlotAccess getSlot(int slot) {
         int inventorySlot = slot - INVENTORY_SLOT_OFFSET;
@@ -657,11 +680,14 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
             this.lastTimePos = this.blockPosition();
         }
         // 每1200个tick更新一次食物等级
-        if((currentTime - this.lastUpdateTime) >= 1200){
-            this.lastUpdateTime = currentTime;
-            int minusFoodLevel = (int) Mth.sqrt((float)this.distanceToSqr(this.lastTimePos.getX(), this.lastTimePos.getY(), this.lastTimePos.getZ()))%100;
+        if(currentTime % 1200 == 0){
+            int minusFoodLevel = (int) Mth.sqrt((float)this.distanceToSqr(this.lastTimePos.getX(), this.lastTimePos.getY(), this.lastTimePos.getZ()))/100;
             this.foodData.setFoodLevel(this.foodData.getFoodLevel() - minusFoodLevel);
             this.lastTimePos = this.blockPosition();
+        }
+
+        if(currentTime % 20 == 0 && this.foodData.getFoodLevel() <= 0 && !this.level().isClientSide()) {
+            this.hurtServer((ServerLevel) this.level(), this.damageSources().starve(), 2.0F);
         }
 
         // 执行脚本

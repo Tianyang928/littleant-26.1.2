@@ -1,8 +1,10 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
@@ -87,6 +89,7 @@ public final class AntGoalScheduler {
     public List<TaskDebugEntry> debugForeground() {
         List<TaskDebugEntry> result = new ArrayList<>();
         finishedHistory.stream().filter(TaskDebugEntry::foreground).forEach(result::add);
+        result = result.reversed();
         appendDebug(result, foregroundActive, true, TaskDebugState.RUNNING, 0);
         appendDebug(result, foregroundQueue, true, TaskDebugState.QUEUED, 0);
         return List.copyOf(result);
@@ -298,6 +301,9 @@ public final class AntGoalScheduler {
                 case "vanilla:use_inventory_crafting", "vanilla:use_crafting_table" -> craftingGoal(name, args);
                 case "vanilla:use_container" -> containerGoal(args);
                 case "vanilla:melee_attack" -> meleeGoal(args);
+                case "vanilla:use_item" -> args.isEmpty() ? new UseItemGoal(ant, InteractionHand.MAIN_HAND) : null;
+                case "vanilla:use_block" -> interactionBlockGoal(args);
+                case "vanilla:interact_entity" -> interactionEntityGoal(args);
                 default -> null;
             };
         } catch (RuntimeException ignored) { return null; }
@@ -343,6 +349,23 @@ public final class AntGoalScheduler {
         if (args.size() != 1) return null;
         LivingEntity target = ant.level().getEntity(Integer.parseInt(args.getFirst())) instanceof LivingEntity living ? living : null;
         return target == null ? null : new EntityMeleeAttackGoal(ant, target, true);
+    }
+
+    private Goal interactionBlockGoal(List<String> args) {
+        if (args.size() != 5) return null;
+        Direction face = Direction.byName(args.get(3));
+        if (face == null) {
+            LittleAnt.LOGGER.info("[vanilla:use_block] face {} not found", args.get(3));
+            return null;
+        }
+        return UseInteractionGoal.block(ant, blockPos(args, 0), face,
+                Boolean.parseBoolean(args.get(4)));
+    }
+
+    private Goal interactionEntityGoal(List<String> args) {
+        if (args.size() != 2) return null;
+        return UseInteractionGoal.entity(ant, Integer.parseInt(args.get(0)),
+                Boolean.parseBoolean(args.get(1)));
     }
 
     public interface NeoGoalRunner { boolean run(Task task, List<UUID> receiveRoots, List<UUID> tickReceiveRoots); }

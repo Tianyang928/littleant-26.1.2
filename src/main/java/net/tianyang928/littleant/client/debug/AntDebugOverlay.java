@@ -13,6 +13,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public final class AntDebugOverlay {
     private static final int WIDTH = 190;
@@ -31,9 +32,10 @@ public final class AntDebugOverlay {
         boolean enlarged = GLFW.glfwGetKey(minecraft.getWindow().handle(), GLFW.GLFW_KEY_TAB) == GLFW.GLFW_PRESS;
         int width = enlarged ? WIDTH * 2 : WIDTH;
         int sectionHeight = enlarged ? SECTION_HEIGHT * 2 : SECTION_HEIGHT;
-        drawSection(graphics, 5, 5, width, sectionHeight, "Foreground goal", snapshot.foreground(), snapshot.hasRunningForeground(), false);
-        drawSection(graphics, 5, 5 + sectionHeight, width, sectionHeight, "Background goal", snapshot.background(), snapshot.hasRunningBackground(), true);
-        graphics.text(Minecraft.getInstance().font, Component.translatable("tip.littleant.debug.f8_to_close"), 5, 5 + sectionHeight*2 + 4, 0xFFFFFFFF, false);
+        graphics.text(Minecraft.getInstance().font, Objects.requireNonNull(minecraft.level.getEntity(snapshot.entityId())).getName().getString(), 5, 5, 0xFFFFFFFF, false);
+        drawSection(graphics, 5, 5 + Minecraft.getInstance().font.lineHeight, width, sectionHeight, "Foreground goal", snapshot.foreground(), snapshot.hasRunningForeground(), false);
+        drawSection(graphics, 5, 5 + sectionHeight + Minecraft.getInstance().font.lineHeight, width, sectionHeight, "Background goal", snapshot.background(), snapshot.hasRunningBackground(), true);
+        graphics.text(Minecraft.getInstance().font, Component.translatable("tip.littleant.debug.f8_to_close"), 5, 5 + sectionHeight*2 + 5 + Minecraft.getInstance().font.lineHeight, 0xFFFFFFFF, false);
     }
 
     private static TaskDebugSnapshot selectSnapshot(Minecraft minecraft) {

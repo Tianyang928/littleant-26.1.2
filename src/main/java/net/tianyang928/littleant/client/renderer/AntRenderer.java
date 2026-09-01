@@ -10,6 +10,10 @@ import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.ItemStack;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.client.renderstate.AntRenderState;
 import net.tianyang928.littleant.entity.AntEntity;
@@ -31,6 +35,29 @@ public class AntRenderer extends HumanoidMobRenderer<AntEntity, AntRenderState, 
     @Override
     public AntRenderState createRenderState() {
         return new AntRenderState();
+    }
+
+    @Override
+    protected HumanoidModel.ArmPose getArmPose(AntEntity ant, HumanoidArm arm) {
+        ItemStack stack = ant.getItemHeldByArm(arm);
+        if (stack.isEmpty()) return HumanoidModel.ArmPose.EMPTY;
+        if (!ant.swinging && stack.getItem() instanceof CrossbowItem && CrossbowItem.isCharged(stack)) {
+            return HumanoidModel.ArmPose.CROSSBOW_HOLD;
+        }
+
+        InteractionHand hand = arm == ant.getMainArm() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        if (!ant.isUsingItem() || ant.getUsedItemHand() != hand) return super.getArmPose(ant, arm);
+        return switch (stack.getUseAnimation()) {
+            case BLOCK -> HumanoidModel.ArmPose.BLOCK;
+            case BOW -> HumanoidModel.ArmPose.BOW_AND_ARROW;
+            case TRIDENT -> HumanoidModel.ArmPose.THROW_TRIDENT;
+            case CROSSBOW -> HumanoidModel.ArmPose.CROSSBOW_CHARGE;
+            case SPYGLASS -> HumanoidModel.ArmPose.SPYGLASS;
+            case TOOT_HORN -> HumanoidModel.ArmPose.TOOT_HORN;
+            case BRUSH -> HumanoidModel.ArmPose.BRUSH;
+            case SPEAR -> HumanoidModel.ArmPose.SPEAR;
+            default -> HumanoidModel.ArmPose.ITEM;
+        };
     }
 
     @Override

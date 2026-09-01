@@ -41,8 +41,6 @@ public final class ModuleRegistry {
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
         add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "")),List.of("set_run","()"));
         add("set_crouching", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("crouching", ValueType.BOOLEAN, "")),List.of("set_crouching","()"));
-        //TODO: use item (very complicated)
-        //add("use_item", "behavior", BlockShape.COMMAND, List.of(),List.of("use_item"));
 
         // control
         add("repeat", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("count", ValueType.NUMBER, "10", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("repeat","times","()","{}"));
@@ -84,6 +82,19 @@ public final class ModuleRegistry {
         add("clear_goal", "goal", BlockShape.COMMAND, List.of(),List.of("clear_goal"));
         add("already_has_goal", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, "")),List.of("already_has_goal","()"));
         add("already_has_goal_at_priority", "goal", BlockShape.BOOLEAN, List.of(new InputDefinition("goal", ValueType.TEXT, ""), new InputDefinition("priority", ValueType.NUMBER, "1", true)),List.of("already_has_goal","()","priority","()"));
+        add("use_item", "goal", BlockShape.REPORTER, List.of(), List.of("use_item"));
+        add("use_block_xyz", "goal", BlockShape.REPORTER,
+                List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true),
+                        new InputDefinition("face", ValueType.TEXT, "up"), new InputDefinition("held_item", ValueType.BOOLEAN, "")),
+                List.of("use_block", "pos", "()", "()", "()", "face", "()", "held_item", "<>"));
+        add("use_block_blockpos", "goal", BlockShape.REPORTER,
+                List.of(new InputDefinition("blockpos", ValueType.LIST, ""), new InputDefinition("face", ValueType.TEXT, "up"),
+                        new InputDefinition("held_item", ValueType.BOOLEAN, "")),
+                List.of("use_block", "pos", "()", "face", "()", "held_item", "<>"));
+        add("interact_entity", "goal", BlockShape.REPORTER,
+                List.of(new InputDefinition("target", ValueType.NUMBER, "-1", true),
+                        new InputDefinition("held_item", ValueType.BOOLEAN, "", true)),
+                List.of("interact_entity", "target", "()", "held_item", "<>"));
 
         // sense
         add("health", "sense", BlockShape.REPORTER, List.of(),List.of("health"));

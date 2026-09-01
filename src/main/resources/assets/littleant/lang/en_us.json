@@ -45,6 +45,13 @@
   "opcode.littleant.ant_brain.set_run": "set run",
   "opcode.littleant.ant_brain.set_crouching": "set crouching",
   "opcode.littleant.ant_brain.use_item": "use item",
+  "opcode.littleant.ant_brain.use_block_xyz": "use block",
+  "opcode.littleant.ant_brain.use_block_blockpos": "use block",
+  "opcode.littleant.ant_brain.use_block": "use block",
+  "opcode.littleant.ant_brain.interact_entity": "interact with entity",
+  "opcode.littleant.ant_brain.face": "face",
+  "opcode.littleant.ant_brain.secondary": "secondary use",
+  "opcode.littleant.ant_brain.held_item": "use held item",
   "opcode.littleant.ant_brain.if_else": "if else",
   "opcode.littleant.ant_brain.while": "while",
   "opcode.littleant.ant_brain.add": "+",
@@ -134,5 +141,6 @@
   "opcode.littleant.ant_brain.key": "key",
   "opcode.littleant.ant_brain.clear_list": "clear list",
   "tip.littleant.debug.f8_to_close": "press F8 to close",
-  "menu.littleant.show_debug_overlay": "show debug"
+  "menu.littleant.show_debug_overlay": "show debug",
+  "antentity.littleant.food_level": "food level: %d"
 }

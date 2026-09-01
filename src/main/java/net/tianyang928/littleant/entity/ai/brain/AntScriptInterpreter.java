@@ -516,6 +516,25 @@ public final class AntScriptInterpreter {
             case "melee_attack" -> {
                 return String.join(",", "vanilla:melee_attack", inputNumber(block, "target", "-1", blocks, active));
             }
+            case "use_item" -> { return "vanilla:use_item"; }
+            case "use_block_xyz" -> {
+                return String.join(",", "vanilla:use_block",
+                        inputNumber(block, "x", "0", blocks, active), inputNumber(block, "y", "0", blocks, active),
+                        inputNumber(block, "z", "0", blocks, active), inputNumber(block, "face", "up", blocks, active),
+                        String.valueOf(inputBoolean(block, "held_item", false, blocks, active)));
+            }
+            case "use_block_blockpos" -> {
+                String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
+                if (blockpos.split(",").length != 3) return "";
+                return String.join(",", "vanilla:use_block", blockpos,
+                        inputNumber(block, "face", "up", blocks, active),
+                        String.valueOf(inputBoolean(block, "held_item", false, blocks, active)));
+            }
+            case "interact_entity" -> {
+                return String.join(",", "vanilla:interact_entity",
+                        inputNumber(block, "target", "-1", blocks, active),
+                        String.valueOf(inputBoolean(block, "held_item", true, blocks, active)));
+            }
             case "use_crafting_table_xyz", "use_inventory_crafting", "use_crafting_table_blockpos" -> {
                 StringBuilder result = new StringBuilder(block.opcode().equals("use_inventory_crafting")?"vanilla:use_inventory_crafting":"vanilla:use_crafting_table").append(',').append(inputNumber(block, "amount", "1", blocks, active));
                 if (block.opcode().equals("use_crafting_table_xyz")) {
