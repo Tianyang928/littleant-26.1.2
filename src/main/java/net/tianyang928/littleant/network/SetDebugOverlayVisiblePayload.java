@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.client.debug.AntDebugClientState;
+import net.tianyang928.littleant.client.overlay.debug.AntDebugClientState;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 
 public record SetDebugOverlayVisiblePayload (int containerId, int visible) implements CustomPacketPayload {

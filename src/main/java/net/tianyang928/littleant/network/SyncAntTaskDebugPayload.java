@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.client.debug.AntDebugClientState;
+import net.tianyang928.littleant.client.overlay.debug.AntDebugClientState;
 
 public record SyncAntTaskDebugPayload(int entityId, String antName, String foreground, String background) implements CustomPacketPayload {
     public static final Type<SyncAntTaskDebugPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "sync_ant_task_debug"));

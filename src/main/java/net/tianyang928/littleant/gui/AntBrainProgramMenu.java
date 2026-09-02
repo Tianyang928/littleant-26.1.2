@@ -5,7 +5,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.tianyang928.littleant.client.debug.AntDebugClientState;
+import net.tianyang928.littleant.client.overlay.debug.AntDebugClientState;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.brain.BrainBlock;
 import net.tianyang928.littleant.entity.ai.brain.InputSlot;

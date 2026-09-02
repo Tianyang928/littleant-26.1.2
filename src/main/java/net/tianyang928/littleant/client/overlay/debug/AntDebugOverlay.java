@@ -1,4 +1,4 @@
-package net.tianyang928.littleant.client.debug;
+package net.tianyang928.littleant.client.overlay.debug;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

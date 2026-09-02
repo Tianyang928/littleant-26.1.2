@@ -41,7 +41,7 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.client.debug.AntDebugClientState;
+import net.tianyang928.littleant.client.overlay.debug.AntDebugClientState;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.entity.ai.goal.*;
 import net.tianyang928.littleant.entity.ai.sense.*;
@@ -102,6 +102,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
 
     public LivingEntity lastHurtBy = null;
     public long lastHurtTime = -1;
+
+    private double doubleFoodLevel = 0;
 
     private static final EntityDataAccessor<String> skinNameAccessor =
             SynchedEntityData.defineId(
@@ -440,6 +442,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
+        this.doubleFoodLevel = this.foodData.getFoodLevel();
         this.getEntityData().set(skinNameAccessor, input.getStringOr("skin_name", ""));
         this.readInventoryFromTag(input);
         this.selectedSlot = input.getIntOr("selected_slot", 0);
@@ -681,8 +684,8 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         }
         // 每1200个tick更新一次食物等级
         if(currentTime % 1200 == 0){
-            int minusFoodLevel = (int) Mth.sqrt((float)this.distanceToSqr(this.lastTimePos.getX(), this.lastTimePos.getY(), this.lastTimePos.getZ()))/100;
-            this.foodData.setFoodLevel(this.foodData.getFoodLevel() - minusFoodLevel);
+            doubleFoodLevel -= Mth.sqrt((float)this.distanceToSqr(this.lastTimePos.getX(), this.lastTimePos.getY(), this.lastTimePos.getZ()))/100;
+            this.foodData.setFoodLevel((int)doubleFoodLevel);
             this.lastTimePos = this.blockPosition();
         }
 

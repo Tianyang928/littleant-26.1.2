@@ -1,4 +1,4 @@
-package net.tianyang928.littleant.client.debug;
+package net.tianyang928.littleant.client.overlay.debug;
 
 import net.tianyang928.littleant.entity.ai.debug.TaskDebugCodec;
 import net.tianyang928.littleant.entity.ai.debug.TaskDebugSnapshot;

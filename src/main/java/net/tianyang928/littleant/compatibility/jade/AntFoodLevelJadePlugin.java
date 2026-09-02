@@ -11,7 +11,7 @@ import net.tianyang928.littleant.LittleAnt;
 
 @WailaPlugin
 public class AntFoodLevelJadePlugin implements IWailaPlugin{
-    static Identifier ANT_FOOD_LEVEL = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "textures/item/ant_spawn_egg.png");
+    static Identifier ANT_FOOD_LEVEL = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "food_level");
 
     @Override
     public void register(IWailaCommonRegistration registration) {

@@ -80,6 +80,7 @@ public record BlockRenderLayout(
         int cursorX = PADDING;
         int cursorY = PADDING;
         int lineHeight = 0;
+        int rowStart = 0;
         int inputIndex = 0;
 
         for (String token : ModuleRegistry.getDisplayFormat(definition.opcode())) {
@@ -112,7 +113,11 @@ public record BlockRenderLayout(
                     // block is drawn inside this slot and vertically centered
                     // by the screen renderer.
                     int elementHeight = nested == null ? 12 : Math.max(nested.height(), lineHeight);
-                    int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth, false);
+                    int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth, isPalette);
+                    if (position[1] != cursorY) {
+                        centerRow(elements, rowStart, cursorY, lineHeight);
+                        rowStart = elements.size();
+                    }
                     cursorX = position[0]; cursorY = position[1]; lineHeight = position[2];
                     elements.add(new Element(ElementKind.INPUT, input.name(), input.type(), value,
                             cursorX, cursorY, elementWidth, elementHeight, nested));
@@ -127,9 +132,13 @@ public record BlockRenderLayout(
                 for (int i = 0; i < grid * grid; i++) {
                     InputSlot input = inputsByName.get("slot" + i);
                     if (input == null) continue;
-                    Component value = Component.literal(shortValue(input.value()));
                     int elementWidth = 36;
-                    if (i % grid == 0) { cursorX = PADDING; cursorY += lineHeight + GAP; lineHeight = 0; }
+                    if (i % grid == 0) {
+                        centerRow(elements, rowStart, cursorY, lineHeight);
+                        rowStart = elements.size();
+                        cursorX = PADDING; cursorY += lineHeight + GAP; lineHeight = 0;
+                    }
+                    Component value = Component.literal(shortValue(input.value()));
                     elements.add(new Element(ElementKind.INPUT, input.name(), input.type(), value,
                             cursorX, cursorY, elementWidth, 12, null));
                     cursorX += elementWidth + GAP;
@@ -142,12 +151,18 @@ public record BlockRenderLayout(
             Component text = Component.translatable(token);
             int elementWidth = measurer.width(text);
             int[] position = wrap(cursorX, cursorY, lineHeight, elementWidth, isPalette);
+            if (position[1] != cursorY) {
+                centerRow(elements, rowStart, cursorY, lineHeight);
+                rowStart = elements.size();
+            }
             cursorX = position[0]; cursorY = position[1]; lineHeight = position[2];
             elements.add(new Element(ElementKind.LABEL, null, null, text,
-                    cursorX, cursorY + 5, elementWidth, 9, null));
+                    cursorX, cursorY, elementWidth, 9, null));
             cursorX += elementWidth + GAP;
             lineHeight = Math.max(lineHeight, 12);
         }
+
+        centerRow(elements, rowStart, cursorY, lineHeight);
 
         int headerWidth = PADDING * 2;
         for (Element element : elements) headerWidth = Math.max(headerWidth, element.x() + element.width() + PADDING);
@@ -172,6 +187,8 @@ public record BlockRenderLayout(
         }
         if (!bodyNames.isEmpty()) totalHeight += 10;
 
+        totalWidth += setOffsetX(elements,totalHeight,definition.shape());
+
         if (blockId != null) active.remove(blockId);
         return new BlockRenderLayout(blockId, definition, x, y, totalWidth, totalHeight,
                 headerHeight, elements, bodies);
@@ -182,6 +199,36 @@ public record BlockRenderLayout(
             return new int[]{PADDING, cursorY + lineHeight + GAP, 0};
         }
         return new int[]{cursorX, cursorY, lineHeight};
+    }
+
+    /** Vertically centers every element in a completed header row. */
+    private static void centerRow(ArrayList<Element> elements, int rowStart, int rowY, int rowHeight) {
+        if (rowHeight <= 0) return;
+        for (int i = rowStart; i < elements.size(); i++) {
+            Element element = elements.get(i);
+            int offsetY = element.kind() == ElementKind.LABEL? 3 : 0;
+            int centeredY = rowY + Math.max(0, (rowHeight - element.height()) / 2) + offsetY;
+            if (centeredY != element.y()) {
+                elements.set(i, new Element(element.kind(), element.inputName(), element.type(), element.text(),
+                        element.x(), centeredY, element.width(), element.height(), element.nested()));
+            }
+        }
+    }
+
+    private static int setOffsetX(ArrayList<Element> elements, int totalHeight, BlockShape blockShape) {
+        int widthOffset = 0;
+        if(blockShape.equals(BlockShape.REPORTER)){
+            widthOffset = Math.max(totalHeight/4-2*PADDING, 0);
+        }
+        else if(blockShape.equals(BlockShape.BOOLEAN)) {
+            widthOffset = Math.max(totalHeight/2-2*PADDING, 0);
+        }
+        for(int i = 0; i < elements.size(); i++){
+            Element element = elements.get(i);
+            elements.set(i, new Element(element.kind(), element.inputName(), element.type(), element.text(),
+                    element.x() + widthOffset, element.y(), element.width(), element.height(), element.nested()));
+        }
+        return 2*widthOffset;
     }
 
     private static Chain measureChain(UUID root, Map<UUID, BrainBlock> blocks, int x, int y,

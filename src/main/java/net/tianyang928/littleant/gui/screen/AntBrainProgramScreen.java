@@ -102,7 +102,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             drawDraggingChain(g, snapTarget == null ? dragX : snapTarget.x(), snapTarget == null ? dragY : snapTarget.y());
 
         super.extractRenderState(g, mx, my, p);
-        drawScaledText(g,Component.translatable("menu.littleant.show_debug_overlay"), width-65, HEADER_HEIGHT+5+7, 1.0f,debugOverlayVisible?0xFFFFFFFF:0x661E2430, true);
+        drawScaledText(g,Component.translatable("menu.littleant.show_debug_overlay"), width-65, HEADER_HEIGHT+5+8, 1.0f,debugOverlayVisible?0xFFFFFFFF:0x661E2430, true);
     }
 
     private void rebuildLayouts() {
@@ -490,7 +490,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     @Override
     public boolean mouseScrolled(double x, double y, double sx, double sy) {
         if (x >= SIDEBAR_WIDTH && x < canvasLeft()) {
-            int ch = paletteEntries.isEmpty() ? 0 : paletteEntries.getLast().y() + paletteEntries.getLast().layout().height() + paletteScroll, vh = height - HEADER_HEIGHT - PALETTE_HEADER_HEIGHT;
+            int ch = paletteEntries.isEmpty() ? 0 : paletteEntries.getLast().y() + paletteEntries.getLast().layout().height() + LIST_GAP + paletteScroll, vh = height - HEADER_HEIGHT - PALETTE_HEADER_HEIGHT;
             paletteScroll = Math.max(0, Math.min(Math.max(0, ch - (HEADER_HEIGHT + PALETTE_HEADER_HEIGHT) - vh), paletteScroll - (int) (sy * 16)));
             return true;
         }
@@ -631,9 +631,10 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         for (BlockRenderLayout.Element e : l.elements()) {
             int ex = lx + e.x(), ey = ly + e.y();
             if (e.nested() == null && value && compatible(p.definition().shape(), e.type())) {
-                int dist = distance(px + p.width() / 2, py + p.headerHeight() / 2, ex + e.width() / 2, ey + e.height() / 2);
-                if (dist <= INPUT_SNAP_DISTANCE)
-                    best = new SnapTarget(SnapKind.INPUT, l.blockId(), e.inputName(), ex, ey, e.width(), e.height(), dist);
+                int distModule = distance(px + p.width() / 2, py + p.headerHeight() / 2, ex + e.width() / 2, ey + e.height() / 2);
+                int distMouse = distance(mouseX,mouseY,ex + e.width() / 2, ey + e.height() / 2);
+                if (distModule <= INPUT_SNAP_DISTANCE || distMouse <= INPUT_SNAP_DISTANCE)
+                    best = new SnapTarget(SnapKind.INPUT, l.blockId(), e.inputName(), ex, ey, e.width(), e.height(), distModule);
             } else if (e.nested() != null) {
                 int nestedY = ey + Math.max(0, (e.height() - e.nested().height()) / 2);
                 best = better(best, findSnapRecursive(e.nested(), p, px, py, value,
@@ -972,7 +973,8 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     private static int fade(int c) {
-        return c & 0x00FFFFFF | 0xDD000000;
+        int r = Math.max(0, (c >> 16 & 255) - 30), g = Math.max(0, (c >> 8 & 255) - 30), b = Math.max(0, (c & 255) - 30);
+        return c & 0xFF000000 | r << 16 | g << 8 | b;
     }
 
     private static int lighten(int c) {

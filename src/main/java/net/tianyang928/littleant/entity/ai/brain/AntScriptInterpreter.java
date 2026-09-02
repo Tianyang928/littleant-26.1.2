@@ -1,6 +1,9 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.sense.FindBlock;
@@ -186,7 +189,7 @@ public final class AntScriptInterpreter {
             }
             case "move_to_xyz" -> {
                 try {
-                    goalScheduler.submitMoveTo(block.id(), new net.minecraft.core.BlockPos(
+                    goalScheduler.submitMoveTo(block.id(), new BlockPos(
                             (int) Double.parseDouble(inputNumber(block, "x", "0", blocks)),
                             (int) Double.parseDouble(inputNumber(block, "y", "0", blocks)),
                             (int) Double.parseDouble(inputNumber(block, "z", "0", blocks))), currentTask);
@@ -198,7 +201,7 @@ public final class AntScriptInterpreter {
                 try {
                     String[] coordinates = inputNumber(block, "blockpos", "", blocks).split(",", -1);
                     if (coordinates.length != 3) break;
-                    goalScheduler.submitMoveTo(block.id(), new net.minecraft.core.BlockPos(
+                    goalScheduler.submitMoveTo(block.id(), new BlockPos(
                             (int) Double.parseDouble(coordinates[0].trim()),
                             (int) Double.parseDouble(coordinates[1].trim()),
                             (int) Double.parseDouble(coordinates[2].trim())), currentTask);
@@ -209,9 +212,9 @@ public final class AntScriptInterpreter {
             case "step_forward" -> {
                 try {
                     double distance = Double.parseDouble(inputNumber(block, "distance", "0", blocks));
-                    net.minecraft.world.phys.Vec3 target = ant.position().add(ant.getLookAngle().scale(distance));
-                    goalScheduler.submitMoveTo(block.id(), new net.minecraft.core.BlockPos(
-                            net.minecraft.util.Mth.floor(target.x), net.minecraft.util.Mth.floor(target.y), net.minecraft.util.Mth.floor(target.z)), currentTask);
+                    Vec3 target = ant.position().add(ant.getLookAngle().scale(distance));
+                    goalScheduler.submitMoveTo(block.id(), new BlockPos(
+                            Mth.floor(target.x), Mth.floor(target.y), Mth.floor(target.z)), currentTask);
                 } catch (RuntimeException e) {
                     break;
                 }
