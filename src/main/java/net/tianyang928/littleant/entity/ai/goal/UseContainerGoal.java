@@ -107,6 +107,7 @@ public class UseContainerGoal extends Goal {
                 // Containers without an opening animation implement these hooks as no-ops.
                 container.startOpen(this.ant);
                 this.openedContainer = container;
+                this.ant.registerContainerOpen(this.containerPos);
                 return;
             }
             if (++this.openTicks < OPEN_ANIMATION_TICKS) return;
@@ -136,19 +137,20 @@ public class UseContainerGoal extends Goal {
         return blockEntity instanceof Container container ? container : null;
     }
 
-    /** Used by {@link net.minecraft.world.entity.ContainerUser} to keep chest opener counts accurate. */
-    public boolean isContainerOpenAt(BlockPos pos) {
-        if (this.openedContainer == null || this.containerPos == null) return false;
-        if (this.containerPos.equals(pos)) return true;
-        BlockState state = this.ant.level().getBlockState(this.containerPos);
-        return state.getBlock() instanceof ChestBlock
-                && state.getValue(ChestBlock.TYPE) != ChestType.SINGLE
-                && ChestBlock.getConnectedBlockPos(this.containerPos, state).equals(pos);
-    }
+//    /** Used by {@link net.minecraft.world.entity.ContainerUser} to keep chest opener counts accurate. */
+//    public boolean isContainerOpenAt(BlockPos pos) {
+//        if (this.openedContainer == null || this.containerPos == null) return false;
+//        if (this.containerPos.equals(pos)) return true;
+//        BlockState state = this.ant.level().getBlockState(this.containerPos);
+//        return state.getBlock() instanceof ChestBlock
+//                && state.getValue(ChestBlock.TYPE) != ChestType.SINGLE
+//                && ChestBlock.getConnectedBlockPos(this.containerPos, state).equals(pos);
+//    }
 
     private void closeOpenedContainer() {
         if (this.openedContainer != null) {
             this.openedContainer.stopOpen(this.ant);
+            if (this.containerPos != null) this.ant.unregisterContainerOpen(this.containerPos);
             this.openedContainer = null;
         }
     }

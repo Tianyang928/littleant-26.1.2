@@ -32,6 +32,9 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -81,11 +84,14 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     private final FindBlockEntity findBlockEntity = new FindBlockEntity(this, null);
     private final FindEntity findEntity = new FindEntity(this, null);
     private final FindBlock findBlock = new FindBlock(this, null);
+    private final FindDrop findDrop = new FindDrop(this,null);
     private final FindPheromone findPheromone = new FindPheromone(this, "");
     private final GetSurroundingPheromoneType getSurroundingPheromoneTypes = new GetSurroundingPheromoneType(this);
 
 
     private final SimpleContainer inventory = new SimpleContainer(INVENTORY_SIZE);
+    /** Container positions currently held open by any active UseContainerGoal instance. */
+    private final Map<BlockPos, Integer> openedContainerPositions = new HashMap<>();
     private final FoodData foodData = new FoodData();
     private int selectedSlot = 0;
     private BlockPos lastTimePos = null;
@@ -368,6 +374,12 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         }
         return -1;
     }
+    public BlockPos setFindDropTarget(Item item) {
+        if(this.findDrop != null){
+            return this.findDrop.setTarget(item);
+        }
+        return null;
+    }
     public void setMeleeAttackTarget(LivingEntity target) {
         if (this.meleeAttackGoal != null) {
             this.meleeAttackGoal.setTarget(target);
@@ -388,7 +400,25 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
 
     @Override
     public boolean hasContainerOpen(ContainerOpenersCounter container, BlockPos blockPos) {
-        return this.useContainerGoal != null && this.useContainerGoal.isContainerOpenAt(blockPos);
+        for (BlockPos openedPos : this.openedContainerPositions.keySet()) {
+            if (openedPos.equals(blockPos)) return true;
+            BlockState state = this.level().getBlockState(openedPos);
+            if (state.getBlock() instanceof ChestBlock
+                    && state.getValue(ChestBlock.TYPE) != ChestType.SINGLE
+                    && ChestBlock.getConnectedBlockPos(openedPos, state).equals(blockPos)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void registerContainerOpen(BlockPos pos) {
+        openedContainerPositions.merge(pos.immutable(), 1, Integer::sum);
+    }
+
+    public void unregisterContainerOpen(BlockPos pos) {
+        BlockPos immutable = pos.immutable();
+        openedContainerPositions.computeIfPresent(immutable, (ignored, count) -> count > 1 ? count - 1 : null);
     }
 
     @Override

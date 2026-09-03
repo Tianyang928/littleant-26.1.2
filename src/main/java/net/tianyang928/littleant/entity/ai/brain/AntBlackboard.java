@@ -183,6 +183,14 @@ public final class AntBlackboard {
         return result.getX() + "," + result.getY() + "," + result.getZ();
     }
 
+    public String findDrop(String item) {
+        BlockPos result = this.ant.setFindDropTarget(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(item)));
+        if(result == null){
+            return "";
+        }
+        return result.getX() + "," + result.getY() + "," + result.getZ();
+    }
+
     public String findPheromone(String pheromone) {
         BlockPos result = this.ant.setFindPheromoneTarget(pheromone);
         if(result == null){
@@ -265,6 +273,31 @@ public final class AntBlackboard {
             list.add("");
         }
         list.set(key, value);
+    }
+
+    public void setWholeList(String name, String listStr) {
+        if (name.isEmpty()) {
+            return;
+        }
+        List<String> list = Arrays.stream(listStr.split(",")).toList();
+        lists.put(name,list);
+    }
+
+    public void addList(String name, String listStr) {
+        if (name.isEmpty()) {
+            return;
+        }
+        List<String> listToPut = Arrays.stream(listStr.split(",")).toList();
+        List<String> list = lists.computeIfAbsent(name, ignored -> new ArrayList<>());
+        list.addAll(listToPut);
+    }
+
+    public void addValue(String name, String value) {
+        if (name.isEmpty()) {
+            return;
+        }
+        List<String> list = lists.computeIfAbsent(name, ignored -> new ArrayList<>());
+        list.add(value);
     }
 
     public String getListValue(String name, int key) {

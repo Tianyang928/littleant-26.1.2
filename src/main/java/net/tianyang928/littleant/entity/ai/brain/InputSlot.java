@@ -8,6 +8,6 @@ public record InputSlot(String name, ValueType type, String value, UUID blockId)
         return new InputSlot(name, type, value, null);
     }
     public static InputSlot block(String name, ValueType type, UUID id) {
-        return new InputSlot(name, type, null, id);
+        return new InputSlot(name, type, "", id);
     }
 }

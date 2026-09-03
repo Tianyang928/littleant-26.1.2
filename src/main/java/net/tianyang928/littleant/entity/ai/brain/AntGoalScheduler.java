@@ -2,6 +2,7 @@ package net.tianyang928.littleant.entity.ai.brain;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
@@ -9,6 +10,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.goal.*;
@@ -57,6 +59,13 @@ public final class AntGoalScheduler {
 
     public void submitMoveTo(UUID sourceBlock, BlockPos target, Task parent) {
         Task task = new MoveToTask(sourceBlock, "vanilla:move_to",sequence++, target, parent);
+        if (containsTask(task)) return;
+        attach(task, parent);
+        enqueueForeground(task, false);
+    }
+
+    public void submitStepForward(UUID sourceBlock, double distance, Task parent) {
+        Task task = new StepForwardTask(sourceBlock, "vanilla:step_forward",sequence++, distance, parent);
         if (containsTask(task)) return;
         attach(task, parent);
         enqueueForeground(task, false);
@@ -337,11 +346,14 @@ public final class AntGoalScheduler {
     }
 
     private Goal containerGoal(List<String> args) {
-        if (args.size() != 7) return null;
+        if (args.size() != 7) {
+            LittleAnt.LOGGER.info("[AntGoalScheduler] fail to load containerGoal given arg num {}",args.size());
+            return null;
+        }
         var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(4))).orElse(null);
         if (item == null) return null;
         UseContainerGoal goal = new UseContainerGoal(ant);
-        goal.setRequest(blockPos(args, 0), UseContainerGoal.Operation.valueOf(args.get(3).trim().toUpperCase()), item, Integer.parseInt(args.get(5)), Integer.parseInt(args.get(6)));
+        goal.setRequest(blockPos(args, 0), Boolean.parseBoolean(args.get(3)) ? UseContainerGoal.Operation.PUT : UseContainerGoal.Operation.TAKE, item, Integer.parseInt(args.get(5)), Integer.parseInt(args.get(6)));
         return goal;
     }
 
@@ -413,18 +425,13 @@ public final class AntGoalScheduler {
         protected boolean tick(NeoGoalRunner ignored) {
             if (!registered) {
                 if (!goal.canUse()) return ++attempts > 40;
-                attempts = 0; ant.goalSelector.addGoal((int) priority(), goal); registered = true;
+                ant.goalSelector.addGoal((int) priority(), goal);
+                registered = true;
+                attempts = 0;
             }
-            if(!goal.canContinueToUse()){
-                attempts++;
-            }
-            else {
-                attempts --;
-                if(attempts <= 0){
-                    attempts = 0;
-                }
-            }
-            return attempts > 40;
+            if(!goal.canContinueToUse()) attempts++;
+            else attempts = 0;
+            return attempts > 5;
         }
         protected void suspend() { if (registered) ant.goalSelector.removeGoal(goal); goal.stop(); registered = false; }
     }
@@ -437,11 +444,31 @@ public final class AntGoalScheduler {
         }
         protected boolean tick(NeoGoalRunner ignored) {
             if (!started) {
-                var path = ant.getNavigation().createPath(target, 2, 64);
+                var path = ant.getNavigation().createPath(target, 0, 64);
                 if (path == null) return true;
                 ant.getNavigation().moveTo(path, ant.speedModifier); started = true;
             }
-            return ant.getNavigation().isDone() || ant.blockPosition().closerThan(target, 2.0D);
+            return ant.getNavigation().isDone();
+        }
+        protected void suspend() { ant.getNavigation().stop(); started = false; }
+    }
+
+    public final class StepForwardTask extends Task {
+        private final double distance;
+        private boolean started;
+        private BlockPos target;
+        private StepForwardTask(UUID startBlock, String name, long sequence, double distance, Task parent) {
+            super(startBlock, name, 0, sequence, EnumSet.of(Goal.Flag.MOVE), parent, true); this.distance = distance;
+        }
+        protected boolean tick(NeoGoalRunner ignored) {
+            if (!started) {
+                target = BlockPos.containing(ant.position().add(ant.getLookAngle().scale(distance)));
+                var path = ant.getNavigation().createPath(target, 0, 64);
+                if (path == null) return true;
+                ant.getNavigation().moveTo(path, ant.speedModifier);
+                started = true;
+            }
+            return ant.getNavigation().isDone();
         }
         protected void suspend() { ant.getNavigation().stop(); started = false; }
     }

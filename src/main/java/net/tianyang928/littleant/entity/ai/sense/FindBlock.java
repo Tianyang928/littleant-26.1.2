@@ -170,9 +170,9 @@ public class FindBlock {
                         double distanceToEyeSqr = tempBlockPos.distSqr(eyeBlockPos);
                         if (result.distSqr(eyeBlockPos) > distanceToEyeSqr) {
                             result.set(tempBlockPos);
-                            if(distanceToEyeSqr <= 32.0D * 32.0D) {
-                                return result.immutable();
-                            }
+//                            if(distanceToEyeSqr <= 32.0D * 32.0D) {
+//                                return result.immutable();
+//                            }
                         }
                     }
 

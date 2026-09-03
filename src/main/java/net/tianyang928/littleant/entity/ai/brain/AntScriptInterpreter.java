@@ -6,6 +6,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
+import net.tianyang928.littleant.entity.ai.debug.TaskDebugState;
 import net.tianyang928.littleant.entity.ai.sense.FindBlock;
 
 import java.util.*;
@@ -212,9 +213,7 @@ public final class AntScriptInterpreter {
             case "step_forward" -> {
                 try {
                     double distance = Double.parseDouble(inputNumber(block, "distance", "0", blocks));
-                    Vec3 target = ant.position().add(ant.getLookAngle().scale(distance));
-                    goalScheduler.submitMoveTo(block.id(), new BlockPos(
-                            Mth.floor(target.x), Mth.floor(target.y), Mth.floor(target.z)), currentTask);
+                    goalScheduler.submitStepForward(block.id(), distance, currentTask);
                 } catch (RuntimeException e) {
                     break;
                 }
@@ -276,7 +275,7 @@ public final class AntScriptInterpreter {
                         }
                     }
                 } catch (RuntimeException e) {
-                    break;
+                    LittleAnt.LOGGER.info("[AntScriptInterpreter]: module [repeat] exception: {}", e.toString());
                 }
 
             }
@@ -288,7 +287,8 @@ public final class AntScriptInterpreter {
                         executeBlock(blocks.get(body.blockId()), active);
                     }
                 } catch (RuntimeException e) {
-                    break;
+                    e.printStackTrace();
+                    LittleAnt.LOGGER.info("[AntScriptInterpreter]: module [if] exception: {}", e.toString());
                 }
             }
             case "if_else" -> {
@@ -302,7 +302,8 @@ public final class AntScriptInterpreter {
                         executeBlock(blocks.get(body_else.blockId()), active);
                     }
                 } catch (RuntimeException e) {
-                    break;
+                    e.printStackTrace();
+                    LittleAnt.LOGGER.info("[AntScriptInterpreter]: module [if-else] exception: {}", e.toString());
                 }
             }
             case "while" -> {
@@ -319,7 +320,8 @@ public final class AntScriptInterpreter {
                         }
                     }
                 } catch (RuntimeException e) {
-                    break;
+                    e.printStackTrace();
+                    LittleAnt.LOGGER.info("[AntScriptInterpreter]: module [while] exception: {}", e.toString());
                 }
             }
             case "set_variable" -> {
@@ -341,13 +343,28 @@ public final class AntScriptInterpreter {
                     blackboard.newList(name);
                 }
             }
-            case "set_list" -> {
+            case "add_list" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                String list = inputNumber(block, "list", "", blocks);
+                blackboard.addList(name,list);
+            }
+            case "add_value" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                String value = inputNumber(block, "value", "", blocks);
+                blackboard.addValue(name,value);
+            }
+            case "set_list_kv" -> {
                 String name = inputNumber(block, "name", "", blocks);
                 try {
                     int key = (int) Double.parseDouble(inputNumber(block, "key", "-1", blocks));
                     blackboard.setListValue(name, key, inputNumber(block, "value", "", blocks));
                 } catch (RuntimeException ignored) {
                 }
+            }
+            case "set_list_list" -> {
+                String name = inputNumber(block, "name", "", blocks);
+                String list = inputNumber(block, "list", "", blocks);
+                blackboard.setWholeList(name,list);
             }
             case "set_list_permanent" -> {
                 String name = inputNumber(block, "name", "", blocks);
@@ -647,6 +664,10 @@ public final class AntScriptInterpreter {
                 String selectedBlockEntity = inputNumber(block,"block_entity","0",blocks,active);
                 return blackboard.findBlockEntity(selectedBlockEntity);
             }
+            case "find_drop" -> {
+                String selectedDrop = inputNumber(block,"drop","0",blocks,active);
+                return blackboard.findDrop(selectedDrop);
+            }
             case "find_pheromone" -> {
                 String selectedPheromone = inputNumber(block,"pheromone","0",blocks,active);
                 return blackboard.findPheromone(selectedPheromone);
@@ -757,7 +778,7 @@ public final class AntScriptInterpreter {
                     double bNum = Double.parseDouble(b);
                     return aNum == bNum;
                 } catch (RuntimeException e) {
-                    return a.compareTo(b) == 0;
+                    return a.equals(b);
                 }
             }
             case "not" -> {
@@ -780,21 +801,26 @@ public final class AntScriptInterpreter {
             case "false" -> {
                 return false;
             }
+            case "contain_str" -> {
+                String source = inputNumber(block, "source", "0", blocks, active);
+                String target = inputNumber(block, "target", "0", blocks, active);
+                return source.contains(target);
+            }
 
             // goal
             case "already_has_goal" -> {
                 String name = inputNumber(block, "goal", "", blocks);
                 List<TaskDebugEntry> foregroundGoal = debugForeground();
                 List<TaskDebugEntry> backgroundGoal = debugBackground();
-                return foregroundGoal.stream().anyMatch(entry -> entry.name().equals(name)) ||
-                        backgroundGoal.stream().anyMatch(entry -> entry.name().equals(name));
+                return foregroundGoal.stream().anyMatch(entry -> entry.name().equals(name) && (entry.state().equals(TaskDebugState.QUEUED)||entry.state().equals(TaskDebugState.RUNNING))) ||
+                        backgroundGoal.stream().anyMatch(entry -> entry.name().equals(name) && (entry.state().equals(TaskDebugState.QUEUED)||entry.state().equals(TaskDebugState.RUNNING)));
             }
 
             case "already_has_goal_at_priority" -> {
                 String name = inputNumber(block, "goal", "", blocks);
                 double priority = Double.parseDouble(inputNumber(block, "priority", "0", blocks, active));
                 List<TaskDebugEntry> backgroundGoal = debugBackground();
-                return backgroundGoal.stream().anyMatch(entry -> entry.name().equals(name) && entry.priority() == priority);
+                return backgroundGoal.stream().anyMatch(entry -> entry.name().equals(name) && (entry.state().equals(TaskDebugState.QUEUED)||entry.state().equals(TaskDebugState.RUNNING)) && entry.priority() == priority);
             }
 
             // sense

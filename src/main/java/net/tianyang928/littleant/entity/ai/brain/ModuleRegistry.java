@@ -66,6 +66,7 @@ public final class ModuleRegistry {
         add("false", "operator", BlockShape.BOOLEAN, List.of(),List.of("false"));
         add("join_string_list", "operator", BlockShape.REPORTER, List.of(new InputDefinition("strings", ValueType.LIST, "")),List.of("join_string","()"));
         add("join_string_str", "operator", BlockShape.REPORTER, List.of(new InputDefinition("string1", ValueType.TEXT, ""), new InputDefinition("string2", ValueType.TEXT, "")),List.of("join_string","()","and","()"));
+        add("contain_str", "operator", BlockShape.BOOLEAN, List.of(new InputDefinition("source", ValueType.TEXT, ""),new InputDefinition("target", ValueType.TEXT, "")),List.of("()","contain_str","()"));
 
         // goal
         add("break_block_xyz", "goal", BlockShape.REPORTER, blockPos("x", "y", "z"),List.of("break_block_xyz","x","()","y","()","z","()"));
@@ -110,7 +111,7 @@ public final class ModuleRegistry {
         add("get_entity_at_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_entity_at_xyz","x","()","y","()","z","()"));
         add("get_entity_at_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_entity_at_blockpos","()"));
         add("get_entity_pos","sense", BlockShape.REPORTER, List.of(new InputDefinition("id", ValueType.NUMBER, "")),List.of("get_entity_pos","()"));
-        add("has_item_in_inventory","sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone"), new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("has_item_in_inventory","()","slot","()"));
+        add("has_item_in_inventory","sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_inventory","()"));
         add("get_item_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_inventory","()"));
         add("time","sense", BlockShape.REPORTER, List.of(),List.of("time"));
         add("is_hurt","sense", BlockShape.BOOLEAN, List.of(),List.of("is_hurt"));
@@ -122,6 +123,7 @@ public final class ModuleRegistry {
         add("find_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("entity", ValueType.TEXT, "minecraft:pig")),List.of("find_entity","()"));
         add("find_block_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block_entity", ValueType.TEXT, "minecraft:chest")),List.of("find_block_entity","()"));
         add("find_pheromone", "sense", BlockShape.REPORTER, List.of(new InputDefinition("pheromone", ValueType.TEXT, "home")),List.of("find_pheromone","()"));
+        add("find_drop","sense", BlockShape.REPORTER, List.of(new InputDefinition("drop", ValueType.TEXT, "minecraft:stone")),List.of("find_drop","()"));
         add("get_surrounding_pheromone_types", "sense", BlockShape.REPORTER, List.of(),List.of("get_surrounding_pheromone_types"));
         //add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(),List.of("find_nearest_entity"));
         add("has_item_in_container_xyz", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","x","()","y","()","z","()","item","()"));
@@ -137,7 +139,10 @@ public final class ModuleRegistry {
         add("set_variable_permanent", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("set_variable_permanent","()"));
         add("new_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("new_list","()"));
         add("get_list", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("get_list","()"));
-        add("set_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("key", ValueType.NUMBER, ""), new InputDefinition("value", ValueType.TEXT, "")),List.of("set_list","()","key","()","value","()"));
+        add("add_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""),new InputDefinition("list", ValueType.LIST, "")),List.of("name","()","add_list","()"));
+        add("add_value", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""),new InputDefinition("value", ValueType.TEXT, "")),List.of("name","()","add_value","()"));
+        add("set_list_kv", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("key", ValueType.NUMBER, ""), new InputDefinition("value", ValueType.TEXT, "")),List.of("set_list","()","key","()","value","()"));
+        add("set_list_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("list", ValueType.LIST, "")),List.of("set_list","()","list","()"));
         add("get_list_value", "variables", BlockShape.REPORTER, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("key", ValueType.NUMBER, "")),List.of("get_list_value","()","key","()"));
         add("set_list_permanent", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("set_list_permanent","()"));
         add("clear_list", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, "")),List.of("clear_list","()"));

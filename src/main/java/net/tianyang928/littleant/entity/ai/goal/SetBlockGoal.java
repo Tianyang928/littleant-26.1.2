@@ -24,7 +24,6 @@ public class SetBlockGoal extends Goal {
     public BlockState holdingBlockState;
     protected final AntEntity ant;
     private boolean hasTarget;
-    private long lastCanUseCheck;
     private Path path;
 
 
@@ -40,7 +39,6 @@ public class SetBlockGoal extends Goal {
     public void setTarget(BlockPos blockPos) {
         this.blockPos = blockPos.immutable();
         this.hasTarget = true;
-        this.lastCanUseCheck = 0L;
         this.updateHoldingBlockState();
     }
 
@@ -60,20 +58,12 @@ public class SetBlockGoal extends Goal {
             this.clearTarget();
             return false;
         }
-        long time = this.ant.level().getGameTime();
-        if (time - this.lastCanUseCheck < 20L) {
-            return false;
+        // 直接能放置就不寻路了
+        if (isBlockReachable()) {
+            return true;
         }
-        else {
-            this.lastCanUseCheck = time;
-
-            // 直接能放置就不寻路了
-            if (isBlockReachable()) {
-                return true;
-            }
-            this.path = this.ant.getNavigation().createPath(this.blockPos, 2,64);
-            return this.path != null && !this.path.isDone();
-        }
+        this.path = this.ant.getNavigation().createPath(this.blockPos, 2,64);
+        return this.path != null && !this.path.isDone();
     }
 
     @Override

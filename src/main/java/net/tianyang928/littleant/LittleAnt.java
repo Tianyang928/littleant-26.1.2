@@ -108,6 +108,7 @@ public class LittleAnt {
         AntFindBlockEntityCommand.register(event);
         AntCraftItemCommand.register(event);
         AntFindEntityCommand.register(event);
+        AntFindDropCommand.register(event);
         ModuleToCodeCommand.register(event);
         CodeToModuleCommand.register(event);
         AntRunJsonCommand.register(event);

@@ -48,7 +48,7 @@ public class AntBrainProgramMenu extends AbstractContainerMenu {
                 int valueLength = data.readVarInt();
                 String value = data.readUtf(valueLength);
                 UUID ref = data.readBoolean() ? data.readUUID() : null;
-                inputs.add(new InputSlot(name, type, value.isEmpty() ? null : value, ref));
+                inputs.add(new InputSlot(name, type, value, ref));
             }
             UUID next = data.readBoolean() ? data.readUUID() : null;
             UUID parent = data.readBoolean() ? data.readUUID() : null;

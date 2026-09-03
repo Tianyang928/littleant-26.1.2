@@ -22,3 +22,6 @@ about use item and block
 3、未定义武器如三叉戟不会丢出
 4、拉弓、吃喝东西没有动画，只有挥手动作
 5、还不能骑乘任何实体
+
+透过palette栏的缝隙可以点到canvas
+将findBlock变成效率更高的从内到外搜索

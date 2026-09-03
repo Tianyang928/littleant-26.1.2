@@ -365,34 +365,40 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         // AbstractContainerScreen consumes every left click, even when no child widget was hit.
         // Only delegate when the pointer is actually over a visible literal input.
         int x = (int) e.x(), y = (int) e.y();
+        //先判断是否在左边的sidebar或palette中
+        if(inside(x,y,0,0,canvasLeft(),height)) {
+            clearFocus();
+            for (int i = 0; i < CATEGORIES.size(); i++) {
+                if (inside(x, y, 3, 42 + i * 32, SIDEBAR_WIDTH - 12, 26)) {
+                    selectedCategory = i;
+                    paletteScroll = 0;
+                    return true;
+                }
+            }
+            PaletteEntry pe = paletteEntryAt(x, y);
+            if (pe != null) {
+                draggingOpcode = pe.definition().opcode();
+                selectedOpcode = draggingOpcode;
+                draggingId = null;
+                selectedId = null;
+                draggingFromPalette = true;
+                dragX = x - pe.layout().width() / 2;
+                dragY = y - pe.layout().headerHeight() / 2;
+                dragOffsetX = x - dragX;
+                dragOffsetY = y - dragY;
+                hideInputBoxes();
+                return true;
+            }
+            return true;
+        }
+        //然后是判断是否在输入框或按钮中
         if (inputBoxAt(x, y) != null) {
             return super.mouseClicked(e, d);
         }
         if (inside(x, y, width-55, HEADER_HEIGHT+5, 50, 25)) {
             return super.mouseClicked(e, d);
         }
-        clearFocus();
-        for (int i = 0; i < CATEGORIES.size(); i++) {
-            if (inside(x, y, 3, 42 + i * 32, SIDEBAR_WIDTH - 12, 26)) {
-                selectedCategory = i;
-                paletteScroll = 0;
-                return true;
-            }
-        }
-        PaletteEntry pe = paletteEntryAt(x, y);
-        if (pe != null) {
-            draggingOpcode = pe.definition().opcode();
-            selectedOpcode = draggingOpcode;
-            draggingId = null;
-            selectedId = null;
-            draggingFromPalette = true;
-            dragX = x - pe.layout().width() / 2;
-            dragY = y - pe.layout().headerHeight() / 2;
-            dragOffsetX = x - dragX;
-            dragOffsetY = y - dragY;
-            hideInputBoxes();
-            return true;
-        }
+        //最后是判断是否在canvas的brain block中
         LayoutHit hit = canvasBlockAt(x, y);
         if (hit != null) {
             beforeDragSnapshot = snapshotProgram();
@@ -450,13 +456,15 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
 
     @Override
     public boolean keyPressed(KeyEvent e) {
-        // EditBox handles printable characters in charTyped(), but returns false
-        // here. Consume the inventory key first so AbstractContainerScreen does
-        // not close this menu before the character event arrives.
-        if (getFocused() instanceof EditBox editBox
-                && editBox.isFocused()
-                && minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(e))) {
-            return true;
+        // A focused EditBox owns the complete key event (including clipboard
+        // shortcuts). Return immediately so canvas shortcuts such as Ctrl+V
+        // cannot also process the same event.
+        if (getFocused() instanceof EditBox) {
+            // Do not let the inventory key close the container while typing.
+            if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(e))) {
+                return true;
+            }
+            return super.keyPressed(e);
         }
 
         if (e.key() == 261 && selectedId != null) {
