@@ -1,14 +1,13 @@
 - 增加预设的Ant AI，使用Scratch-like模块
-- 增加Ant可以操作的容器（如anvil、 enchanting table、 smoker、 blast furnace等）
+- 增加Ant可以操作的容器（如anvil、 enchanting table、 smoker、 blast furnace等） √
 - 改进编程GUI的外观
 - 增加Ant可以使用的载体（如物品、实体等）
 - 增加进化系统，使Ant种群能够随着时间的推移而进化
-- 增加画布上下左右滑动的功能
+- 增加画布上下左右滑动的功能 √
 - 增加AI模块导出、保存为结构复用以及加载JSON文件的功能
 - 改善吸附判定，比如换成白框而不是直接渲染brainblock
 - 信息素方块修改成id为任意字符串 √
-- Ant死亡时掉落物品栏以及装备
-- 将finish goal和say等behavior 添加到scheduler中
+- Ant死亡时掉落物品栏以及装备 √
 - finish current goal 照理来说应该瞬间结束所有goal，但是现在会放过第一个执行的goal √
 - breakblockgoal 会尝试挖掘水、岩浆等方块 √
 - 提示按下F8可以打开编程GUI debug界面 √
@@ -25,3 +24,6 @@ about use item and block
 
 透过palette栏的缝隙可以点到canvas
 将findBlock变成效率更高的从内到外搜索
+
+增加画布缩放功能
+增加模块组打包成小图标功能

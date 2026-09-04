@@ -1,0 +1,1615 @@
+{
+  "version": 1,
+  "dsl": "LittleAnt DSL (Python-like, not full Python)",
+  "modules": [
+    {
+      "opcode": "tick_start",
+      "category": "event",
+      "shape": "HAT",
+      "inputs": []
+    },
+    {
+      "opcode": "ai_start",
+      "category": "event",
+      "shape": "HAT",
+      "inputs": []
+    },
+    {
+      "opcode": "submit_foreground_goal",
+      "category": "event",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "goal",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "submit_background_goal",
+      "category": "event",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "goal",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "priority",
+          "type": "NUMBER",
+          "default": "1",
+          "required": false
+        },
+        {
+          "name": "move_flag",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "look_flag",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "jump_flag",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "receive_goal",
+      "category": "event",
+      "shape": "HAT",
+      "inputs": [
+        {
+          "name": "goal",
+          "type": "TEXT",
+          "default": "custom_goal",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "goal_tick_start",
+      "category": "event",
+      "shape": "HAT",
+      "inputs": [
+        {
+          "name": "goal",
+          "type": "TEXT",
+          "default": "custom_goal",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "finish_current_goal",
+      "category": "event",
+      "shape": "COMMAND",
+      "inputs": []
+    },
+    {
+      "opcode": "finish_current_goal_delay",
+      "category": "event",
+      "shape": "COMMAND",
+      "inputs": []
+    },
+    {
+      "opcode": "move_to_xyz",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "move_to_blockpos",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "step_forward",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "distance",
+          "type": "NUMBER",
+          "default": "1",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "look_at_xyz",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "look_at_blockpos",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "rotate",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "angle",
+          "type": "NUMBER",
+          "default": "45",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "say",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "message",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "switch_inventory_slot",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "jump",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": []
+    },
+    {
+      "opcode": "set_run",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "run",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "set_crouching",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "crouching",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "repeat",
+      "category": "control",
+      "shape": "C_SHAPE",
+      "inputs": [
+        {
+          "name": "count",
+          "type": "NUMBER",
+          "default": "10",
+          "required": true
+        },
+        {
+          "name": "body",
+          "type": "BLOCK",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "if",
+      "category": "control",
+      "shape": "C_SHAPE",
+      "inputs": [
+        {
+          "name": "condition",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "body",
+          "type": "BLOCK",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "if_else",
+      "category": "control",
+      "shape": "E_SHAPE",
+      "inputs": [
+        {
+          "name": "condition",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "body_if",
+          "type": "BLOCK",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "body_else",
+          "type": "BLOCK",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "while",
+      "category": "control",
+      "shape": "C_SHAPE",
+      "inputs": [
+        {
+          "name": "condition",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "body",
+          "type": "BLOCK",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "add",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "subtract",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "multiply",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "divide",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "mod",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "absolute",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "number",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "random",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "greater_than",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "less_than",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "equal",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "not",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "condition",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "and",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "condition_a",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "condition_b",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "or",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "condition_a",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "condition_b",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "true",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": []
+    },
+    {
+      "opcode": "false",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": []
+    },
+    {
+      "opcode": "join_string_list",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "strings",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "join_string_str",
+      "category": "operator",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "string1",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "string2",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "contain_str",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "source",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "target",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "break_block_xyz",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "break_block_blockpos",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "set_block_xyz",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "set_block_blockpos",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "use_crafting_table_xyz",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "NUMBER",
+          "default": "1",
+          "required": true
+        },
+        {
+          "name": "recipe_slots",
+          "type": "TEXT",
+          "default": "minecraft:air",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "use_crafting_table_blockpos",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "NUMBER",
+          "default": "1",
+          "required": true
+        },
+        {
+          "name": "recipe_slots",
+          "type": "TEXT",
+          "default": "minecraft:air",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "use_inventory_crafting",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "NUMBER",
+          "default": "1",
+          "required": true
+        },
+        {
+          "name": "recipe_slots",
+          "type": "TEXT",
+          "default": "minecraft:air",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "better_float",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "use_container_xyz",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "put_in",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "item",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": true
+        },
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "amount",
+          "type": "NUMBER",
+          "default": "1",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "use_container_blockpos",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "put_in",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        },
+        {
+          "name": "item",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": true
+        },
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "amount",
+          "type": "NUMBER",
+          "default": "1",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "melee_attack",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "NUMBER",
+          "default": "",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "clear_goal",
+      "category": "goal",
+      "shape": "COMMAND",
+      "inputs": []
+    },
+    {
+      "opcode": "already_has_goal",
+      "category": "goal",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "goal",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "already_has_goal_at_priority",
+      "category": "goal",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "goal",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "priority",
+          "type": "NUMBER",
+          "default": "1",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "use_item",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "use_block_xyz",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "face",
+          "type": "TEXT",
+          "default": "up",
+          "required": false
+        },
+        {
+          "name": "held_item",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "use_block_blockpos",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "face",
+          "type": "TEXT",
+          "default": "up",
+          "required": false
+        },
+        {
+          "name": "held_item",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "interact_entity",
+      "category": "goal",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "target",
+          "type": "NUMBER",
+          "default": "-1",
+          "required": true
+        },
+        {
+          "name": "held_item",
+          "type": "BOOLEAN",
+          "default": "",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "health",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "food_level",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "x",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "y",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "z",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "pos",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "distance_to_xyz",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "distance_to_blockpos",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_block_xyz",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "get_block_blockpos",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_entity_at_xyz",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "get_entity_at_blockpos",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_entity_pos",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "id",
+          "type": "NUMBER",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "has_item_in_inventory",
+      "category": "sense",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "item",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_item_in_inventory",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "time",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "is_hurt",
+      "category": "sense",
+      "shape": "BOOLEAN",
+      "inputs": []
+    },
+    {
+      "opcode": "is_on_fire",
+      "category": "sense",
+      "shape": "BOOLEAN",
+      "inputs": []
+    },
+    {
+      "opcode": "is_in_water",
+      "category": "sense",
+      "shape": "BOOLEAN",
+      "inputs": []
+    },
+    {
+      "opcode": "is_under_water",
+      "category": "sense",
+      "shape": "BOOLEAN",
+      "inputs": []
+    },
+    {
+      "opcode": "last_hurt_by_entity",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "find_block",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "block",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "find_entity",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "entity",
+          "type": "TEXT",
+          "default": "minecraft:pig",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "find_block_entity",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "block_entity",
+          "type": "TEXT",
+          "default": "minecraft:chest",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "find_pheromone",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "pheromone",
+          "type": "TEXT",
+          "default": "home",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "find_drop",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "drop",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_surrounding_pheromone_types",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "find_nearest_entity",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "has_item_in_container_xyz",
+      "category": "sense",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "item",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "has_item_in_container_blockpos",
+      "category": "sense",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "item",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_item_in_container_xyz",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "get_item_in_container_blockpos",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "get_speed",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": []
+    },
+    {
+      "opcode": "set_variable",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "value",
+          "type": "NUMBER",
+          "default": "0",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_variable",
+      "category": "variables",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "set_variable_permanent",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "new_list",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_list",
+      "category": "variables",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "add_list",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "list",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "add_value",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "value",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "set_list_kv",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "key",
+          "type": "NUMBER",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "value",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "set_list_list",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "list",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_list_value",
+      "category": "variables",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "key",
+          "type": "NUMBER",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "set_list_permanent",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "clear_list",
+      "category": "variables",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

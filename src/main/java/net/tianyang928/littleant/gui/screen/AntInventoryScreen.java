@@ -20,7 +20,7 @@ import org.joml.Vector3f;
 
 /** A compact chest-style screen for editing an ant's carried items and armor. */
 public class AntInventoryScreen extends AbstractContainerScreen<AntInventoryMenu> {
-    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath("littleant", "textures/gui/container/ant_inventory_background.png");
+    private static final Identifier BACKGROUND = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "textures/gui/container/ant_inventory_background.png");
 
     public AntInventoryScreen(AntInventoryMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 176, 174);

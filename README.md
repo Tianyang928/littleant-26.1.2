@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/main/resources/assets/littleant/doc/img/programming_gui.png" alt="title" width="300" />
+  <img src="docs/img/programming_gui.png" alt="title" width="300" />
 </p>
 <h1>LittleAnt 26.1.2</h1>
 <hr>
@@ -18,6 +18,24 @@ I tried to make the programming GUI as close as possible to [Scratch](https://sc
 Press `right-click` to open the Ant Entity's inventory.
 
 Press `Shift + right-click` to open the Ant Entity's programming GUI.
+
+## LittleAnt DSL
+
+The `/antrunjson` command and the in-game program editor also accept a small,
+Python-like DSL. It is compiled into the same Scratch module graph; it is not
+arbitrary Python and cannot import libraries or access the filesystem.
+
+```python
+@tick_start
+def main():
+    if food_level() < 8:
+        say("I need food")
+    step_forward(1)
+```
+
+The complete, versioned module reference is generated from `ModuleRegistry`:
+see [`docs/ai-api.md`](docs/ai-api.md) or [`docs/ai-api.json`](docs/ai-api.json).
+Run `./gradlew generateAiApi` after adding or changing a module.
 
 
 ## Future Features
