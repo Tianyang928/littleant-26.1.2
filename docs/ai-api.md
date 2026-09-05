@@ -56,6 +56,20 @@ Category: `event` -- Shape: `HAT`
 Parameters:
 - `goal` (`TEXT`), default `custom_goal`
 
+### `function_start`
+
+Category: `event` -- Shape: `HAT`
+
+Parameters:
+- `name` (`TEXT`), default `function`
+
+### `call_function`
+
+Category: `event` -- Shape: `COMMAND`
+
+Parameters:
+- `name` (`TEXT`), default `function`
+
 ### `finish_current_goal`
 
 Category: `event` -- Shape: `COMMAND`
@@ -148,6 +162,13 @@ Category: `behavior` -- Shape: `COMMAND`
 Parameters:
 - `crouching` (`BOOLEAN`), default ``
 
+### `set_pheromone`
+
+Category: `behavior` -- Shape: `COMMAND`
+
+Parameters:
+- `pheromone` (`TEXT`), default ``
+
 ### `repeat`
 
 Category: `control` -- Shape: `C_SHAPE`
@@ -155,6 +176,7 @@ Category: `control` -- Shape: `C_SHAPE`
 Parameters:
 - `count` (`NUMBER`), default `10`; required
 - `body` (`BLOCK`), default ``
+- `variable` (`TEXT`), default ``
 
 ### `if`
 
@@ -249,6 +271,22 @@ Parameters:
 - `b` (`NUMBER`), default `0`; required
 
 ### `greater_than`
+
+Category: `operator` -- Shape: `BOOLEAN`
+
+Parameters:
+- `a` (`NUMBER`), default `0`; required
+- `b` (`NUMBER`), default `0`; required
+
+### `greater_than_or_equal`
+
+Category: `operator` -- Shape: `BOOLEAN`
+
+Parameters:
+- `a` (`NUMBER`), default `0`; required
+- `b` (`NUMBER`), default `0`; required
+
+### `less_than_or_equal`
 
 Category: `operator` -- Shape: `BOOLEAN`
 
@@ -583,6 +621,13 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `slot` (`NUMBER`), default `0`; required
 
+### `get_item_count_in_inventory`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `slot` (`NUMBER`), default `0`; required
+
 ### `time`
 
 Category: `sense` -- Shape: `REPORTER`
@@ -695,6 +740,24 @@ Parameters:
 - `slot` (`NUMBER`), default `0`; required
 
 ### `get_item_in_container_blockpos`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `blockpos` (`LIST`), default ``
+- `slot` (`NUMBER`), default `0`; required
+
+### `get_item_count_in_container_xyz`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `x` (`NUMBER`), default `0`; required
+- `y` (`NUMBER`), default `0`; required
+- `z` (`NUMBER`), default `0`; required
+- `slot` (`NUMBER`), default `0`; required
+
+### `get_item_count_in_container_blockpos`
 
 Category: `sense` -- Shape: `REPORTER`
 

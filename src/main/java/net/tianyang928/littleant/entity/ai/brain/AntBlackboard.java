@@ -15,6 +15,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.tianyang928.littleant.block.ModBlocks;
+import net.tianyang928.littleant.block.PheromoneBlock;
+import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.*;
@@ -66,6 +69,34 @@ public final class AntBlackboard {
             if (ant.level() instanceof ServerLevel serverLevel) {
                 // 广播给服务器所有玩家
                 serverLevel.getServer().getPlayerList().broadcastSystemMessage(combinedMessage, false);
+            }
+        }
+    }
+
+    public void scriptSetPheromone(String pheromone) {
+        BlockPos result = this.ant.setFindBlockEntityTarget(ModBlocks.PHEROMONE_BLOCK.get());
+        if(result == null || result.distSqr(this.ant.blockPosition()) > 6*6) {
+            for(int offsetX = -1; offsetX <= 1; offsetX++) {
+                for(int offsetY = -1; offsetY <= 1; offsetY++) {
+                    for(int offsetZ = -1; offsetZ <= 1; offsetZ++) {
+                        BlockPos pos = new BlockPos(this.ant.getBlockX() + offsetX, this.ant.getBlockY() + offsetY, this.ant.getBlockZ() + offsetZ);
+                        if(this.ant.level().getBlockState(pos).isAir()) {
+                            BlockState blockState = ModBlocks.PHEROMONE_BLOCK.get().defaultBlockState();
+                            this.ant.level().setBlock(pos, blockState, 3);
+                            PheromoneBlockEntity blockEntity = (PheromoneBlockEntity) this.ant.level().getBlockEntity(pos);
+                            if(blockEntity != null) {
+                                blockEntity.getPheromoneList().put(pheromone, 1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            PheromoneBlockEntity blockEntity = (PheromoneBlockEntity) this.ant.level().getBlockEntity(result);
+            if(blockEntity != null) {
+                int currentAmount = blockEntity.getPheromoneList().getOrDefault(pheromone, 0);
+                blockEntity.getPheromoneList().put(pheromone, currentAmount + 1);
             }
         }
     }
@@ -377,5 +408,21 @@ public final class AntBlackboard {
         }
         BlockEntity blockEntity = this.ant.level().getBlockEntity(containerPos);
         return blockEntity instanceof Container container ? container : null;
+    }
+
+    public String getItemCountInInventory(double slot) {
+        return String.valueOf(Objects.requireNonNull(this.ant.getInventory().getSlot((int) slot)).get().getCount());
+    }
+
+    public String getItemCountInContainer(double x, double y, double z, double slot) {
+        BlockPos containerPos = new BlockPos((int) x, (int) y, (int) z);
+        Container container = getContainer(containerPos);
+        if(container == null) {
+            return "";
+        }
+        if(slot < 0 || slot >= container.getContainerSize()) {
+            return "";
+        }
+        return String.valueOf(container.getItem((int) slot).getCount());
     }
 }

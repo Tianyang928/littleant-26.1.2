@@ -268,6 +268,13 @@ public final class AntScriptInterpreter {
                     break;
                 }
             }
+            case "set_pheromone" -> {
+                try {
+                    blackboard.scriptSetPheromone(inputNumber(block, "pheromone", "0", blocks));
+                } catch (RuntimeException e) {
+                    break;
+                }
+            }
             case "set_run" -> {
                 try {
                     blackboard.scriptSetRun(inputBoolean(block, "run", false, blocks));
@@ -699,6 +706,45 @@ public final class AntScriptInterpreter {
                 try {
                     double slot = Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
                     return blackboard.getItemInInventory(slot);
+                }
+                catch (RuntimeException e){
+                    return "";
+                }
+            }
+            case "get_item_count_in_inventory" -> {
+                try {
+                    double slot = Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
+                    return blackboard.getItemCountInInventory(slot);
+                }
+                catch (RuntimeException e){
+                    return "";
+                }
+            }
+            case "get_item_count_in_container_xyz" -> {
+                try {
+                    double slot = Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
+                    double x = Double.parseDouble(inputNumber(block, "x", "0", blocks, active));
+                    double y = Double.parseDouble(inputNumber(block, "y", "0", blocks, active));
+                    double z = Double.parseDouble(inputNumber(block, "z", "0", blocks, active));
+                    return blackboard.getItemCountInContainer(x, y, z, slot);
+                }
+                catch (RuntimeException e){
+                    return "";
+                }
+            }
+            case "get_item_count_in_container_blockpos" -> {
+                try {
+                    double slot = Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
+                    String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
+                    String[] posList = blockpos.split(",");
+                    if(posList.length != 3){
+                        return "";
+                    }
+                    try{
+                        return blackboard.getItemCountInContainer(Double.parseDouble(posList[0]), Double.parseDouble(posList[1]), Double.parseDouble(posList[2]), slot);
+                    } catch (RuntimeException e) {
+                        return "";
+                    }
                 }
                 catch (RuntimeException e){
                     return "";

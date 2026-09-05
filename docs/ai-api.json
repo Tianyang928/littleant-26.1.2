@@ -91,6 +91,32 @@
       ]
     },
     {
+      "opcode": "function_start",
+      "category": "event",
+      "shape": "HAT",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "function",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "call_function",
+      "category": "event",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "TEXT",
+          "default": "function",
+          "required": false
+        }
+      ]
+    },
+    {
       "opcode": "finish_current_goal",
       "category": "event",
       "shape": "COMMAND",
@@ -263,6 +289,19 @@
       ]
     },
     {
+      "opcode": "set_pheromone",
+      "category": "behavior",
+      "shape": "COMMAND",
+      "inputs": [
+        {
+          "name": "pheromone",
+          "type": "TEXT",
+          "default": "",
+          "required": false
+        }
+      ]
+    },
+    {
       "opcode": "repeat",
       "category": "control",
       "shape": "C_SHAPE",
@@ -276,6 +315,12 @@
         {
           "name": "body",
           "type": "BLOCK",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "variable",
+          "type": "TEXT",
           "default": "",
           "required": false
         }
@@ -485,6 +530,44 @@
     },
     {
       "opcode": "greater_than",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "greater_than_or_equal",
+      "category": "operator",
+      "shape": "BOOLEAN",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "less_than_or_equal",
       "category": "operator",
       "shape": "BOOLEAN",
       "inputs": [
@@ -1207,6 +1290,19 @@
       ]
     },
     {
+      "opcode": "get_item_count_in_inventory",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
       "opcode": "time",
       "category": "sense",
       "shape": "REPORTER",
@@ -1402,6 +1498,56 @@
     },
     {
       "opcode": "get_item_in_container_blockpos",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "blockpos",
+          "type": "LIST",
+          "default": "",
+          "required": false
+        },
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "get_item_count_in_container_xyz",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "z",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        },
+        {
+          "name": "slot",
+          "type": "NUMBER",
+          "default": "0",
+          "required": true
+        }
+      ]
+    },
+    {
+      "opcode": "get_item_count_in_container_blockpos",
       "category": "sense",
       "shape": "REPORTER",
       "inputs": [

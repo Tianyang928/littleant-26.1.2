@@ -169,6 +169,24 @@ Parameters:
 
 Description: Entry point that is called every tick while a matching custom goal is active. Unlike `receive_goal` which fires once upon goal submission, this block runs repeatedly each tick for the duration of the goal's execution.
 
+### `function_start`
+
+Category: `event` -- Shape: `HAT`
+
+Parameters:
+- `name` (`TEXT`), default `function`
+
+Description: Entry point that is called when a function is called via `call_function`. The `name` parameter filters which functions activate this block. Unlike `submit_foreground_goal` or `submit_background_goal`, functions will sequentially execute.
+
+### `call_function`
+
+Category: `event` -- Shape: `COMMAND`
+
+Parameters:
+- `name` (`TEXT`), default `function`
+
+Description: Calls a function with the specified name. If the function does not exist, this command does nothing.
+
 ### `finish_current_goal`
 
 Category: `event` -- Shape: `COMMAND`
@@ -286,6 +304,15 @@ Parameters:
 - `crouching` (`BOOLEAN`), default ``
 
 Description: Toggles the ant's crouching (sneaking) state on or off. Applied instantly via the blackboard.
+
+### `set_pheromone`
+
+Category: `behavior` -- Shape: `COMMAND`
+
+Parameters:
+- `pheromone` (`TEXT`), default ``
+
+Description: Adds the ant's surrounding specific pheromone level by 1. Applied instantly via the blackboard.
 
 ### `repeat`
 
@@ -422,6 +449,22 @@ Parameters:
 - `b` (`NUMBER`), default `0`; required
 
 Description: Returns true if `a` is strictly greater than `b`.
+
+### `greater_than_or_equal`
+
+Category: `operator` -- Shape: `BOOLEAN`
+
+Parameters:
+- `a` (`NUMBER`), default `0`; required
+- `b` (`NUMBER`), default `0`; required
+
+### `less_than_or_equal`
+
+Category: `operator` -- Shape: `BOOLEAN`
+
+Parameters:
+- `a` (`NUMBER`), default `0`; required
+- `b` (`NUMBER`), default `0`; required
 
 ### `less_than`
 
@@ -844,6 +887,15 @@ Parameters:
 
 Description: Returns the item name, like `minecraft:stone`, in the specified hotbar slot (`0` through `8`).
 
+### `get_item_count_in_inventory`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `slot` (`NUMBER`), default `0`; required
+
+Description: Returns the number of items in the inventory slot (`0` through `8`).
+
 ### `time`
 
 Category: `sense` -- Shape: `REPORTER`
@@ -1004,6 +1056,28 @@ Parameters:
 - `slot` (`NUMBER`), default `0`; required
 
 Description: Returns the item name, like `minecraft:stone`, in the specified slot of the container at the coordinates given as a list `x, y, z`.
+
+### `get_item_count_in_container_xyz`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `x` (`NUMBER`), default `0`; required
+- `y` (`NUMBER`), default `0`; required
+- `z` (`NUMBER`), default `0`; required
+- `slot` (`NUMBER`), default `0`; required
+
+Description: Returns the number of items in the specified slot of the container at the coordinates given as a list `x, y, z`.
+
+### `get_item_count_in_container_blockpos`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `blockpos` (`LIST`), default ``
+- `slot` (`NUMBER`), default `0`; required
+
+Description: Returns the number of items in the specified slot of the container at the coordinates given as a list `x, y, z`.
 
 ### `get_speed`
 

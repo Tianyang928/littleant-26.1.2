@@ -10,6 +10,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.tianyang928.littleant.block.ModBlocks;
+import net.tianyang928.littleant.item.ModItems;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -36,7 +37,7 @@ public class ModRecipeProvider extends RecipeProvider {
 
     @Override
     protected void buildRecipes() {
-        shapeless(RecipeCategory.MISC, ModBlocks.ANT_CRAFTING_TABLE.get())
+        shapeless(RecipeCategory.MISC, ModItems.ANT_SPAWN_EGG.get())
                 .requires(Blocks.CRAFTING_TABLE)
                 .requires(Blocks.DIRT)
                 .requires(Blocks.COBBLESTONE)
@@ -44,7 +45,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .requires(Items.IRON_INGOT)
                 .requires(Items.BREAD)
                 .requires(Items.BONE)
-                .requires(Items.GUNPOWDER)
+                .requires(Items.ROTTEN_FLESH)
                 .requires(ItemTags.LOGS)
                 .unlockedBy("has_crafting_table", has(Blocks.CRAFTING_TABLE))
                 .unlockedBy("has_dirt", has(Blocks.DIRT))
@@ -53,7 +54,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_iron_ingot", has(Items.IRON_INGOT))
                 .unlockedBy("has_bread", has(Items.BREAD))
                 .unlockedBy("has_bone", has(Items.BONE))
-                .unlockedBy("has_gunpowder", has(Items.GUNPOWDER))
+                .unlockedBy("has_rotten_flesh", has(Items.ROTTEN_FLESH))
                 .unlockedBy("has_logs", has(ItemTags.LOGS))
                 .save(output);
     }

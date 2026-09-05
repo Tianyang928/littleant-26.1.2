@@ -121,7 +121,6 @@ public final class ModuleRegistry {
         add("get_entity_pos","sense", BlockShape.REPORTER, List.of(new InputDefinition("id", ValueType.NUMBER, "")),List.of("get_entity_pos","()"));
         add("has_item_in_inventory","sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_inventory","()"));
         add("get_item_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_inventory","()"));
-        //TODO: get_item_count_in_inventory
         add("get_item_count_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_count_in_inventory","()"));
         add("time","sense", BlockShape.REPORTER, List.of(),List.of("time"));
         add("is_hurt","sense", BlockShape.BOOLEAN, List.of(),List.of("is_hurt"));
@@ -140,7 +139,6 @@ public final class ModuleRegistry {
         add("has_item_in_container_blockpos", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("blockpos", ValueType.LIST, ""), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","pos","()","item","()"));
         add("get_item_in_container_xyz", "sense", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","x","()","y","()","z","()","slot","()"));
         add("get_item_in_container_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, ""),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","pos","()","slot","()"));
-        //TODO: get_item_count_in_container
         add("get_item_count_in_container_xyz", "sense", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_count_in_container","x","()","y","()","z","()","slot","()"));
         add("get_item_count_in_container_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, ""),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_count_in_container","pos","()","slot","()"));
         add("get_speed", "sense", BlockShape.REPORTER, List.of(),List.of("get_speed"));

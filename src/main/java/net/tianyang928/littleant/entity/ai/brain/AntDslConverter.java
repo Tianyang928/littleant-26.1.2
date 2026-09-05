@@ -254,8 +254,10 @@ public final class AntDslConverter {
                 String mapped = switch (op) {
                     case "!=" -> "not_equal";
                     case "==" -> "equal";
-                    case ">", ">=" -> "greater_than";
-                    case "<", "<=" -> "less_than";
+                    case ">" -> "greater_than";
+                    case ">=" -> "greater_than_or_equal";
+                    case "<" -> "less_than";
+                    case "<=" -> "less_than_or_equal";
                     default -> "equal";
                 };
                 if (op.equals("!=")) return addStatement("not", List.of("equal(" + s.substring(0, p).trim() + "," + s.substring(p + op.length()).trim() + ")"));
