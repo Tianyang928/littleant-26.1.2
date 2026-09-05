@@ -1,9 +1,7 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -11,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Converts the editor graph into a nested JSON program representation. */
-public final class ModuleToCodeConverter {
+public final class ModuleToJsonConverter {
     public JsonObject convert(Map<UUID, BrainBlock> blocks) {
         JsonObject root = new JsonObject();
         root.addProperty("version", 1);

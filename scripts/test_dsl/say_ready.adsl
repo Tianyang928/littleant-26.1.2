@@ -1,0 +1,8 @@
+@ai_start
+def init():
+    say("ready")
+
+@tick_start
+def tick():
+    if is_in_water():
+        say("splash")

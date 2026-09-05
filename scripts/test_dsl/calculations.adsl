@@ -1,0 +1,8 @@
+@ai_start
+def main():
+    a=1+2+3
+    say(a)
+    say(1+2+3)
+    say((1+2)*3)
+    say(a%4)
+    say(a*2)

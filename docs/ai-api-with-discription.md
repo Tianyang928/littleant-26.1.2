@@ -4,9 +4,27 @@ Generated from `ModuleRegistry` (the single source of truth). The DSL is restric
 
 ## Prerequisites
 
+### Ant Entity
+
+The ant inventory has nine hotbar slots, indexed `0` through `8`.
+
 ### Goal Scheduling
 
 `foreground goal` is the foreground goal queue: goals execute in submission order (FIFO), and the next goal starts only after the current one completes. It is suitable for tasks that must be completed continuously, such as mining, moving to a target, and crafting. A `background goal` is a background task that competes according to its priority and can run in parallel with other goals. `move_flag`, `look_flag`, and `jump_flag` indicate the Goal resources it occupies; the scheduler arbitrates when resources conflict. In general, a higher numeric value means higher priority.
+
+#### Submission Is Asynchronous
+
+`submit_foreground_goal` and `submit_background_goal` only enqueue a goal and return immediately. They do not wait for movement, mining, crafting, or container interaction to finish, and the next command in the same DSL chain can run during the same interpreter pass. Treat submission as an asynchronous request, not a synchronous function call.
+
+For recurring `@tick_start` code, guard submissions with `already_has_goal(...)` or `already_has_goal_at_priority(...)`; otherwise the same goal may be enqueued every tick. Put follow-up behavior that depends on completion in a custom goal's `goal_tick_start` handler, or check goal state before submitting the next action.
+
+Reporter modules such as `find_block`, `find_block_entity`, and `find_drop` perform a fresh world query on every evaluation. Save a result in a variable and reuse it when several operations need the same position:
+
+```python
+target = find_block("minecraft:oak_log")
+if target != "":
+    submit_foreground_goal(move_to_blockpos(target))
+```
 
 Strings beginning with `vanilla:` identify **vanilla goals**. They are not Java methods that can be executed directly; they are string protocols recognized by the goal scheduler, such as `vanilla:break_block,x,y,z` and `vanilla:set_block,x,y,z`. Therefore, the return values of goal reporters such as `break_block_*`, `set_block_*`, crafting, container, and attack reporters are usually comma-separated string parameter lists intended for use with `submit_foreground_goal` or `submit_background_goal`.
 
@@ -52,7 +70,7 @@ Strings beginning with `vanilla:` identify **vanilla goals**. They are not Java 
 
 - `BOOLEAN` is a Boolean hexagonal block. A `BOOLEAN` can only connect to Boolean inputs.
 
-Except for `BOOLEAN`, `TEXT`, `NUMBER`, and `LIST` are all passed as strings at runtime, so they can be nested or converted into one another. For example, a coordinate list `x,y,z` can be passed as text to a goal module. Use a `BOOLEAN` reporter only when a true/false judgment is required, such as `greater_than` or `has_item_in_inventory`.
+Except for `BOOLEAN`, the `TEXT`, `NUMBER`, and `LIST` are all passed as strings at runtime, so they can be nested or converted into one another. For example, a coordinate list `x,y,z` can be passed as text to a `say` module. Use a `BOOLEAN` reporter only when a true/false judgment is required, such as `greater_than` or `has_item_in_inventory`.
 
 ### Return Value Conventions
 
@@ -60,6 +78,26 @@ Except for `BOOLEAN`, `TEXT`, `NUMBER`, and `LIST` are all passed as strings at 
 - Arithmetic reporters return text that can be parsed as a number.
 - `goal` reporters return a vanilla goal string protocol or a Boolean value representing the goal state.
 - `COMMAND` and `HAT` do not produce connectable return values.
+
+### DSL
+
+#### DSL's role
+
+完整的、面向代码生成的语法边界和示例请参阅单独的 [LittleAnt DSL 参考](ant-dsl-reference.md)。该参考直接依据 `AntDslConverter` 的实际行为，尤其说明了赋值、变量读取、`repeat`/`for`/`while`、缩进、表达式以及不支持的 Python 语法。
+
+The DSL is a restricted Python-like language that can be compiled into the Scratch module graph. It is not a Python interpreter and cannot import libraries or access the filesystem. Some of python's syntax is not supported.
+
+#### DSL Conditions
+
+The DSL supports `==`, `!=`, `>`, `<`, `>=`, `<=`, prefix `not` (or `!`), and Boolean composition with `and` / `or`. For example, `if target != "":` is valid and is compiled to the existing `equal` and `not` operator modules. Bare identifiers in module inputs are resolved as blackboard variables (or lists for LIST inputs), so `move_to_blockpos(target)` is equivalent to `move_to_blockpos(get_variable("target"))`.
+
+#### Variables and Lists
+
+All variables and lists are global to the Ant instance, but not global to the whole game. Assignment `a = 1` writes a variable; `a = []` creates an empty list. List contents still require explicit list modules such as `add_value` and `set_list_kv`.
+
+#### Query Reuse
+
+World reporters are not memoized by the interpreter. A call such as `find_block("minecraft:oak_log")` searches the world each time it is evaluated. Assign the result once and reuse the variable for movement, goal construction, or further checks. This avoids repeated scans and also keeps all operations in one decision path consistent with the same position.
 
 ## Example
 
@@ -94,7 +132,7 @@ Category: `event` -- Shape: `COMMAND`
 Parameters:
 - `goal` (`TEXT`), default ``
 
-Description: Submits a goal to the foreground queue, which executes sequentially in FIFO order. Foreground goals block subsequent foreground goals until completion and may suspend conflicting background tasks.
+Description: Enqueues a goal in the foreground FIFO queue and returns immediately. It does not block the current DSL chain. The scheduler starts it after earlier foreground work completes and may suspend conflicting background tasks.
 
 Return: No value. The `goal` text is interpreted by the goal scheduler; vanilla goal reporters return the protocol string passed here.
 
@@ -109,7 +147,7 @@ Parameters:
 - `look_flag` (`BOOLEAN`), default ``
 - `jump_flag` (`BOOLEAN`), default ``
 
-Description: Submits a goal to the background scheduler with a priority value. Background tasks run concurrently unless they conflict with each other or with an active foreground task. Higher priority tasks preempt lower priority ones when resource flags overlap. (priority: 1 preempt priority: 2)
+Description: Enqueues a goal in the background scheduler and returns immediately. It does not block the current DSL chain. Background tasks run concurrently unless they conflict with another task or an active foreground task. Higher priority tasks preempt lower priority ones when resource flags overlap. (priority: 1 preempt priority: 2)
 
 Return: No value. The goal argument is a comma-separated vanilla/custom goal string.
 
@@ -156,7 +194,7 @@ Parameters:
 - `y` (`NUMBER`), default `0`; required
 - `z` (`NUMBER`), default `0`; required
 
-Description: Submits a foreground movement task that navigates the ant to the specified world coordinates using pathfinding. Blocks subsequent foreground actions until the ant reaches the destination or the path is unreachable.
+Description: Enqueues a foreground movement task that navigates the ant to the specified world coordinates using pathfinding. The command returns immediately; it does not block subsequent DSL commands. The scheduler keeps the task active until the destination is reached or the path is unreachable.
 
 ### `move_to_blockpos`
 
@@ -165,7 +203,7 @@ Category: `behavior` -- Shape: `COMMAND`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-Description: Submits a foreground movement task using a list-based coordinate format `x, y, z`. Behaves identically to `move_to_xyz` but accepts coordinates as a single list parameter.
+Description: Enqueues a foreground movement task using a list-based coordinate format `x, y, z`. It returns immediately and does not block subsequent DSL commands. Behaves identically to `move_to_xyz` but accepts coordinates as a single list parameter.
 
 ### `step_forward`
 
@@ -289,6 +327,22 @@ Parameters:
 - `body` (`BLOCK`), default ``
 
 Description: Repeatedly executes the attached body block as long as the condition remains true. Includes a built-in safety cap of 1000 iterations to prevent infinite loops.
+
+### `break`
+
+Category: `control` -- Shape: `COMMAND`
+
+Parameters: none
+
+Description: Exits the current loop or while statement, ending the execution of the loop body.
+
+### `continue`
+
+Category: `control` -- Shape: `COMMAND`
+
+Parameters: none
+
+Description: Skips one step of the current loop iteration and moves to the next one.
 
 ### `add`
 
@@ -779,7 +833,7 @@ Category: `sense` -- Shape: `BOOLEAN`
 Parameters:
 - `item` (`TEXT`), default `minecraft:stone`
 
-Description: Returns true if the ant has the specified item anywhere in its inventory.
+Description: Returns true if the ant has the specified item anywhere in its nine-slot inventory.
 
 ### `get_item_in_inventory`
 
@@ -788,7 +842,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `slot` (`NUMBER`), default `0`; required
 
-Description: Returns the item name, like `minecraft:stone`, in the specified inventory slot.
+Description: Returns the item name, like `minecraft:stone`, in the specified hotbar slot (`0` through `8`).
 
 ### `time`
 
@@ -847,7 +901,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `block` (`TEXT`), default `minecraft:stone`
 
-Description: Searches for the nearest block of the specified type and returns its position as a comma-separated string `x,y,z`.
+Description: Searches for the nearest block (from the ant's current position) of the specified type and returns its position as a comma-separated string `x,y,z`. Each evaluation performs a new world query, so save the result when reusing it.
 
 Return: TEXT/LIST-compatible coordinate string `x,y,z`, or an empty string when no block is found.
 
@@ -869,7 +923,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `block_entity` (`TEXT`), default `minecraft:chest`
 
-Description: Searches for the nearest block entity (e.g., chest, furnace) of the specified type and returns its position.
+Description: Searches for the nearest block entity (e.g., chest, furnace) of the specified type and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
 
 ### `find_pheromone`
 
@@ -889,7 +943,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `drop` (`TEXT`), default `minecraft:stone`
 
-Description: Searches for the nearest dropped item of the specified type and returns its position.
+Description: Searches for the nearest dropped item of the specified type and returns its position. Each evaluation performs a new world query. Use the result with `move_to_blockpos`; approaching the item is sufficient for pickup.
 
 ### `get_surrounding_pheromone_types`
 

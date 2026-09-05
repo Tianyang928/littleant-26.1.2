@@ -1,0 +1,6 @@
+def greet():
+    say("hello")
+
+@ai_start
+def main():
+    greet()

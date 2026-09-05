@@ -2,14 +2,18 @@ package net.tianyang928.littleant.server.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Util;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
-import net.tianyang928.littleant.entity.ai.brain.ModuleToCodeConverter;
+import net.tianyang928.littleant.entity.ai.brain.ModuleToJsonConverter;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public final class ModuleToCodeCommand {
     public static void register(RegisterCommandsEvent event) {
@@ -24,7 +28,7 @@ public final class ModuleToCodeCommand {
                                 if (entity instanceof AntEntity ant
                                         && ant.hasCustomName()
                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                    String json = new ModuleToCodeConverter().convert(ant.getBrainBlocks()).toString();
+                                    String json = new ModuleToJsonConverter().convert(ant.getBrainBlocks()).toString();
                                     context.getSource().sendSuccess(() -> Component.literal(json), false);
                                     count++;
                                 }

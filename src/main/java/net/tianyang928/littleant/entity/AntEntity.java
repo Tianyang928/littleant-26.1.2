@@ -233,9 +233,9 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         this.brainBlocks.clear();
         String trimmed = source == null ? "" : source.stripLeading();
         if (trimmed.startsWith("{")) {
-            this.brainBlocks.putAll(new CodeToModuleConverter().convert(JsonParser.parseString(source).getAsJsonObject()));
+            this.brainBlocks.putAll(new JsonToModuleConverter().convert(JsonParser.parseString(source).getAsJsonObject()));
         } else {
-            this.brainBlocks.putAll(new LittleAntDslConverter().convert(source));
+            this.brainBlocks.putAll(new AntDslConverter().convert(source));
         }
         this.needAiRestart = true;
     }

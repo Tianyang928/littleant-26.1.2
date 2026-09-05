@@ -1,9 +1,7 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -12,7 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /** Converts nested JSON programs back into editor graph nodes. */
-public final class CodeToModuleConverter {
+public final class JsonToModuleConverter {
     public Map<UUID, BrainBlock> convert(JsonObject root) {
         if (root == null || !root.has("blocks") || !root.get("blocks").isJsonArray()) throw new IllegalArgumentException("程序必须包含 blocks 数组");
         LinkedHashMap<UUID, BrainBlock> result = new LinkedHashMap<>();

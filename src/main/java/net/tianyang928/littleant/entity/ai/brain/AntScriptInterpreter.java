@@ -30,6 +30,8 @@ public final class AntScriptInterpreter {
     private AntGoalScheduler.Task currentTask;
     private final AntGoalScheduler goalScheduler;
     private final AntBlackboard blackboard;
+    private final Map<UUID, LoopControl> pendingLoopControls = new HashMap<>();
+    private final Map<String, UUID> functionRoots = new HashMap<>();
 
     public AntScriptInterpreter(AntEntity ant) {
         this.ant = ant;
@@ -47,7 +49,10 @@ public final class AntScriptInterpreter {
         aiStarts.clear();
         tickStarts.clear();
         receiveGoalRoots.clear();
+        functionRoots.clear();
         goalScheduler.clear();
+        pendingLoopControls.clear();
+
         Set<UUID> incoming = new HashSet<>();
         blocks.values().forEach(b -> {
             if (b.next() != null) incoming.add(b.next());
@@ -60,6 +65,8 @@ public final class AntScriptInterpreter {
         blocks.values().stream()
                 .filter(b -> b.parent() == null && !incoming.contains(b.id()) && b.opcode().equals("goal_tick_start"))
                 .forEach(b -> goalTickRoots.computeIfAbsent(inputNumber(b, "goal", "", blocks), ignored -> new ArrayList<>()).add(b.id()));
+        blocks.values().stream().filter(b -> b.parent() == null && b.opcode().equals("function_start"))
+                .forEach(b -> functionRoots.put(inputNumber(b, "name", "", blocks), b.id()));
         isRunning = !aiStarts.isEmpty() || !tickStarts.isEmpty() || !receiveGoalRoots.isEmpty() || !goalTickRoots.isEmpty();
 
 
@@ -139,7 +146,17 @@ public final class AntScriptInterpreter {
 //            return;
 //        }
         switch (block.opcode()) {
-            case "ai_start", "tick_start", "receive_goal", "goal_tick_start" -> {}
+            case "ai_start", "tick_start", "receive_goal", "goal_tick_start", "function_start" -> {}
+            case "call_function" -> {
+                String name = inputNumber(block, "name", "", blocks).trim();
+                UUID root = functionRoots.get(name);
+                if (root != null) {
+                    BrainBlock function = blocks.get(root);
+                    if (function != null && function.next() != null && blocks.containsKey(function.next())) {
+                        executeBlock(blocks.get(function.next()), active);
+                    }
+                }
+            }
             case "submit_foreground_goal", "submit_background_goal" -> {
                 List<String> all_param;
                 try {
@@ -268,10 +285,15 @@ public final class AntScriptInterpreter {
             case "repeat" -> {
                 try {
                     int count = Math.max(0, (int) Double.parseDouble(inputNumber(block, "count", "0", blocks)));
+                    String variable = inputNumber(block, "variable", "", blocks).trim();
                     InputSlot body = input(block, "body");
                     if (body != null && body.blockId() != null && blocks.containsKey(body.blockId())) {
                         for (int i = 0; i < count; i++) {
+                            if (!variable.isEmpty()) blackboard.setVariable(variable, String.valueOf(i));
                             executeBlock(blocks.get(body.blockId()), active);
+                            if (consumeLoopControl(block.id()) == LoopControl.BREAK) {
+                                break;
+                            }
                         }
                     }
                 } catch (RuntimeException e) {
@@ -314,6 +336,9 @@ public final class AntScriptInterpreter {
                         if (body != null && body.blockId() != null && blocks.containsKey(body.blockId())) {
                             executeBlock(blocks.get(body.blockId()), active);
                         }
+                        if (consumeLoopControl(block.id()) == LoopControl.BREAK) {
+                            break;
+                        }
                         repeatTimes++;
                         if(repeatTimes > 1000){
                             break;
@@ -324,6 +349,8 @@ public final class AntScriptInterpreter {
                     LittleAnt.LOGGER.info("[AntScriptInterpreter]: module [while] exception: {}", e.toString());
                 }
             }
+            case "break" -> requestLoopControl(block, LoopControl.BREAK);
+            case "continue" -> requestLoopControl(block, LoopControl.CONTINUE);
             case "set_variable" -> {
                 String name = inputNumber(block,"name","0",blocks);
                 if(name.isEmpty()){
@@ -380,10 +407,41 @@ public final class AntScriptInterpreter {
             }
             default -> {}
         }
-        if ((!executingCustomGoal || !customGoalFinished) && block.next() != null && blocks.containsKey(block.next())) {
+        if ((!executingCustomGoal || !customGoalFinished) && !hasPendingLoopControl(block.parent())
+                && block.next() != null && blocks.containsKey(block.next())) {
             executeBlock(blocks.get(block.next()), active);
         }
     }
+
+    private void requestLoopControl(BrainBlock block, LoopControl control) {
+        UUID loopId = nearestLoopParent(block.parent());
+        if (loopId != null) {
+            pendingLoopControls.put(loopId, control);
+        }
+    }
+
+    private UUID nearestLoopParent(UUID parentId) {
+        Set<UUID> visited = new HashSet<>();
+        UUID current = parentId;
+        while (current != null && visited.add(current)) {
+            BrainBlock parent = blocks.get(current);
+            if (parent == null) return null;
+            if (parent.opcode().equals("repeat") || parent.opcode().equals("while")) return parent.id();
+            current = parent.parent();
+        }
+        return null;
+    }
+
+    private boolean hasPendingLoopControl(UUID parentId) {
+        UUID loopId = nearestLoopParent(parentId);
+        return loopId != null && pendingLoopControls.containsKey(loopId);
+    }
+
+    private LoopControl consumeLoopControl(UUID loopId) {
+        return pendingLoopControls.remove(loopId);
+    }
+
+    private enum LoopControl { BREAK, CONTINUE }
 
     // 用于获取特定名称的block成员
     private InputSlot input(BrainBlock block, String name) {
@@ -767,6 +825,30 @@ public final class AntScriptInterpreter {
                     return aNum < bNum;
                 } catch (RuntimeException e) {
                     return a.compareTo(b) < 0;
+                }
+            }
+            case "greater_than_or_equal" -> {
+                String a = inputNumber(block, "a", "0", blocks, active);
+                String b = inputNumber(block, "b", "0", blocks, active);
+
+                try {
+                    double aNum = Double.parseDouble(a);
+                    double bNum = Double.parseDouble(b);
+                    return aNum >= bNum;
+                } catch (RuntimeException e) {
+                    return a.compareTo(b) >= 0;
+                }
+            }
+            case "less_than_or_equal" -> {
+                String a = inputNumber(block, "a", "0", blocks, active);
+                String b = inputNumber(block, "b", "0", blocks, active);
+
+                try {
+                    double aNum = Double.parseDouble(a);
+                    double bNum = Double.parseDouble(b);
+                    return aNum <= bNum;
+                } catch (RuntimeException e) {
+                    return a.compareTo(b) <= 0;
                 }
             }
             case "equal" -> {

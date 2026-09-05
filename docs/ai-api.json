@@ -345,6 +345,18 @@
       ]
     },
     {
+      "opcode": "break",
+      "category": "control",
+      "shape": "COMMAND",
+      "inputs": []
+    },
+    {
+      "opcode": "continue",
+      "category": "control",
+      "shape": "COMMAND",
+      "inputs": []
+    },
+    {
       "opcode": "add",
       "category": "operator",
       "shape": "REPORTER",

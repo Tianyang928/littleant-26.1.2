@@ -1,0 +1,33 @@
+def test1():
+    n=10
+        while n > 0:
+            n = n-1
+            say(n)
+
+def test2():
+    n=10
+    while true():
+        n = n-1
+        say(n)
+        if n == 0:
+            break()
+
+def test3():
+    n=10
+    for i in range(10):
+        n = n-1
+        say(n)
+
+def test4():
+    n=10
+    repeat(10):
+        n = n-1
+        say(n)
+
+
+@ai_start
+def main():
+    test1()
+    test2()
+    test3()
+    test4()

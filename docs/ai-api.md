@@ -181,6 +181,18 @@ Parameters:
 - `condition` (`BOOLEAN`), default ``; required
 - `body` (`BLOCK`), default ``
 
+### `break`
+
+Category: `control` -- Shape: `COMMAND`
+
+Parameters: none
+
+### `continue`
+
+Category: `control` -- Shape: `COMMAND`
+
+Parameters: none
+
 ### `add`
 
 Category: `operator` -- Shape: `REPORTER`
