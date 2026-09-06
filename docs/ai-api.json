@@ -1213,44 +1213,6 @@
       ]
     },
     {
-      "opcode": "get_entity_at_xyz",
-      "category": "sense",
-      "shape": "REPORTER",
-      "inputs": [
-        {
-          "name": "x",
-          "type": "NUMBER",
-          "default": "0",
-          "required": true
-        },
-        {
-          "name": "y",
-          "type": "NUMBER",
-          "default": "0",
-          "required": true
-        },
-        {
-          "name": "z",
-          "type": "NUMBER",
-          "default": "0",
-          "required": true
-        }
-      ]
-    },
-    {
-      "opcode": "get_entity_at_blockpos",
-      "category": "sense",
-      "shape": "REPORTER",
-      "inputs": [
-        {
-          "name": "blockpos",
-          "type": "LIST",
-          "default": "",
-          "required": false
-        }
-      ]
-    },
-    {
       "opcode": "get_entity_pos",
       "category": "sense",
       "shape": "REPORTER",
@@ -1339,7 +1301,7 @@
       "inputs": []
     },
     {
-      "opcode": "find_block",
+      "opcode": "find_nearest_block",
       "category": "sense",
       "shape": "REPORTER",
       "inputs": [
@@ -1352,7 +1314,7 @@
       ]
     },
     {
-      "opcode": "find_entity",
+      "opcode": "find_nearest_entity",
       "category": "sense",
       "shape": "REPORTER",
       "inputs": [
@@ -1365,7 +1327,7 @@
       ]
     },
     {
-      "opcode": "find_block_entity",
+      "opcode": "find_nearest_block_entity",
       "category": "sense",
       "shape": "REPORTER",
       "inputs": [
@@ -1378,7 +1340,7 @@
       ]
     },
     {
-      "opcode": "find_pheromone",
+      "opcode": "find_nearest_pheromone",
       "category": "sense",
       "shape": "REPORTER",
       "inputs": [
@@ -1391,7 +1353,7 @@
       ]
     },
     {
-      "opcode": "find_drop",
+      "opcode": "find_nearest_drop",
       "category": "sense",
       "shape": "REPORTER",
       "inputs": [
@@ -1404,13 +1366,102 @@
       ]
     },
     {
-      "opcode": "get_surrounding_pheromone_types",
+      "opcode": "find_block_list",
       "category": "sense",
       "shape": "REPORTER",
-      "inputs": []
+      "inputs": [
+        {
+          "name": "block",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": false
+        },
+        {
+          "name": "count",
+          "type": "NUMBER",
+          "default": "256",
+          "required": false
+        }
+      ]
     },
     {
-      "opcode": "find_nearest_entity",
+      "opcode": "find_entity_list",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "entity",
+          "type": "TEXT",
+          "default": "minecraft:pig",
+          "required": false
+        },
+        {
+          "name": "count",
+          "type": "NUMBER",
+          "default": "256",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "find_block_entity_list",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "block_entity",
+          "type": "TEXT",
+          "default": "minecraft:chest",
+          "required": false
+        },
+        {
+          "name": "count",
+          "type": "NUMBER",
+          "default": "256",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "find_pheromone_list",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "pheromone",
+          "type": "TEXT",
+          "default": "home",
+          "required": false
+        },
+        {
+          "name": "count",
+          "type": "NUMBER",
+          "default": "256",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "find_drop_list",
+      "category": "sense",
+      "shape": "REPORTER",
+      "inputs": [
+        {
+          "name": "drop",
+          "type": "TEXT",
+          "default": "minecraft:stone",
+          "required": false
+        },
+        {
+          "name": "count",
+          "type": "NUMBER",
+          "default": "256",
+          "required": false
+        }
+      ]
+    },
+    {
+      "opcode": "get_surrounding_pheromone_types",
       "category": "sense",
       "shape": "REPORTER",
       "inputs": []

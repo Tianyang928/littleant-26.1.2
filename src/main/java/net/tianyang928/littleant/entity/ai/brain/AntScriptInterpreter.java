@@ -1,13 +1,10 @@
 package net.tianyang928.littleant.entity.ai.brain;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.phys.Vec3;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
 import net.tianyang928.littleant.entity.ai.debug.TaskDebugState;
-import net.tianyang928.littleant.entity.ai.sense.FindBlock;
 
 import java.util.*;
 import net.tianyang928.littleant.entity.ai.debug.TaskDebugEntry;
@@ -16,6 +13,15 @@ import net.tianyang928.littleant.entity.ai.debug.TaskDebugEntry;
  * Small, deterministic interpreter for Python-like command scripts; no Python runtime is required.
  */
 public final class AntScriptInterpreter {
+
+    private static List<String> listParts(String value) {
+        return AntBlackboard.parseList(value);
+    }
+
+    private static String normalizeList(String value) {
+        List<String> parts = listParts(value);
+        return String.join(",", parts);
+    }
 
     private Map<UUID, BrainBlock> blocks;
     private final LinkedHashSet<UUID> aiStarts = new LinkedHashSet<>();
@@ -160,7 +166,7 @@ public final class AntScriptInterpreter {
             case "submit_foreground_goal", "submit_background_goal" -> {
                 List<String> all_param;
                 try {
-                    all_param = Arrays.stream(inputNumber(block, "goal", "", blocks).split(",", -1)).map(String::trim).toList();
+                    all_param = AntBlackboard.parseList(inputNumber(block, "goal", "", blocks));
                     if (all_param.isEmpty() || all_param.getFirst().isBlank()) {
                         break;
                     }
@@ -217,12 +223,12 @@ public final class AntScriptInterpreter {
             }
             case "move_to_blockpos" -> {
                 try {
-                    String[] coordinates = inputNumber(block, "blockpos", "", blocks).split(",", -1);
-                    if (coordinates.length != 3) break;
+                    List<String> coordinates = listParts(inputNumber(block, "blockpos", "", blocks));
+                    if (coordinates.size() != 3) break;
                     goalScheduler.submitMoveTo(block.id(), new BlockPos(
-                            (int) Double.parseDouble(coordinates[0].trim()),
-                            (int) Double.parseDouble(coordinates[1].trim()),
-                            (int) Double.parseDouble(coordinates[2].trim())), currentTask);
+                            (int) Double.parseDouble(coordinates.get(0).trim()),
+                            (int) Double.parseDouble(coordinates.get(1).trim()),
+                            (int) Double.parseDouble(coordinates.get(2).trim())), currentTask);
                 } catch (RuntimeException e) {
                     break;
                 }
@@ -478,8 +484,7 @@ public final class AntScriptInterpreter {
 //        }
         switch (block.opcode()) {
             case "join_string_list" -> {
-                String[] strings = inputNumber(block, "strings", "", blocks, active).split(",", -1);
-                return String.join("", strings);
+                return String.join("", listParts(inputNumber(block, "strings", "", blocks, active)));
             }
             case "join_string_str" -> {
                 return inputNumber(block, "string1", "", blocks, active)
@@ -563,17 +568,17 @@ public final class AntScriptInterpreter {
             }
             case "break_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                if(blockpos.split(",").length != 3) {
+                if(listParts(blockpos).size() != 3) {
                     return "";
                 }
-                return "vanilla:break_block" + "," + blockpos;
+                return "vanilla:break_block" + "," + normalizeList(blockpos);
             }
             case "set_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                if(blockpos.split(",").length != 3) {
+                if(listParts(blockpos).size() != 3) {
                     return "";
                 }
-                return "vanilla:set_block" + "," + blockpos;
+                return "vanilla:set_block" + "," + normalizeList(blockpos);
             }
             case "better_float" -> { return "vanilla:better_float"; }
             case "use_container_xyz" -> {
@@ -588,11 +593,11 @@ public final class AntScriptInterpreter {
             }
             case "use_container_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                if(blockpos.split(",").length != 3) {
+                if(listParts(blockpos).size() != 3) {
                     return "";
                 }
                 return String.join(",", "vanilla:use_container",
-                        blockpos,
+                        normalizeList(blockpos),
                         String.valueOf(inputBoolean(block, "put_in", true, blocks, active)),
                         inputNumber(block, "item", "minecraft:stone", blocks, active),
                         inputNumber(block, "slot", "0", blocks, active),
@@ -610,8 +615,8 @@ public final class AntScriptInterpreter {
             }
             case "use_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                if (blockpos.split(",").length != 3) return "";
-                return String.join(",", "vanilla:use_block", blockpos,
+                if (listParts(blockpos).size() != 3) return "";
+                return String.join(",", "vanilla:use_block", normalizeList(blockpos),
                         inputNumber(block, "face", "up", blocks, active),
                         String.valueOf(inputBoolean(block, "held_item", false, blocks, active)));
             }
@@ -627,10 +632,10 @@ public final class AntScriptInterpreter {
                 }
                 else if(block.opcode().equals("use_crafting_table_blockpos")) {
                     String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                    if(blockpos.split(",").length != 3) {
+                    if(listParts(blockpos).size() != 3) {
                         return "";
                     }
-                    result.append(',').append(blockpos);
+                    result.append(',').append(normalizeList(blockpos));
                 }
                 int slots = block.opcode().equals("use_crafting_table_xyz") ? 9 : 4;
                 for (int i = 0; i < slots; i++) result.append(',').append(inputNumber(block, "slot" + i, "minecraft:air", blocks, active));
@@ -658,12 +663,12 @@ public final class AntScriptInterpreter {
             }
             case "distance_to_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                String[] posList = blockpos.split(",");
-                if(posList.length != 3){
+                List<String> posList = listParts(blockpos);
+                if(posList.size() != 3){
                     return "-1";
                 }
                 try{
-                    return blackboard.distanceToTarget(Double.parseDouble(posList[0]), Double.parseDouble(posList[1]), Double.parseDouble(posList[2]));
+                    return blackboard.distanceToTarget(Double.parseDouble(posList.get(0)), Double.parseDouble(posList.get(1)), Double.parseDouble(posList.get(2)));
                 } catch (RuntimeException e) {
                     return "-1";
                 }
@@ -680,12 +685,20 @@ public final class AntScriptInterpreter {
             }
             case "get_block_blockpos" -> {
                 String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                String[] posList = blockpos.split(",");
-                if(posList.length != 3){
+                List<String> posList = listParts(blockpos);
+                if(posList.size() != 3){
                     return "";
                 }
                 try{
-                    return blackboard.getBlock(Double.parseDouble(posList[0]), Double.parseDouble(posList[1]), Double.parseDouble(posList[2]));
+                    return blackboard.getBlock(Double.parseDouble(posList.get(0)), Double.parseDouble(posList.get(1)), Double.parseDouble(posList.get(2)));
+                } catch (RuntimeException e) {
+                    return "";
+                }
+            }
+            case "get_entity_pos" -> {
+                try {
+                    int entityId = (int)Double.parseDouble(inputNumber(block, "entity_id", "-1", blocks, active));
+                    return blackboard.getEntityPos(entityId);
                 } catch (RuntimeException e) {
                     return "";
                 }
@@ -736,12 +749,12 @@ public final class AntScriptInterpreter {
                 try {
                     double slot = Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
                     String blockpos = inputNumber(block, "blockpos", "0", blocks, active);
-                    String[] posList = blockpos.split(",");
-                    if(posList.length != 3){
+                    List<String> posList = listParts(blockpos);
+                    if(posList.size() != 3){
                         return "";
                     }
                     try{
-                        return blackboard.getItemCountInContainer(Double.parseDouble(posList[0]), Double.parseDouble(posList[1]), Double.parseDouble(posList[2]), slot);
+                        return blackboard.getItemCountInContainer(Double.parseDouble(posList.get(0)), Double.parseDouble(posList.get(1)), Double.parseDouble(posList.get(2)), slot);
                     } catch (RuntimeException e) {
                         return "";
                     }
@@ -756,25 +769,37 @@ public final class AntScriptInterpreter {
             case "last_hurt_by_entity" -> {
                 return blackboard.getLastHurtByEntity();
             }
-            case "find_block" -> {
+            case "find_nearest_block" -> {
                 String selectedBlock = inputNumber(block,"block","0",blocks,active);
-                return blackboard.findBlock(selectedBlock);
+                return blackboard.findNearestBlock(selectedBlock);
             }
-            case "find_entity" -> {
+            case "find_nearest_entity" -> {
                 String selectedEntity = inputNumber(block,"entity","0",blocks,active);
-                return blackboard.findEntity(selectedEntity);
+                return blackboard.findNearestEntity(selectedEntity);
             }
-            case "find_block_entity" -> {
+            case "find_nearest_block_entity" -> {
                 String selectedBlockEntity = inputNumber(block,"block_entity","0",blocks,active);
-                return blackboard.findBlockEntity(selectedBlockEntity);
+                return blackboard.findNearestBlockEntity(selectedBlockEntity);
             }
-            case "find_drop" -> {
+            case "find_nearest_drop" -> {
                 String selectedDrop = inputNumber(block,"drop","0",blocks,active);
-                return blackboard.findDrop(selectedDrop);
+                return blackboard.findNearestDrop(selectedDrop);
             }
-            case "find_pheromone" -> {
+            case "find_nearest_pheromone" -> {
                 String selectedPheromone = inputNumber(block,"pheromone","0",blocks,active);
-                return blackboard.findPheromone(selectedPheromone);
+                return blackboard.findNearestPheromone(selectedPheromone);
+            }
+            case "find_block_list", "find_entity_list", "find_block_entity_list", "find_pheromone_list", "find_drop_list" -> {
+                int count;
+                try { count = Math.max(0, Math.min(256, (int) Double.parseDouble(inputNumber(block,"count","256",blocks,active)))); }
+                catch (RuntimeException e) { count = 256; }
+                return switch (block.opcode()) {
+                    case "find_block_list" -> blackboard.findBlockList(inputNumber(block,"block","",blocks,active), count);
+                    case "find_entity_list" -> blackboard.findEntityList(inputNumber(block,"entity","",blocks,active), count);
+                    case "find_block_entity_list" -> blackboard.findBlockEntityList(inputNumber(block,"block_entity","",blocks,active), count);
+                    case "find_pheromone_list" -> blackboard.findPheromoneList(inputNumber(block,"pheromone","",blocks,active), count);
+                    default -> blackboard.findDropList(inputNumber(block,"drop","",blocks,active), count);
+                };
             }
             case "get_surrounding_pheromone_types" -> {
                 return blackboard.getSurroundingPheromoneTypes();
@@ -793,10 +818,10 @@ public final class AntScriptInterpreter {
             case "get_item_in_container_blockpos" -> {
                 try{
                     int slot = Integer.parseInt(inputNumber(block, "slot", "0", blocks, active));
-                    String[] blockposStr = inputNumber(block, "blockpos", "", blocks, active).split(",");
-                    double x = Double.parseDouble(blockposStr[0]);
-                    double y = Double.parseDouble(blockposStr[1]);
-                    double z = Double.parseDouble(blockposStr[2]);
+                    List<String> blockposStr = listParts(inputNumber(block, "blockpos", "", blocks, active));
+                    double x = Double.parseDouble(blockposStr.get(0));
+                    double y = Double.parseDouble(blockposStr.get(1));
+                    double z = Double.parseDouble(blockposStr.get(2));
                     return blackboard.getItemInContainer(slot, x, y, z);
                 } catch (RuntimeException e) {
                     return "";
@@ -981,11 +1006,11 @@ public final class AntScriptInterpreter {
             }
             case "has_item_in_container_blockpos" -> {
                 String item = inputNumber(block, "item", "0", blocks, active);
-                String[] blockposStr = inputNumber(block, "blockpos", "", blocks, active).split(",");
+                    List<String> blockposStr = listParts(inputNumber(block, "blockpos", "", blocks, active));
                 try{
-                    double x = Double.parseDouble(blockposStr[0]);
-                    double y = Double.parseDouble(blockposStr[1]);
-                    double z = Double.parseDouble(blockposStr[2]);
+                    double x = Double.parseDouble(blockposStr.get(0));
+                    double y = Double.parseDouble(blockposStr.get(1));
+                    double z = Double.parseDouble(blockposStr.get(2));
                     return blackboard.hasItemInContainer(item, x, y, z);
                 } catch (RuntimeException e) {
                     return false;

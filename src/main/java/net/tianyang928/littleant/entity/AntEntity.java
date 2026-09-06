@@ -29,6 +29,7 @@ import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -81,11 +82,16 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     @Nullable
     private EntityMeleeAttackGoal meleeAttackGoal;
 
-    private final FindBlockEntity findBlockEntity = new FindBlockEntity(this, null);
-    private final FindEntity findEntity = new FindEntity(this, null);
-    private final FindBlock findBlock = new FindBlock(this, null);
-    private final FindDrop findDrop = new FindDrop(this,null);
-    private final FindPheromone findPheromone = new FindPheromone(this, "");
+    private final FindNearestBlockEntity findNearestBlockEntity = new FindNearestBlockEntity(this);
+    private final FindNearestEntity findNearestEntity = new FindNearestEntity(this);
+    private final FindNearestBlock findNearestBlock = new FindNearestBlock(this, null);
+    private final FindNearestDrop findNearestDrop = new FindNearestDrop(this);
+    private final FindNearestPheromone findNearestPheromone = new FindNearestPheromone(this);
+    private final FindBlockList findBlockList = new FindBlockList(this);
+    private final FindEntityList findEntityList = new FindEntityList(this);
+    private final FindDropList findDropList = new FindDropList(this);
+    private final FindBlockEntityList findBlockEntityList = new FindBlockEntityList(this);
+    private final FindPheromoneList findPheromoneList = new FindPheromoneList(this);
     private final GetSurroundingPheromoneType getSurroundingPheromoneTypes = new GetSurroundingPheromoneType(this);
 
 
@@ -349,12 +355,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         if (this.useContainerGoal != null) this.useContainerGoal.setRequest(target, operation, item, slot, amount);
     }
 
-    public BlockPos setFindBlockTarget(Block blockToFind) {
-        if (this.findBlock != null) {
-            return this.findBlock.setTarget(blockToFind);
-        }
-        return null;
-    }
+
 
     public void setCraftingTableInput(CraftingInput input, BlockPos craftingTablePos, int amountCrafted) {
         if (this.useCraftingTableGoal != null) {
@@ -368,40 +369,38 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         }
     }
 
-    public BlockPos setFindBlockEntityTarget(Block blockEntity) {
-        if(this.findBlockEntity != null && blockEntity.defaultBlockState().hasBlockEntity()){
-            return this.findBlockEntity.setTarget(blockEntity);
-        }
-        return null;
-    }
-    public int setFindEntityTarget(EntityType<?> entityType) {
-        if(this.findEntity != null){
-            return this.findEntity.setTarget(entityType);
-        }
-        return -1;
-    }
-    public BlockPos setFindDropTarget(Item item) {
-        if(this.findDrop != null){
-            return this.findDrop.setTarget(item);
-        }
-        return null;
-    }
     public void setMeleeAttackTarget(LivingEntity target) {
         if (this.meleeAttackGoal != null) {
             this.meleeAttackGoal.setTarget(target);
         }
     }
-    public BlockPos setFindPheromoneTarget(String pheromoneType) {
-        if(this.findPheromone != null){
-            return this.findPheromone.setTarget(pheromoneType);
+
+    public BlockPos setFindBlockTarget(Block blockToFind) {
+        return this.findNearestBlock.setTarget(blockToFind);
+    }
+    public BlockPos setFindBlockEntityTarget(Block blockEntity) {
+        if(blockEntity.defaultBlockState().hasBlockEntity()){
+            return this.findNearestBlockEntity.setTarget(blockEntity);
         }
         return null;
     }
+    public int setFindEntityTarget(EntityType<?> entityType) {
+        return this.findNearestEntity.setTarget(entityType);
+    }
+    public BlockPos setFindDropTarget(Item item) {
+        return this.findNearestDrop.setTarget(item);
+    }
+    public BlockPos setFindPheromoneTarget(String pheromoneType) {
+        return this.findNearestPheromone.setTarget(pheromoneType);
+    }
+    public List<BlockPos> setFindBlockListTarget(Block block, int count) { return findBlockList.setTarget(block, count); }
+    public List<Integer> setFindEntityListTarget(EntityType<?> type, int count) { return findEntityList.setTarget(type, count); }
+    public List<BlockPos> setFindDropListTarget(Item item, int count) { return findDropList.setTarget(item, count); }
+    public List<BlockPos> setFindBlockEntityListTarget(Block block, int count) { return findBlockEntityList.setTarget(block, count); }
+    public List<BlockPos> setFindPheromoneListTarget(String type, int count) { return findPheromoneList.setTarget(type, count); }
+
     public Set<String> getSurroundingPheromoneTypes() {
-        if(this.getSurroundingPheromoneTypes != null){
-            return this.getSurroundingPheromoneTypes.setTarget();
-        }
-        return Set.of();
+        return this.getSurroundingPheromoneTypes.setTarget();
     }
 
     @Override
@@ -785,5 +784,10 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         } else {
             return this.isCrouching ? Pose.CROUCHING : Pose.STANDING;
         }
+    }
+
+    @Override
+    public boolean hasLineOfSight(Entity target) {
+        return this.hasLineOfSight(target, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, target.getEyeY());
     }
 }

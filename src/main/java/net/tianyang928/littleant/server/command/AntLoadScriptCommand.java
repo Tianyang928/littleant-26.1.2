@@ -14,9 +14,9 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-public final class AntRunScriptCommand {
+public final class AntLoadScriptCommand {
     public static void register(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("antrunscript")
+        event.getDispatcher().register(Commands.literal("antloadscript")
                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .then(Commands.argument("source", StringArgumentType.greedyString())
@@ -66,5 +66,5 @@ public final class AntRunScriptCommand {
         }, Util.ioPool());
     }
 
-    private AntRunScriptCommand() {}
+    private AntLoadScriptCommand() {}
 }

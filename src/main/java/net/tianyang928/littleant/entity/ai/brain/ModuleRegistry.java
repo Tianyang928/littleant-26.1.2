@@ -43,7 +43,6 @@ public final class ModuleRegistry {
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
         add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "")),List.of("set_run","<>"));
         add("set_crouching", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("crouching", ValueType.BOOLEAN, "")),List.of("set_crouching","<>"));
-        //TODO: set_pheromone
         add("set_pheromone", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("pheromone", ValueType.TEXT, "")),List.of("set_pheromone","()"));
 
         // control
@@ -116,8 +115,6 @@ public final class ModuleRegistry {
         add("distance_to_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("distance_to_blockpos","()"));
         add("get_block_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_block_xyz","x","()","y","()","z","()"));
         add("get_block_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_block_blockpos","()"));
-        add("get_entity_at_xyz","sense", BlockShape.REPORTER, blockPos("x","y","z"),List.of("get_entity_at_xyz","x","()","y","()","z","()"));
-        add("get_entity_at_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, "")),List.of("get_entity_at_blockpos","()"));
         add("get_entity_pos","sense", BlockShape.REPORTER, List.of(new InputDefinition("id", ValueType.NUMBER, "")),List.of("get_entity_pos","()"));
         add("has_item_in_inventory","sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_inventory","()"));
         add("get_item_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_inventory","()"));
@@ -128,13 +125,17 @@ public final class ModuleRegistry {
         add("is_in_water","sense", BlockShape.BOOLEAN, List.of(),List.of("is_in_water"));
         add("is_under_water","sense", BlockShape.BOOLEAN, List.of(),List.of("is_under_water"));
         add("last_hurt_by_entity","sense", BlockShape.REPORTER, List.of(),List.of("last_hurt_by_entity"));
-        add("find_block", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block", ValueType.TEXT, "minecraft:stone")),List.of("find_block","()"));
-        add("find_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("entity", ValueType.TEXT, "minecraft:pig")),List.of("find_entity","()"));
-        add("find_block_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block_entity", ValueType.TEXT, "minecraft:chest")),List.of("find_block_entity","()"));
-        add("find_pheromone", "sense", BlockShape.REPORTER, List.of(new InputDefinition("pheromone", ValueType.TEXT, "home")),List.of("find_pheromone","()"));
-        add("find_drop","sense", BlockShape.REPORTER, List.of(new InputDefinition("drop", ValueType.TEXT, "minecraft:stone")),List.of("find_drop","()"));
+        add("find_nearest_block", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block", ValueType.TEXT, "minecraft:stone")),List.of("find_nearest_block","()"));
+        add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("entity", ValueType.TEXT, "minecraft:pig")),List.of("find_nearest_entity","()"));
+        add("find_nearest_block_entity", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block_entity", ValueType.TEXT, "minecraft:chest")),List.of("find_nearest_block_entity","()"));
+        add("find_nearest_pheromone", "sense", BlockShape.REPORTER, List.of(new InputDefinition("pheromone", ValueType.TEXT, "home")),List.of("find_nearest_pheromone","()"));
+        add("find_nearest_drop","sense", BlockShape.REPORTER, List.of(new InputDefinition("drop", ValueType.TEXT, "minecraft:stone")),List.of("find_nearest_drop","()"));
+        add("find_block_list", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block", ValueType.TEXT, "minecraft:stone"),new InputDefinition("count", ValueType.NUMBER, "256")),List.of("find_block_list","()","count","()"));
+        add("find_entity_list", "sense", BlockShape.REPORTER, List.of(new InputDefinition("entity", ValueType.TEXT, "minecraft:pig"),new InputDefinition("count", ValueType.NUMBER, "256")),List.of("find_entity_list","()","count","()"));
+        add("find_block_entity_list", "sense", BlockShape.REPORTER, List.of(new InputDefinition("block_entity", ValueType.TEXT, "minecraft:chest"),new InputDefinition("count", ValueType.NUMBER, "256")),List.of("find_block_entity_list","()","count","()"));
+        add("find_pheromone_list", "sense", BlockShape.REPORTER, List.of(new InputDefinition("pheromone", ValueType.TEXT, "home"),new InputDefinition("count", ValueType.NUMBER, "256")),List.of("find_pheromone_list","()","count","()"));
+        add("find_drop_list","sense", BlockShape.REPORTER, List.of(new InputDefinition("drop", ValueType.TEXT, "minecraft:stone"),new InputDefinition("count", ValueType.NUMBER, "256")),List.of("find_drop_list","()","count","()"));
         add("get_surrounding_pheromone_types", "sense", BlockShape.REPORTER, List.of(),List.of("get_surrounding_pheromone_types"));
-        //add("find_nearest_entity", "sense", BlockShape.REPORTER, List.of(),List.of("find_nearest_entity"));
         add("has_item_in_container_xyz", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","x","()","y","()","z","()","item","()"));
         add("has_item_in_container_blockpos", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("blockpos", ValueType.LIST, ""), new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_container","pos","()","item","()"));
         add("get_item_in_container_xyz", "sense", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_container","x","()","y","()","z","()","slot","()"));
@@ -225,8 +226,9 @@ public final class ModuleRegistry {
         return switch (opcode) {
             case "health", "food_level", "x", "y", "z", "distance_to_xyz", "distance_to_blockpos", "time",
                     "add", "subtract", "multiply", "divide", "mod", "absolute", "random" -> ValueType.NUMBER;
-            case "find_block", "find_entity", "find_block_entity", "find_pheromone", "get_surrounding_pheromone",
-                    "find_nearest_entity" -> ValueType.LIST;
+            case "pos", "find_nearest_block", "find_nearest_block_entity", "find_nearest_pheromone", "find_nearest_drop",
+                    "find_block_list", "find_entity_list", "find_block_entity_list", "find_pheromone_list", "find_drop_list",
+                    "get_surrounding_pheromone_types" -> ValueType.LIST;
             default -> ValueType.TEXT;
         };
     }

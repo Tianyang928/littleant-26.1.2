@@ -1,5 +1,5 @@
 - 增加预设的Ant AI，使用Scratch-like模块
-- 增加Ant可以操作的容器（如anvil、 enchanting table、 smoker、 blast furnace等） √
+- 增加Ant可以操作的容器（如smoker、 blast furnace等） √
 - 改进编程GUI的外观
 - 增加Ant可以使用的载体（如物品、实体等）
 - 增加进化系统，使Ant种群能够随着时间的推移而进化
@@ -23,7 +23,7 @@ about use item and block
 5、还不能骑乘任何实体
 
 透过palette栏的缝隙可以点到canvas √
-将findBlock变成效率更高的从内到外搜索
+将findBlock变成效率更高的从内到外搜索 √
 
 增加画布缩放功能
 增加模块组打包成小图标功能
@@ -32,3 +32,18 @@ about use item and block
 增加寻找方块时返回列表而不是最近的方块
 
 ant-dsl-reference.md文档有点落后，需要更新
+
+列表的表达形式可以换成[]和， √
+
+命令相关代码的输出格式较乱，也没有翻译
+将findlist相关模块加入命令中
+
+ant还不能脱盔甲
+
+除工作台外，anvil、 enchanting table等需要配方的方块，还不能操作
+
+界面内文本自动补全功能
+多种AI（包括预设和自建）选择界面
+Dsl转换功能、Json导入导出功能
+
+editbox和加载文本同步问题

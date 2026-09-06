@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.WorldlyContainerHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
@@ -21,6 +22,7 @@ import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /** Shared, tick-local and persistent-by-runtime facts used by sense, control and goal modules. */
 public final class AntBlackboard {
@@ -141,6 +143,14 @@ public final class AntBlackboard {
         return BuiltInRegistries.BLOCK.getKey(this.ant.level().getBlockState(new BlockPos((int) x, (int) y, (int) z)).getBlock()).toString();
     }
 
+    public String getEntityPos(int entityId) {
+        Entity entity = this.ant.level().getEntity(entityId);
+        if(entity == null) {
+            return "[]";
+        }
+        return "[" + entity.position().x + "," + entity.position().y + "," + entity.position().z + "]";
+    }
+
     public Boolean hasItemInInventory(String item) {
         for(int i = 0; i < this.ant.getInventory().getContainerSize(); i++) {
             if(BuiltInRegistries.ITEM.getKey(this.ant.getInventory().getSlot(i).get().getItem()).toString().equals(item)) {
@@ -187,18 +197,18 @@ public final class AntBlackboard {
     }
 
     public String getPos() {
-        return this.ant.position().x + "," + this.ant.position().y + "," + this.ant.position().z;
+        return "[" + this.ant.position().x + "," + this.ant.position().y + "," + this.ant.position().z + "]";
     }
 
-    public String findBlock(String block) {
+    public String findNearestBlock(String block) {
         BlockPos result = this.ant.setFindBlockTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(block)));
         if(result == null){
-            return "";
+            return "[]";
         }
-        return result.getX() + "," + result.getY() + "," + result.getZ();
+        return "[" + result.getX() + "," + result.getY() + "," + result.getZ() + "]";
     }
 
-    public String findEntity(String entity) {
+    public String findNearestEntity(String entity) {
         int result = this.ant.setFindEntityTarget(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(entity)));
         if(result == -1){
             return "";
@@ -206,32 +216,56 @@ public final class AntBlackboard {
         return String.valueOf(result);
     }
 
-    public String findBlockEntity(String blockEntity) {
+    public String findNearestBlockEntity(String blockEntity) {
         BlockPos result = this.ant.setFindBlockEntityTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(blockEntity)));
         if(result == null){
-            return "";
+            return "[]";
         }
-        return result.getX() + "," + result.getY() + "," + result.getZ();
+        return "[" + result.getX() + "," + result.getY() + "," + result.getZ() + "]";
     }
 
-    public String findDrop(String item) {
+    public String findNearestDrop(String item) {
         BlockPos result = this.ant.setFindDropTarget(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(item)));
         if(result == null){
-            return "";
+            return "[]";
         }
-        return result.getX() + "," + result.getY() + "," + result.getZ();
+        return "[" + result.getX() + "," + result.getY() + "," + result.getZ() + "]";
     }
 
-    public String findPheromone(String pheromone) {
+    public String findNearestPheromone(String pheromone) {
         BlockPos result = this.ant.setFindPheromoneTarget(pheromone);
         if(result == null){
-            return "";
+            return "[]";
         }
-        return result.getX() + "," + result.getY() + "," + result.getZ();
+        return "[" + result.getX() + "," + result.getY() + "," + result.getZ() + "]";
+    }
+
+    private static String positions(List<BlockPos> values) {
+        return values.stream().map(p -> "[" + p.getX() + "," + p.getY() + "," + p.getZ() + "]").collect(Collectors.joining(",", "[", "]"));
+    }
+
+    public String findBlockList(String block, int count) {
+        return positions(ant.setFindBlockListTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(block)), count));
+    }
+
+    public String findBlockEntityList(String block, int count) {
+        return positions(ant.setFindBlockEntityListTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(block)), count));
+    }
+
+    public String findPheromoneList(String type, int count) {
+        return positions(ant.setFindPheromoneListTarget(type, count));
+    }
+
+    public String findEntityList(String entity, int count) {
+        return ant.setFindEntityListTarget(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(entity)), count).stream().map(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+    }
+
+    public String findDropList(String item, int count) {
+        return positions(ant.setFindDropListTarget(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(item)), count));
     }
 
     public String getSurroundingPheromoneTypes() {
-        return String.join(",", this.ant.getSurroundingPheromoneTypes());
+        return this.ant.getSurroundingPheromoneTypes().stream().collect(Collectors.joining(",", "[", "]"));
     }
 
     public Boolean hasItemInContainer(String item, double x, double y, double z) {
@@ -289,10 +323,11 @@ public final class AntBlackboard {
         }
     }
 
-    /** Returns the list in the comma-separated representation used by LIST inputs. */
+    /** Returns a bracketed list representation, preserving nested list strings. */
     public String getList(String name) {
         List<String> list = lists.get(name);
-        return list == null ? "" : String.join(",", list);
+        if (list == null) return "[]";
+        return list.stream().map(v -> v == null ? "" : v).collect(Collectors.joining(",", "[", "]"));
     }
 
     public void setListValue(String name, int key, String value) {
@@ -310,15 +345,14 @@ public final class AntBlackboard {
         if (name.isEmpty()) {
             return;
         }
-        List<String> list = Arrays.stream(listStr.split(",")).toList();
-        lists.put(name,list);
+        lists.put(name, parseList(listStr));
     }
 
     public void addList(String name, String listStr) {
         if (name.isEmpty()) {
             return;
         }
-        List<String> listToPut = Arrays.stream(listStr.split(",")).toList();
+        List<String> listToPut = parseList(listStr);
         List<String> list = lists.computeIfAbsent(name, ignored -> new ArrayList<>());
         list.addAll(listToPut);
     }
@@ -334,6 +368,36 @@ public final class AntBlackboard {
     public String getListValue(String name, int key) {
         List<String> list = lists.get(name);
         return list == null || key < 0 || key >= list.size() ? "" : list.get(key);
+    }
+
+    /** Splits a list literal on top-level commas, honoring nested brackets and quotes. */
+    static List<String> parseList(String text) {
+        if (text == null) return new ArrayList<>();
+        String s = text.trim();
+        if (s.startsWith("[") && s.endsWith("]")) s = s.substring(1, s.length() - 1).trim();
+        if (s.isEmpty()) return new ArrayList<>();
+        List<String> out = new ArrayList<>();
+        StringBuilder item = new StringBuilder(); int depth = 0; boolean quoted = false; char quote = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if ((c == '\"' || c == '\'') && (i == 0 || s.charAt(i - 1) != '\\')) {
+                if (!quoted) { quoted = true; quote = c; }
+                else if (quote == c) quoted = false;
+                item.append(c);
+                continue;
+            }
+            if (!quoted && c == '[') depth++; else if (!quoted && c == ']') depth--;
+            if (!quoted && depth == 0 && c == ',') { out.add(unquoteListValue(item.toString().trim())); item.setLength(0); } else item.append(c);
+        }
+        out.add(unquoteListValue(item.toString().trim()));
+        return out;
+    }
+
+    private static String unquoteListValue(String value) {
+        if (value.length() >= 2 && ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'")))) {
+            return value.substring(1, value.length() - 1).replace("\\\"", "\"").replace("\\\\", "\\");
+        }
+        return value;
     }
 
     /** Saves a defensive snapshot, so later set_list calls do not silently alter persistence. */

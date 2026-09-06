@@ -584,22 +584,6 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-### `get_entity_at_xyz`
-
-Category: `sense` -- Shape: `REPORTER`
-
-Parameters:
-- `x` (`NUMBER`), default `0`; required
-- `y` (`NUMBER`), default `0`; required
-- `z` (`NUMBER`), default `0`; required
-
-### `get_entity_at_blockpos`
-
-Category: `sense` -- Shape: `REPORTER`
-
-Parameters:
-- `blockpos` (`LIST`), default ``
-
 ### `get_entity_pos`
 
 Category: `sense` -- Shape: `REPORTER`
@@ -664,48 +648,82 @@ Category: `sense` -- Shape: `REPORTER`
 
 Parameters: none
 
-### `find_block`
+### `find_nearest_block`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `block` (`TEXT`), default `minecraft:stone`
 
-### `find_entity`
+### `find_nearest_entity`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `entity` (`TEXT`), default `minecraft:pig`
 
-### `find_block_entity`
+### `find_nearest_block_entity`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `block_entity` (`TEXT`), default `minecraft:chest`
 
-### `find_pheromone`
+### `find_nearest_pheromone`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `pheromone` (`TEXT`), default `home`
 
-### `find_drop`
+### `find_nearest_drop`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `drop` (`TEXT`), default `minecraft:stone`
 
-### `get_surrounding_pheromone_types`
+### `find_block_list`
 
 Category: `sense` -- Shape: `REPORTER`
 
-Parameters: none
+Parameters:
+- `block` (`TEXT`), default `minecraft:stone`
+- `count` (`NUMBER`), default `256`
 
-### `find_nearest_entity`
+### `find_entity_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `entity` (`TEXT`), default `minecraft:pig`
+- `count` (`NUMBER`), default `256`
+
+### `find_block_entity_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `block_entity` (`TEXT`), default `minecraft:chest`
+- `count` (`NUMBER`), default `256`
+
+### `find_pheromone_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `pheromone` (`TEXT`), default `home`
+- `count` (`NUMBER`), default `256`
+
+### `find_drop_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `drop` (`TEXT`), default `minecraft:stone`
+- `count` (`NUMBER`), default `256`
+
+### `get_surrounding_pheromone_types`
 
 Category: `sense` -- Shape: `REPORTER`
 

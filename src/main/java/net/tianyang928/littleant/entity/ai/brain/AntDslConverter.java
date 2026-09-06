@@ -124,6 +124,7 @@ public final class AntDslConverter {
                 String variable = s.substring(0, p).trim();
                 String value = s.substring(p + 1).trim();
                 if (value.equals("[]")) out.add(addStatement("new_list", List.of(quote(variable))));
+                else if (value.startsWith("[") && value.endsWith("]")) out.add(addStatement("set_list_list", List.of(quote(variable), runtimeListLiteral(value))));
                 else out.add(addStatement("set_variable", List.of(quote(variable), value)));
             }
         }
@@ -287,21 +288,29 @@ public final class AntDslConverter {
         List<String> r = new ArrayList<>();
         if (s.isBlank()) return r;
         int d = 0;
+        int brackets = 0;
         boolean q = false;
         StringBuilder b = new StringBuilder();
         for (char c : s.toCharArray()) {
             if (c == '\"') q = !q;
-            if (c == ',' && !q && d == 0) {
+            if (c == ',' && !q && d == 0 && brackets == 0) {
                 r.add(b.toString().trim());
                 b.setLength(0);
             } else {
                 if (c == '(' && !q) d++;
                 if (c == ')' && !q) d--;
+                if (c == '[' && !q) brackets++;
+                if (c == ']' && !q) brackets--;
                 b.append(c);
             }
         }
         r.add(b.toString().trim());
         return r;
+    }
+
+    /** Converts Python-style quoted list literals to the runtime's unquoted string-list protocol. */
+    private static String runtimeListLiteral(String value) {
+        return AntBlackboard.parseList(value).stream().collect(java.util.stream.Collectors.joining(",", "[", "]"));
     }
 
     private static int topLevelWord(String s, String word) {

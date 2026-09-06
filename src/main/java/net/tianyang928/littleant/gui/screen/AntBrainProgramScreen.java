@@ -16,6 +16,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
+import net.tianyang928.littleant.gui.BrainFileRepository;
 import net.tianyang928.littleant.network.SetDebugOverlayVisiblePayload;
 import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
 
@@ -42,10 +43,20 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     //private int scaledMouseX, scaledMouseY;
     private AntBrainProgramButton debugOverlayButton;
     private boolean debugOverlayVisible;
+    private boolean filesMode;
+    private List<BrainFileRepository.BrainFile> brainFiles = List.of();
+    private BrainFileRepository.BrainFile pendingLoad;
+    private EditBox fileNameBox;
+    private Button dialogOk, dialogCancel;
+    private String dialogMessage;
+    private DialogMode dialogMode = DialogMode.NONE;
+    private String pendingSaveName;
+    private LinkedHashMap<UUID, BrainBlock> savedSnapshot = new LinkedHashMap<>();
 
     public AntBrainProgramScreen(AntBrainProgramMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 1, 1);
         placedBlocks.putAll(menu.getPlacedBlocks());
+        savedSnapshot.putAll(placedBlocks);
         inventoryLabelY = -1000;
     }
 
@@ -65,6 +76,11 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                     )
             );
         }));
+        fileNameBox = addRenderableWidget(new EditBox(font, width / 2 - 130, height / 2 - 15, 260, 20, Component.literal("Name")));
+        dialogOk = addRenderableWidget(Button.builder(CommonComponents.GUI_YES, b -> handleDialogOk()).bounds(width / 2 - 80, height / 2 + 25, 75, 20).build());
+        dialogCancel = addRenderableWidget(Button.builder(CommonComponents.GUI_NO, b -> handleDialogCancel()).bounds(width / 2 + 5, height / 2 + 25, 75, 20).build());
+        hideDialogWidgets();
+        BrainFileRepository.list().thenAccept(files -> minecraft.execute(() -> brainFiles = files));
     }
 
     @Override
@@ -91,6 +107,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         g.fill(0, 0, width, HEADER_HEIGHT, 0x661E2430);
         drawScaledText(g,Component.translatable("menu.littleant.ant_brain_program"), 12, 10, 1.0f,0xFFFFFFFF, true);
         drawPalette(g);
+
         // Edit boxes remain Screen children for focus/input handling, but are
         // rendered by drawBlock so their z-order matches their owning block.
         syncInputBoxes();
@@ -101,12 +118,15 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         if (preview != null)
             drawDraggingChain(g, snapTarget == null ? dragX : snapTarget.x(), snapTarget == null ? dragY : snapTarget.y());
 
+        if (filesMode) drawFileDialog(g);
+
         super.extractRenderState(g, mx, my, p);
         drawScaledText(g,Component.translatable("menu.littleant.show_debug_overlay"), width-65, HEADER_HEIGHT+5+8, 1.0f,debugOverlayVisible?0xFFFFFFFF:0x661E2430, true);
     }
 
     private void rebuildLayouts() {
         paletteEntries.clear();
+        //if (filesMode) { canvasLayouts.clear(); return; }
         if (!CATEGORIES.isEmpty()) {
             int yOffset = 8;
             int y = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT - paletteScroll;
@@ -169,21 +189,88 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         g.fill(0, HEADER_HEIGHT, SIDEBAR_WIDTH, height, 0xD9181D27);
         for (int i = 0; i < CATEGORIES.size(); i++) {
             int y = 42 + i * 32;
-            g.fill(6, y, SIDEBAR_WIDTH - 6, y + 26, i == selectedCategory ? ModuleRegistry.categoryColor(CATEGORIES.get(i)) : 0xFF303947);
+            int color;
+            if(i == selectedCategory && !filesMode){
+                color = ModuleRegistry.categoryColor(CATEGORIES.get(i));
+            }else{
+                color = 0xFF303947;
+            }
+            g.fill(6, y, SIDEBAR_WIDTH - 6, y + 26, color);
             drawScaledText(g, Component.translatable(ModuleRegistry.categoryTranslationKey(CATEGORIES.get(i))), 10, y + 9, 1.0f,0xFFFFFFFF, false);
         }
+        int y = 42 + CATEGORIES.size() * 32;
+        g.fill(6, height-40, SIDEBAR_WIDTH - 6, height-14, filesMode ? 0xFF4D6B55 : 0xFF303947);
+        drawScaledText(g, Component.literal("Files"), 10, height-31, 1.0f, 0xFFFFFFFF, false);
     }
 
     private void drawPalette(GuiGraphicsExtractor g) {
         int right = canvasLeft();
         g.fill(SIDEBAR_WIDTH, HEADER_HEIGHT, right, height, 0xE52B3340);
-        g.enableScissor(SIDEBAR_WIDTH, HEADER_HEIGHT + PALETTE_HEADER_HEIGHT, right, height);
+        int listTop = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT;
+        if (filesMode) {
+            int saveY = saveButtonY();
+            g.enableScissor(SIDEBAR_WIDTH, listTop, right, Math.max(listTop, saveY - 6));
+            drawFiles(g, right);
+            g.disableScissor();
+            g.fill(SIDEBAR_WIDTH + 8, saveY, right - 8, saveY + 28, 0xFF446B52);
+            drawScaledText(g, Component.literal("Save current brain"), SIDEBAR_WIDTH + 14, saveY + 9, 1.0f, 0xFFFFFFFF, false);
+            drawScaledText(g, Component.literal("Files"), SIDEBAR_WIDTH + 8, 42, 1.0f,0xFFFFFFFF, false);
+            return;
+        }
+        g.enableScissor(SIDEBAR_WIDTH, listTop, right, height);
         for (PaletteEntry e : paletteEntries)
             if (e.y() + e.layout().height() >= HEADER_HEIGHT + PALETTE_HEADER_HEIGHT && e.y() < height)
                 drawBlock(g, e.layout(), e.x(), e.y(), false);
         g.disableScissor();
         g.fill(SIDEBAR_WIDTH, HEADER_HEIGHT, right, PALETTE_HEADER_HEIGHT, 0xE52B3340);
         drawScaledText(g, Component.translatable(ModuleRegistry.categoryTranslationKey(currentCategory())), SIDEBAR_WIDTH + 8, 42, 1.0f,0xFFFFFFFF, false);
+    }
+
+    private void drawFiles(GuiGraphicsExtractor g, int right) {
+        int y = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT + 8 - paletteScroll;
+        drawScaledText(g, Component.literal("Presets"), SIDEBAR_WIDTH + 8, y, 1.0f, 0xFFB9D8C0, true); y += 22;
+        for (BrainFileRepository.BrainFile f : brainFiles) if (f.preset()) { drawFileEntry(g, f, y, right); y += 25; }
+        y += 8; drawScaledText(g, Component.literal("Custom"), SIDEBAR_WIDTH + 8, y, 1.0f, 0xFFB9D8C0, true); y += 22;
+        for (BrainFileRepository.BrainFile f : brainFiles) if (!f.preset()) { drawFileEntry(g, f, y, right); y += 25; }
+    }
+
+    private int saveButtonY() {
+        return Math.max(HEADER_HEIGHT + PALETTE_HEADER_HEIGHT + 4, height - 42);
+    }
+
+    private int filesContentBottom() {
+        int y = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT + 8 + 22;
+        for (BrainFileRepository.BrainFile f : brainFiles) if (f.preset()) y += 25;
+        y += 8 + 22;
+        for (BrainFileRepository.BrainFile f : brainFiles) if (!f.preset()) y += 25;
+        return y;
+    }
+
+    private int filesMaxScroll() {
+        int listTop = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT;
+        return Math.max(0, filesContentBottom() - (saveButtonY() - 6));
+    }
+
+    private void drawFileEntry(GuiGraphicsExtractor g, BrainFileRepository.BrainFile f, int y, int right) {
+        int color;
+        if(fileAt(mouseX,mouseY) != null && Objects.equals(fileAt(mouseX, mouseY), f)){
+            color = 0xFF446B52;
+        }else{
+            color = 0xFF303947;
+        }
+        g.fill(SIDEBAR_WIDTH + 8, y, right - 8, y + 21, color);
+        drawScaledText(g, Component.literal(f.name()), SIDEBAR_WIDTH + 14, y + 6, 0.9f, 0xFFFFFFFF, false);
+    }
+
+    private void drawFileDialog(GuiGraphicsExtractor g) {
+        if (dialogMessage == null) return;
+        int x = Math.max(80, width / 2 - 150), y = Math.max(70, height / 2 - 55);
+        g.fill(x, y, x + 300, y + 110, 0xF0222935);
+        g.fill(x,y,x+300,y+1,0xE52B3340);
+        g.fill(x,y,x+1,y+110,0xE52B3340);
+        g.fill(x+300,y,x+301,y+110,0xE52B3340);
+        g.fill(x,y+110,x+300,y+111,0xE52B3340);
+        drawScaledText(g, Component.literal(dialogMessage), x + 12, y + 14, 0.85f, 0xFFFFFFFF, true);
     }
 
     private void drawCanvas(GuiGraphicsExtractor g) {
@@ -365,15 +452,27 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         // AbstractContainerScreen consumes every left click, even when no child widget was hit.
         // Only delegate when the pointer is actually over a visible literal input.
         int x = (int) e.x(), y = (int) e.y();
+        if (dialogMessage != null) return super.mouseClicked(e, d);
         //先判断是否在左边的sidebar或palette中
         if(inside(x,y,0,0,canvasLeft(),height)) {
             clearFocus();
+            int filesY = height-40;
+            if (inside(x, y, 3, filesY, SIDEBAR_WIDTH - 12, 26)) {
+                filesMode = true; paletteScroll = 0; BrainFileRepository.list().thenAccept(files -> minecraft.execute(() -> brainFiles = files)); return true;
+            }
             for (int i = 0; i < CATEGORIES.size(); i++) {
                 if (inside(x, y, 3, 42 + i * 32, SIDEBAR_WIDTH - 12, 26)) {
+                    filesMode = false;
                     selectedCategory = i;
                     paletteScroll = 0;
                     return true;
                 }
+            }
+            if (filesMode) {
+                BrainFileRepository.BrainFile file = fileAt(x, y);
+                if (file != null) { requestLoad(file); return true; }
+                if (saveAt(x, y)) { openNameDialog(); return true; }
+                return true;
             }
             PaletteEntry pe = paletteEntryAt(x, y);
             if (pe != null) {
@@ -395,6 +494,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         if (inputBoxAt(x, y) != null) {
             return super.mouseClicked(e, d);
         }
+        clearFocus();
         if (inside(x, y, width-55, HEADER_HEIGHT+5, 50, 25)) {
             return super.mouseClicked(e, d);
         }
@@ -416,6 +516,113 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             return true;
         }
         return true;
+    }
+
+    private BrainFileRepository.BrainFile fileAt(int x, int y) {
+        if (x < SIDEBAR_WIDTH || x >= canvasLeft()) return null;
+        if (y < HEADER_HEIGHT + PALETTE_HEADER_HEIGHT || y >= saveButtonY() - 6) return null;
+        int row = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT + 8 - paletteScroll + 22;
+        for (BrainFileRepository.BrainFile f : brainFiles) {
+            if (f.preset()) {
+                if (inside(x, y, SIDEBAR_WIDTH + 8, row, PALETTE_WIDTH - 16, 21)) return f;
+                row += 25;
+            }
+        }
+        row += 8 + 22;
+        for (BrainFileRepository.BrainFile f : brainFiles) if (!f.preset()) { if (inside(x, y, SIDEBAR_WIDTH + 8, row, PALETTE_WIDTH - 16, 21)) return f; row += 25; }
+        return null;
+    }
+
+    private boolean saveAt(int x, int y) {
+        return inside(x, y, SIDEBAR_WIDTH + 8, saveButtonY(), PALETTE_WIDTH - 16, 28);
+    }
+
+    private void requestLoad(BrainFileRepository.BrainFile file) {
+        if (!placedBlocks.equals(savedSnapshot)) {
+            pendingLoad = file;
+            dialogMessage = "Save changes before loading?";
+            dialogMode = DialogMode.LOAD_CONFIRM;
+            showDialogButtons(false);
+            dialogOk.setMessage(CommonComponents.GUI_YES);
+            dialogCancel.setMessage(CommonComponents.GUI_NO);
+        } else loadFile(file);
+    }
+
+    private void loadFile(BrainFileRepository.BrainFile file) {
+        BrainFileRepository.load(file).thenAccept(blocks -> minecraft.execute(() -> {
+            placedBlocks.clear(); placedBlocks.putAll(blocks); savedSnapshot = new LinkedHashMap<>(blocks); sendProgram(); closeDialog();
+        })).exceptionally(error -> { LittleAnt.LOGGER.warn("Unable to load brain", error); return null; });
+    }
+
+    private void openNameDialog() {
+        dialogMessage = "Brain file name";
+        dialogMode = DialogMode.NAME;
+        fileNameBox.setValue("");
+        showDialogButtons(true);
+        dialogOk.setMessage(CommonComponents.GUI_DONE);
+        dialogCancel.setMessage(CommonComponents.GUI_CANCEL);
+        setFocused(fileNameBox);
+    }
+
+    private void saveNamedBrain() {
+        String name = BrainFileRepository.sanitize(fileNameBox.getValue());
+        if (name.isEmpty()) return;
+        boolean exists = brainFiles.stream().anyMatch(f -> !f.preset() && f.name().equalsIgnoreCase(name));
+        if (exists) {
+            dialogMessage = "Replace existing file?";
+            pendingSaveName = name;
+            dialogMode = DialogMode.REPLACE_CONFIRM;
+            showDialogButtons(false);
+            dialogOk.setMessage(CommonComponents.GUI_YES);
+            dialogCancel.setMessage(CommonComponents.GUI_NO);
+        }
+        else doSave(name);
+    }
+
+    private void doSave(String name) {
+        BrainFileRepository.save(name, placedBlocks).thenAccept(path -> minecraft.execute(() -> {
+            savedSnapshot = new LinkedHashMap<>(placedBlocks);
+            BrainFileRepository.list().thenAccept(files -> minecraft.execute(() -> brainFiles = files));
+            BrainFileRepository.BrainFile next = pendingLoad;
+            closeDialog();
+            if (next != null) loadFile(next);
+        })).exceptionally(error -> { LittleAnt.LOGGER.warn("Unable to save brain", error); return null; });
+    }
+
+    private void showDialogButtons(boolean nameMode) {
+        fileNameBox.visible = nameMode;
+        dialogOk.visible = dialogCancel.visible = true;
+    }
+
+    private void handleDialogOk() {
+        switch (dialogMode) {
+            case LOAD_CONFIRM -> openNameDialog();
+            case NAME -> saveNamedBrain();
+            case REPLACE_CONFIRM -> doSave(pendingSaveName);
+            default -> { }
+        }
+    }
+
+    private void handleDialogCancel() {
+        if (dialogMode == DialogMode.LOAD_CONFIRM) {
+            BrainFileRepository.BrainFile file = pendingLoad;
+            closeDialog();
+            if (file != null) loadFile(file);
+        } else closeDialog();
+    }
+
+    private void hideDialogWidgets() {
+        fileNameBox.visible = false;
+        dialogOk.visible = dialogCancel.visible = false;
+    }
+
+    private void closeDialog() {
+        dialogMessage = null;
+        pendingLoad = null;
+        pendingSaveName = null;
+        dialogMode = DialogMode.NONE;
+        hideDialogWidgets();
+        clearFocus();
     }
 
     @Override
@@ -498,6 +705,10 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     @Override
     public boolean mouseScrolled(double x, double y, double sx, double sy) {
         if (x >= SIDEBAR_WIDTH && x < canvasLeft()) {
+            if (filesMode) {
+                paletteScroll = Math.max(0, Math.min(filesMaxScroll(), paletteScroll - (int) (sy * 16)));
+                return true;
+            }
             int ch = paletteEntries.isEmpty() ? 0 : paletteEntries.getLast().y() + paletteEntries.getLast().layout().height() + LIST_GAP + paletteScroll, vh = height - HEADER_HEIGHT - PALETTE_HEADER_HEIGHT;
             paletteScroll = Math.max(0, Math.min(Math.max(0, ch - (HEADER_HEIGHT + PALETTE_HEADER_HEIGHT) - vh), paletteScroll - (int) (sy * 16)));
             return true;
@@ -1011,6 +1222,8 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private record DeleteUndo(LinkedHashMap<UUID, BrainBlock> removed,
                               LinkedHashMap<UUID, ChangedBlock> changed) {
     }
+
+    private enum DialogMode { NONE, LOAD_CONFIRM, NAME, REPLACE_CONFIRM }
 
     private class ScalableEditBox extends EditBox {
 

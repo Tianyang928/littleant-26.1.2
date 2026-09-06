@@ -28,6 +28,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 @Mod(LittleAnt.MOD_ID)
 public class LittleAnt {
     public static final String MOD_ID = "littleant";
@@ -60,7 +63,13 @@ public class LittleAnt {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
-
+        event.enqueueWork(() -> {
+            try {
+                Files.createDirectories(Path.of("littleant_brains"));
+            } catch (java.io.IOException exception) {
+                LOGGER.warn("Unable to create littleant_brains directory", exception);
+            }
+        });
     }
 
     /** Server-bound editing payloads must be registered on both integrated and dedicated servers. */
@@ -111,7 +120,7 @@ public class LittleAnt {
         AntFindDropCommand.register(event);
         ModuleToCodeCommand.register(event);
         CodeToModuleCommand.register(event);
-        AntRunScriptCommand.register(event);
+        AntLoadScriptCommand.register(event);
         AntFindPheromoneCommand.register(event);
         AntAttackCommand.register(event);
     }
