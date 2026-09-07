@@ -24,14 +24,14 @@ public class FindNearestBlockEntity {
         this.mob = mob;
     }
 
-    public BlockPos setTarget(Block block) {
-        if (block == null) return null;
+    public BlockPos setTarget(List<Block> blocks) {
+        if (blocks == null || blocks.isEmpty()) return null;
         List<BlockPos> r = new ArrayList<>();
         ChunkPos c = ChunkPos.containing(mob.blockPosition());
         for (ChunkPos cp : ChunkPos.rangeClosed(c, 5).toList()) {
             LevelChunk ch = mob.level().getChunkSource().getChunkNow(cp.x(), cp.z());
             if (ch != null) for (BlockEntity e : ch.getBlockEntities().values())
-                if (e.getBlockState().is(block) && e.getBlockPos().distSqr(mob.blockPosition()) <= 4096 && visible(e.getBlockPos()))
+                if (blocks.contains(e.getBlockState().getBlock()) && e.getBlockPos().distSqr(mob.blockPosition()) <= 4096 && visible(e.getBlockPos()))
                     r.add(e.getBlockPos().immutable());
         }
         r.sort(Comparator.comparingDouble(p -> mob.distanceToSqr(p.getX(), p.getY(), p.getZ())));

@@ -16,9 +16,9 @@ public class FindDropList {
         this.mob = mob;
     }
 
-    public List<BlockPos> setTarget(Item item, int limit) {
-        if (item == null || limit <= 0) return List.of();
-        List<ItemEntity> es = mob.level().getEntities(EntityType.ITEM, mob.getBoundingBox().inflate(64), e -> e.isAlive() && e.getItem().is(item) && mob.distanceToSqr(e) <= 4096);
+    public List<BlockPos> setTarget(List<Item> items, int limit) {
+        if (items == null || items.isEmpty() || limit <= 0) return List.of();
+        List<ItemEntity> es = mob.level().getEntities(EntityType.ITEM, mob.getBoundingBox().inflate(64), e -> e.isAlive() && items.contains(e.getItem().getItem()) && mob.distanceToSqr(e) <= 4096);
         es.sort(Comparator.comparingDouble(mob::distanceToSqr));
         return es.stream().limit(Math.min(limit, 256)).map(Entity::blockPosition).toList();
     }

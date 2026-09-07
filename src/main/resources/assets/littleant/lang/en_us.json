@@ -158,6 +158,9 @@
   "opcode.littleant.ant_brain.less_than_or_equal": "<=",
   "opcode.littleant.ant_brain.get_item_count_in_inventory": "get item count in inventory",
   "opcode.littleant.ant_brain.get_item_count_in_container": "get item count in container",
+  "opcode.littleant.ant_brain.is_crouching": "is crouching",
+  "opcode.littleant.ant_brain.is_in_tag": "is in tag",
+  "opcode.littleant.ant_brain.is_running": "is running",
   "tip.littleant.debug.f8_to_close": "press F8 to close",
   "menu.littleant.show_debug_overlay": "show debug",
   "antentity.littleant.food_level": "food level: %d"

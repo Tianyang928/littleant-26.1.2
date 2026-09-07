@@ -36,7 +36,7 @@ public class AntFindDropCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    net.minecraft.core.BlockPos result = ant.setFindDropTarget(item);
+                                                    net.minecraft.core.BlockPos result = ant.setFindDropTarget(List.of(item));
                                                     if(result != null) positions.add(result);
                                                     count++;
                                                 }

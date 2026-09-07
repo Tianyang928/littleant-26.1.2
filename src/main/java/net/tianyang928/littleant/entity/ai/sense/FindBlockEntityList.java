@@ -19,14 +19,14 @@ public class FindBlockEntityList {
         this.mob = mob;
     }
 
-    public List<BlockPos> setTarget(Block block, int limit) {
-        if (block == null || limit <= 0) return List.of();
+    public List<BlockPos> setTarget(List<Block> blocks, int limit) {
+        if (blocks == null || blocks.isEmpty() || limit <= 0) return List.of();
         List<BlockPos> r = new ArrayList<>();
         ChunkPos c = ChunkPos.containing(mob.blockPosition());
         for (ChunkPos cp : ChunkPos.rangeClosed(c, 5).toList()) {
             LevelChunk ch = mob.level().getChunkSource().getChunkNow(cp.x(), cp.z());
             if (ch != null) for (BlockEntity e : ch.getBlockEntities().values())
-                if (e.getBlockState().is(block) && e.getBlockPos().distSqr(mob.blockPosition()) <= 4096 && visible(e.getBlockPos()))
+                if (blocks.contains(e.getBlockState().getBlock()) && e.getBlockPos().distSqr(mob.blockPosition()) <= 4096 && visible(e.getBlockPos()))
                     r.add(e.getBlockPos().immutable());
         }
         r.sort(Comparator.comparingDouble(p -> mob.distanceToSqr(p.getX(), p.getY(), p.getZ())));

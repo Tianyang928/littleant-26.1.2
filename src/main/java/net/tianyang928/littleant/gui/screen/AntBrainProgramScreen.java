@@ -51,12 +51,12 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private String dialogMessage;
     private DialogMode dialogMode = DialogMode.NONE;
     private String pendingSaveName;
-    private LinkedHashMap<UUID, BrainBlock> savedSnapshot = new LinkedHashMap<>();
+    private int savedSnapshotHashCode;
 
     public AntBrainProgramScreen(AntBrainProgramMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 1, 1);
         placedBlocks.putAll(menu.getPlacedBlocks());
-        savedSnapshot.putAll(placedBlocks);
+        savedSnapshotHashCode = aggregateHashCode(placedBlocks);
         inventoryLabelY = -1000;
     }
 
@@ -538,7 +538,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     private void requestLoad(BrainFileRepository.BrainFile file) {
-        if (!placedBlocks.equals(savedSnapshot)) {
+        if (aggregateHashCode(placedBlocks) != savedSnapshotHashCode) {
             pendingLoad = file;
             dialogMessage = "Save changes before loading?";
             dialogMode = DialogMode.LOAD_CONFIRM;
@@ -550,8 +550,17 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
 
     private void loadFile(BrainFileRepository.BrainFile file) {
         BrainFileRepository.load(file).thenAccept(blocks -> minecraft.execute(() -> {
-            placedBlocks.clear(); placedBlocks.putAll(blocks); savedSnapshot = new LinkedHashMap<>(blocks); sendProgram(); closeDialog();
-        })).exceptionally(error -> { LittleAnt.LOGGER.warn("Unable to load brain", error); return null; });
+            placedBlocks.clear();
+            hideInputBoxes();
+            inputBoxes.clear();
+            placedBlocks.putAll(blocks);
+            savedSnapshotHashCode = aggregateHashCode(placedBlocks);
+            sendProgram();
+            closeDialog();
+        })).exceptionally(error -> {
+            LittleAnt.LOGGER.warn("Unable to load brain", error);
+            return null;
+        });
     }
 
     private void openNameDialog() {
@@ -581,7 +590,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
 
     private void doSave(String name) {
         BrainFileRepository.save(name, placedBlocks).thenAccept(path -> minecraft.execute(() -> {
-            savedSnapshot = new LinkedHashMap<>(placedBlocks);
+            savedSnapshotHashCode = aggregateHashCode(placedBlocks);
             BrainFileRepository.list().thenAccept(files -> minecraft.execute(() -> brainFiles = files));
             BrainFileRepository.BrainFile next = pendingLoad;
             closeDialog();
@@ -1201,6 +1210,22 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         return c & 0xFF000000 | r << 16 | g << 8 | b;
     }
 
+    private static int aggregateHashCode(LinkedHashMap<UUID, BrainBlock> blocks) {
+        int result = 17;
+        if(blocks.isEmpty()){
+            return result;
+        }
+        for (UUID key : blocks.keySet()) {
+            List<InputSlot> list = blocks.get(key).inputs();
+            for (InputSlot input : list) {
+                int h = (input == null) ? 0 : input.hashCode();
+                result = 31 * result + h;
+            }
+        }
+        result = 31 * result + blocks.hashCode();
+        return result;
+    }
+
     private enum SnapKind {AFTER, BEFORE, INPUT, BODY}
 
     private record SnapTarget(SnapKind kind, UUID owner, String input, int x, int y, int width, int height,
@@ -1230,7 +1255,6 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         public ScalableEditBox(Font font, int x, int y, int width, int height, Component narration) {
             super(font, x, y, (int) Math.ceil(width / TEXT_SCALE), (int) Math.ceil(height / TEXT_SCALE), narration);
             this.visible = true;
-            this.setFilter(v -> v.isEmpty() || v.matches("^[a-zA-Z0-9_: -]+$"));
         }
 
         /**

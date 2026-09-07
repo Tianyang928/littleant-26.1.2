@@ -3,6 +3,7 @@ package net.tianyang928.littleant.entity.ai.sense;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.block.Block;
+import java.util.List;
 
 public class FindNearestBlock {
     private final PathfinderMob mob;
@@ -18,10 +19,10 @@ public class FindNearestBlock {
         return block != null;
     }
 
-    public BlockPos setTarget(Block block) {
-        this.block = block;
-        if (block == null) return resultBlockPos = null;
-        var r = new FindBlockList(mob).setTarget(block, 1);
+    public BlockPos setTarget(List<Block> blocks) {
+        this.block = blocks == null || blocks.isEmpty() ? null : blocks.getFirst();
+        if (blocks == null || blocks.isEmpty()) return resultBlockPos = null;
+        var r = new FindBlockList(mob).setTarget(blocks, 1);
         return resultBlockPos = r.isEmpty() ? null : r.getFirst();
     }
 
@@ -30,6 +31,6 @@ public class FindNearestBlock {
     }
 
     public void start() {
-        setTarget(block);
+        setTarget(block == null ? List.of() : List.of(block));
     }
 }

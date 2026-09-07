@@ -46,7 +46,7 @@ public final class ModuleRegistry {
         add("set_pheromone", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("pheromone", ValueType.TEXT, "")),List.of("set_pheromone","()"));
 
         // control
-        add("repeat", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("count", ValueType.NUMBER, "10", true), new InputDefinition("body", ValueType.BLOCK, ""), new InputDefinition("variable", ValueType.TEXT, "")),List.of("repeat","times","()","{}"));
+        add("repeat", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("count", ValueType.NUMBER, "10", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("repeat","times","()","{}"));
         add("if", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("if","<>","{}"));
         add("if_else", "control", BlockShape.E_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body_if", ValueType.BLOCK, ""),new InputDefinition("body_else", ValueType.BLOCK, "")),List.of("if","<>","{}","else","{}"));
         add("while", "control", BlockShape.C_SHAPE, List.of(new InputDefinition("condition", ValueType.BOOLEAN, "", true), new InputDefinition("body", ValueType.BLOCK, "")),List.of("while","<>","{}"));
@@ -143,6 +143,10 @@ public final class ModuleRegistry {
         add("get_item_count_in_container_xyz", "sense", BlockShape.REPORTER, List.of(new InputDefinition("x", ValueType.NUMBER, "0", true), new InputDefinition("y", ValueType.NUMBER, "0", true), new InputDefinition("z", ValueType.NUMBER, "0", true),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_count_in_container","x","()","y","()","z","()","slot","()"));
         add("get_item_count_in_container_blockpos", "sense", BlockShape.REPORTER, List.of(new InputDefinition("blockpos", ValueType.LIST, ""),new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_count_in_container","pos","()","slot","()"));
         add("get_speed", "sense", BlockShape.REPORTER, List.of(),List.of("get_speed"));
+        //TODO
+        add("is_running", "sense", BlockShape.BOOLEAN, List.of(),List.of("is_running"));
+        add("is_crouching", "sense", BlockShape.BOOLEAN, List.of(),List.of("is_crouching"));
+        add("is_in_tag", "sense", BlockShape.BOOLEAN, List.of(new InputDefinition("target", ValueType.TEXT, ""),new InputDefinition("tag", ValueType.TEXT, "")),List.of("()","is_in_tag","()"));
 
         // variables
         add("set_variable", "variables", BlockShape.COMMAND, List.of(new InputDefinition("name", ValueType.TEXT, ""), new InputDefinition("value", ValueType.NUMBER, "0")),List.of("set_variable","()","value","()"));

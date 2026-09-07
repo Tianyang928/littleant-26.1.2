@@ -1,0 +1,5 @@
+@ai_start
+def main():
+    target = find_nearest_block("minecraft:oak_log")
+    if target != []:
+        move_to_blockpos(target)

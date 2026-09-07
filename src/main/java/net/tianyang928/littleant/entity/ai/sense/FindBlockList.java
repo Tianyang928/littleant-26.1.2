@@ -18,8 +18,8 @@ public class FindBlockList {
 
     public FindBlockList(PathfinderMob mob) { this.mob = mob; }
 
-    public List<BlockPos> setTarget(Block block, int requestedCount) {
-        if (block == null || requestedCount <= 0) return List.of();
+    public List<BlockPos> setTarget(List<Block> blocks, int requestedCount) {
+        if (blocks == null || blocks.isEmpty() || requestedCount <= 0) return List.of();
         int limit = Math.min(requestedCount, MAX_RESULTS);
         BlockPos center = mob.blockPosition();
         List<BlockPos> results = new ArrayList<>();
@@ -32,7 +32,7 @@ public class FindBlockList {
                         if (Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z)) != radius) continue;
                         if (x * x + y * y + z * z > SEARCH_RADIUS * SEARCH_RADIUS) continue;
                         BlockPos candidate = center.offset(x, y, z);
-                        if (mob.level().getBlockState(candidate).is(block) && isVisible(candidate)) {
+                        if (blocks.contains(mob.level().getBlockState(candidate).getBlock()) && isVisible(candidate)) {
                             results.add(candidate.immutable());
                             if(results.size() >= limit) {
                                 results.sort(Comparator.comparingDouble(p -> p.distSqr(center)));

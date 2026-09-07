@@ -375,28 +375,28 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         }
     }
 
-    public BlockPos setFindBlockTarget(Block blockToFind) {
+    public BlockPos setFindBlockTarget(List<Block> blockToFind) {
         return this.findNearestBlock.setTarget(blockToFind);
     }
-    public BlockPos setFindBlockEntityTarget(Block blockEntity) {
-        if(blockEntity.defaultBlockState().hasBlockEntity()){
+    public BlockPos setFindBlockEntityTarget(List<Block> blockEntity) {
+        if(blockEntity != null && blockEntity.stream().anyMatch(b -> b.defaultBlockState().hasBlockEntity())){
             return this.findNearestBlockEntity.setTarget(blockEntity);
         }
         return null;
     }
-    public int setFindEntityTarget(EntityType<?> entityType) {
+    public int setFindEntityTarget(List<EntityType<?>> entityType) {
         return this.findNearestEntity.setTarget(entityType);
     }
-    public BlockPos setFindDropTarget(Item item) {
+    public BlockPos setFindDropTarget(List<Item> item) {
         return this.findNearestDrop.setTarget(item);
     }
     public BlockPos setFindPheromoneTarget(String pheromoneType) {
         return this.findNearestPheromone.setTarget(pheromoneType);
     }
-    public List<BlockPos> setFindBlockListTarget(Block block, int count) { return findBlockList.setTarget(block, count); }
-    public List<Integer> setFindEntityListTarget(EntityType<?> type, int count) { return findEntityList.setTarget(type, count); }
-    public List<BlockPos> setFindDropListTarget(Item item, int count) { return findDropList.setTarget(item, count); }
-    public List<BlockPos> setFindBlockEntityListTarget(Block block, int count) { return findBlockEntityList.setTarget(block, count); }
+    public List<BlockPos> setFindBlockListTarget(List<Block> block, int count) { return findBlockList.setTarget(block, count); }
+    public List<Integer> setFindEntityListTarget(List<EntityType<?>> type, int count) { return findEntityList.setTarget(type, count); }
+    public List<BlockPos> setFindDropListTarget(List<Item> item, int count) { return findDropList.setTarget(item, count); }
+    public List<BlockPos> setFindBlockEntityListTarget(List<Block> block, int count) { return findBlockEntityList.setTarget(block, count); }
     public List<BlockPos> setFindPheromoneListTarget(String type, int count) { return findPheromoneList.setTarget(type, count); }
 
     public Set<String> getSurroundingPheromoneTypes() {

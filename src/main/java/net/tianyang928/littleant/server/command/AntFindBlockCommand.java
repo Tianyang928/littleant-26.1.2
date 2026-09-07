@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import java.util.Objects;
+import java.util.List;
 
 public class AntFindBlockCommand {
     public static void register(RegisterCommandsEvent event) {
@@ -34,7 +35,7 @@ public class AntFindBlockCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    resultPos = ant.setFindBlockTarget(block);
+                                                    resultPos = ant.setFindBlockTarget(List.of(block));
                                                     if(resultPos!=null){
                                                         BlockPos finalResultPos = resultPos;
                                                         context.getSource().sendSuccess(() -> Component.literal(name + " 已找到 " + block.getName() + " 在 " + finalResultPos), true);

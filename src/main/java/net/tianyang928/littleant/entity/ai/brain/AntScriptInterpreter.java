@@ -298,11 +298,9 @@ public final class AntScriptInterpreter {
             case "repeat" -> {
                 try {
                     int count = Math.max(0, (int) Double.parseDouble(inputNumber(block, "count", "0", blocks)));
-                    String variable = inputNumber(block, "variable", "", blocks).trim();
                     InputSlot body = input(block, "body");
                     if (body != null && body.blockId() != null && blocks.containsKey(body.blockId())) {
                         for (int i = 0; i < count; i++) {
-                            if (!variable.isEmpty()) blackboard.setVariable(variable, String.valueOf(i));
                             executeBlock(blocks.get(body.blockId()), active);
                             if (consumeLoopControl(block.id()) == LoopControl.BREAK) {
                                 break;
@@ -980,6 +978,11 @@ public final class AntScriptInterpreter {
             case "has_item_in_inventory" -> {
                 String item = inputNumber(block, "item", "0", blocks, active);
                 return blackboard.hasItemInInventory(item);
+            }
+            case "is_in_tag" -> {
+                String target = inputNumber(block, "target", "", blocks, active);
+                String tag = inputNumber(block, "tag", "", blocks, active);
+                return blackboard.isInTag(target, tag);
             }
             case "is_hurt" -> {
                 return blackboard.isHurt();

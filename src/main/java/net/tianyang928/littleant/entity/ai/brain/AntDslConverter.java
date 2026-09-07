@@ -9,6 +9,7 @@ public final class AntDslConverter {
     private static final Pattern CALL = Pattern.compile("([A-Za-z_][A-Za-z0-9_]*)\\s*\\((.*)\\)");
     private final LinkedHashMap<UUID, BrainBlock> blocks = new LinkedHashMap<>();
     private final Set<String> functionNames = new HashSet<>();
+    private final Set<String> listVariables = new HashSet<>();
     private List<Line> lines;
     private int index;
 
@@ -17,6 +18,7 @@ public final class AntDslConverter {
             throw new IllegalArgumentException("[AntDslConverter]DSL is empty or too long");
         blocks.clear();
         functionNames.clear();
+        listVariables.clear();
         lines = new ArrayList<>();
         for (String raw : source.replace("\r", "").split("\n")) {
             String t = raw.stripTrailing();
@@ -88,17 +90,27 @@ public final class AntDslConverter {
                 out.add(addStatement("repeat", List.of(s.substring(p + 1, q), "body:" + first(b))));
                 continue;
             }
-            // for i in range():
+            // Python-style for variable in range(stop) / range(start, stop).
             if (s.startsWith("for ") && s.endsWith(":")) {
                 index++;
                 Matcher range = Pattern.compile("for\\s+[A-Za-z_]\\w*\\s+in\\s+range\\s*\\((.*)\\)\\s*:").matcher(s);
                 if (!range.matches()) throw new IllegalArgumentException("[AntDslConverter] Invalid for syntax: " + s);
                 List<String> args = splitArgs(range.group(1));
-                String count = args.size() == 1 ? args.get(0) : args.size() >= 2 ? "subtract(" + args.get(1) + "," + args.get(0) + ")" : "0";
-                List<UUID> b = parseSuite(l.indent);
+                if (args.size() < 1 || args.size() > 2 || args.stream().anyMatch(String::isBlank))
+                    throw new IllegalArgumentException("[AntDslConverter] range() requires stop or start, stop: " + s);
                 String variable = s.substring(4, s.indexOf(" in ")).trim();
-                //out.add(addStatement("set_variable", List.of(variable, count)));
-                out.add(addStatement("repeat", List.of(count, "body:" +first(b))));
+                listVariables.remove(variable);
+                String start = args.size() == 2 ? args.get(0) : "0";
+                String count = args.size() == 1 ? args.get(0) : "subtract(" + args.get(1) + "," + start + ")";
+                UUID initialize = addStatement("set_variable", List.of(quote(variable), "subtract(" + start + ",1)"));
+                UUID increment = addStatement("set_variable", List.of(quote(variable), "add(" + variable + ",1)"));
+                List<UUID> b = parseSuite(l.indent);
+                UUID bodyStart = b.isEmpty() ? null : b.getFirst();
+                BrainBlock incrementBlock = blocks.get(increment);
+                blocks.put(increment, new BrainBlock(incrementBlock.opcode(), incrementBlock.x(), incrementBlock.y(),
+                        incrementBlock.id(), incrementBlock.inputs(), bodyStart, incrementBlock.parent()));
+                out.add(initialize);
+                out.add(addStatement("repeat", List.of(count, "body:" + increment)));
                 continue;
             }
             if (s.startsWith("while ") && s.endsWith(":")) {
@@ -123,9 +135,19 @@ public final class AntDslConverter {
                 int p = s.indexOf('=');
                 String variable = s.substring(0, p).trim();
                 String value = s.substring(p + 1).trim();
-                if (value.equals("[]")) out.add(addStatement("new_list", List.of(quote(variable))));
-                else if (value.startsWith("[") && value.endsWith("]")) out.add(addStatement("set_list_list", List.of(quote(variable), runtimeListLiteral(value))));
-                else out.add(addStatement("set_variable", List.of(quote(variable), value)));
+                if (value.equals("[]")) {
+                    listVariables.add(variable);
+                    out.add(addStatement("new_list", List.of(quote(variable))));
+                } else if (value.startsWith("[") && value.endsWith("]")) {
+                    listVariables.add(variable);
+                    out.add(addStatement("set_list_list", List.of(quote(variable), runtimeListLiteral(value))));
+                } else if (expressionType(value) == ValueType.LIST) {
+                    listVariables.add(variable);
+                    out.add(addStatement("set_list_list", List.of(quote(variable), value)));
+                } else {
+                    listVariables.remove(variable);
+                    out.add(addStatement("set_variable", List.of(quote(variable), value)));
+                }
             }
         }
         link(out);
@@ -237,10 +259,10 @@ public final class AntDslConverter {
         if (s.startsWith("(") && isParenthesesWrapped(s)) {
             return expression(s.substring(1, s.length() - 1), expectedType);
         }
-        int and = topLevelWord(s, "and");
-        if (and > 0) return addStatement("and", List.of(s.substring(0, and).trim(), s.substring(and + 3).trim()));
         int or = topLevelWord(s, "or");
         if (or > 0) return addStatement("or", List.of(s.substring(0, or).trim(), s.substring(or + 2).trim()));
+        int and = topLevelWord(s, "and");
+        if (and > 0) return addStatement("and", List.of(s.substring(0, and).trim(), s.substring(and + 3).trim()));
         if (s.startsWith("not ")) return addStatement("not", List.of(s.substring(4).trim()));
         if (s.startsWith("!")) {
             if (s.startsWith("!=", 0)) {
@@ -265,23 +287,43 @@ public final class AntDslConverter {
                 return addStatement(mapped, List.of(s.substring(0, p).trim(), s.substring(p + op.length()).trim()));
             }
         }
-        int mod = findTopLevelArithmetic(s, "%");
-        if (mod > 0) return addStatement("mod", List.of(s.substring(0, mod).trim(), s.substring(mod + 1).trim()));
-        int div = findTopLevelArithmetic(s, "/");
-        if (div > 0) return addStatement("divide", List.of(s.substring(0, div).trim(), s.substring(div + 1).trim()));
-        int mul = findTopLevelArithmetic(s, "*");
-        if (mul > 0) return addStatement("multiply", List.of(s.substring(0, mul).trim(), s.substring(mul + 1).trim()));
-        int sub = findTopLevelArithmetic(s, "-");
-        if (sub > 0) return addStatement("subtract", List.of(s.substring(0, sub).trim(), s.substring(sub + 1).trim()));
-        int add = findTopLevelArithmetic(s, "+");
-        if (add > 0) return addStatement("add", List.of(s.substring(0, add).trim(), s.substring(add + 1).trim()));
+        int addOrSubtract = findLastTopLevelArithmetic(s, "+-");
+        if (addOrSubtract > 0) {
+            String opcode = s.charAt(addOrSubtract) == '+' ? "add" : "subtract";
+            return addStatement(opcode, List.of(s.substring(0, addOrSubtract).trim(), s.substring(addOrSubtract + 1).trim()));
+        }
+        int multiplyOrDivide = findLastTopLevelArithmetic(s, "*/%");
+        if (multiplyOrDivide > 0) {
+            String opcode = switch (s.charAt(multiplyOrDivide)) {
+                case '*' -> "multiply";
+                case '/' -> "divide";
+                default -> "mod";
+            };
+            return addStatement(opcode, List.of(s.substring(0, multiplyOrDivide).trim(), s.substring(multiplyOrDivide + 1).trim()));
+        }
         Matcher m = CALL.matcher(s);
         if (m.matches()) return addStatement(m.group(1), splitArgs(m.group(2)));
         if (s.matches("[A-Za-z_][A-Za-z0-9_]*")) {
-            String getter = expectedType == ValueType.LIST ? "get_list" : "get_variable";
+            String getter = listVariables.contains(s) || expectedType == ValueType.LIST ? "get_list" : "get_variable";
             return addStatement(getter, List.of(quote(s)));
         }
         return null;
+    }
+
+    /** Determines whether an assignment expression produces a named-list value. */
+    private ValueType expressionType(String expression) {
+        String s = expression == null ? "" : expression.trim();
+        while (s.startsWith("(") && isParenthesesWrapped(s)) {
+            s = s.substring(1, s.length() - 1).trim();
+        }
+        if (s.matches("[A-Za-z_][A-Za-z0-9_]*")) {
+            return listVariables.contains(s) ? ValueType.LIST : ValueType.ANY;
+        }
+        Matcher call = CALL.matcher(s);
+        if (call.matches() && ModuleRegistry.contains(call.group(1))) {
+            return ModuleRegistry.outputType(call.group(1));
+        }
+        return ValueType.ANY;
     }
 
     private static List<String> splitArgs(String s) {
@@ -336,25 +378,28 @@ public final class AntDslConverter {
         return -1;
     }
 
-    private static int findTopLevelArithmetic(String s, String operator) {
+    /** Finds the rightmost binary arithmetic operator so equal-precedence operators remain left-associative. */
+    private static int findLastTopLevelArithmetic(String s, String operators) {
         int depth = 0;
         boolean quoted = false;
-        for (int i = 0; i + operator.length() <= s.length(); i++) {
+        int result = -1;
+        for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             if (c == '\'' || c == '"') quoted = !quoted;
             if (quoted) continue;
             if (c == '(') depth++;
             else if (c == ')') depth--;
-            else if (depth == 0 && s.startsWith(operator, i)) {
-                if (operator.equals("-") && i == 0) continue;
-                if (operator.equals("-") && i > 0) {
-                    char prev = s.charAt(i - 1);
-                    if (prev == '(' || prev == ',' || prev == ' ' || prev == '=' || prev == '+' || prev == '-' || prev == '*' || prev == '/' || prev == '%') continue;
+            else if (depth == 0 && operators.indexOf(c) >= 0) {
+                if ((c == '-' || c == '+') && i == 0) continue;
+                if ((c == '-' || c == '+') && i > 0) {
+                    int previousIndex = i - 1;
+                    while (previousIndex >= 0 && Character.isWhitespace(s.charAt(previousIndex))) previousIndex--;
+                    if (previousIndex < 0 || "(,=<>!+-*/%".indexOf(s.charAt(previousIndex)) >= 0) continue;
                 }
-                return i;
+                result = i;
             }
         }
-        return -1;
+        return result;
     }
 
     private static boolean isParenthesesWrapped(String s) {

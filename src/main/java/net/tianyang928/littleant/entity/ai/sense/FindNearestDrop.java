@@ -19,9 +19,9 @@ public class FindNearestDrop {
         this.mob = mob;
     }
 
-    public BlockPos setTarget(Item item) {
-        if (item == null) return null;
-        List<ItemEntity> es = mob.level().getEntities(EntityType.ITEM, mob.getBoundingBox().inflate(64), e -> e.isAlive() && e.getItem().is(item) && mob.distanceToSqr(e) <= 4096);
+    public BlockPos setTarget(List<Item> items) {
+        if (items == null || items.isEmpty()) return null;
+        List<ItemEntity> es = mob.level().getEntities(EntityType.ITEM, mob.getBoundingBox().inflate(64), e -> e.isAlive() && items.contains(e.getItem().getItem()) && mob.distanceToSqr(e) <= 4096);
         es.sort(Comparator.comparingDouble(mob::distanceToSqr));
         if(es.isEmpty()) return null;
         return es.stream().limit(1).toList().getFirst().blockPosition();

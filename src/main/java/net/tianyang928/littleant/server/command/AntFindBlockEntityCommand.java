@@ -40,7 +40,7 @@ public class AntFindBlockEntityCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    BlockPos result = ant.setFindBlockEntityTarget(blockState.getBlock());
+                                                    BlockPos result = ant.setFindBlockEntityTarget(List.of(blockState.getBlock()));
                                                     if(result != null) {
                                                         resultPos.add(result);
                                                     }

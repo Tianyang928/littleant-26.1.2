@@ -20,6 +20,7 @@ import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.block.PheromoneBlock;
 import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 import net.tianyang928.littleant.entity.AntEntity;
+import net.minecraft.world.entity.EntityType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -76,7 +77,7 @@ public final class AntBlackboard {
     }
 
     public void scriptSetPheromone(String pheromone) {
-        BlockPos result = this.ant.setFindBlockEntityTarget(ModBlocks.PHEROMONE_BLOCK.get());
+        BlockPos result = this.ant.setFindBlockEntityTarget(List.of(ModBlocks.PHEROMONE_BLOCK.get()));
         if(result == null || result.distSqr(this.ant.blockPosition()) > 6*6) {
             for(int offsetX = -1; offsetX <= 1; offsetX++) {
                 for(int offsetY = -1; offsetY <= 1; offsetY++) {
@@ -152,8 +153,9 @@ public final class AntBlackboard {
     }
 
     public Boolean hasItemInInventory(String item) {
+        List<Item> items = TagSupport.items(item);
         for(int i = 0; i < this.ant.getInventory().getContainerSize(); i++) {
-            if(BuiltInRegistries.ITEM.getKey(this.ant.getInventory().getSlot(i).get().getItem()).toString().equals(item)) {
+            if(items.contains(this.ant.getInventory().getSlot(i).get().getItem())) {
                 return true;
             }
         }
@@ -201,7 +203,7 @@ public final class AntBlackboard {
     }
 
     public String findNearestBlock(String block) {
-        BlockPos result = this.ant.setFindBlockTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(block)));
+        BlockPos result = this.ant.setFindBlockTarget(TagSupport.blocks(block));
         if(result == null){
             return "[]";
         }
@@ -209,7 +211,7 @@ public final class AntBlackboard {
     }
 
     public String findNearestEntity(String entity) {
-        int result = this.ant.setFindEntityTarget(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(entity)));
+        int result = this.ant.setFindEntityTarget(TagSupport.entities(entity));
         if(result == -1){
             return "";
         }
@@ -217,7 +219,7 @@ public final class AntBlackboard {
     }
 
     public String findNearestBlockEntity(String blockEntity) {
-        BlockPos result = this.ant.setFindBlockEntityTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(blockEntity)));
+        BlockPos result = this.ant.setFindBlockEntityTarget(TagSupport.blocks(blockEntity));
         if(result == null){
             return "[]";
         }
@@ -225,7 +227,7 @@ public final class AntBlackboard {
     }
 
     public String findNearestDrop(String item) {
-        BlockPos result = this.ant.setFindDropTarget(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(item)));
+        BlockPos result = this.ant.setFindDropTarget(TagSupport.items(item));
         if(result == null){
             return "[]";
         }
@@ -245,11 +247,11 @@ public final class AntBlackboard {
     }
 
     public String findBlockList(String block, int count) {
-        return positions(ant.setFindBlockListTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(block)), count));
+        return positions(ant.setFindBlockListTarget(TagSupport.blocks(block), count));
     }
 
     public String findBlockEntityList(String block, int count) {
-        return positions(ant.setFindBlockEntityListTarget(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(block)), count));
+        return positions(ant.setFindBlockEntityListTarget(TagSupport.blocks(block), count));
     }
 
     public String findPheromoneList(String type, int count) {
@@ -257,11 +259,11 @@ public final class AntBlackboard {
     }
 
     public String findEntityList(String entity, int count) {
-        return ant.setFindEntityListTarget(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(entity)), count).stream().map(String::valueOf).collect(Collectors.joining(",", "[", "]"));
+        return ant.setFindEntityListTarget(TagSupport.entities(entity), count).stream().map(String::valueOf).collect(Collectors.joining(",", "[", "]"));
     }
 
     public String findDropList(String item, int count) {
-        return positions(ant.setFindDropListTarget(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(item)), count));
+        return positions(ant.setFindDropListTarget(TagSupport.items(item), count));
     }
 
     public String getSurroundingPheromoneTypes() {
@@ -274,14 +276,22 @@ public final class AntBlackboard {
         if(container == null) {
             return false;
         }
-        Item selectedItem = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(item));
+        List<Item> selectedItems = TagSupport.items(item);
         for(int i = 0; i < container.getContainerSize(); i++) {
-            if(container.getItem(i).getItem().equals(selectedItem)) {
+            if(selectedItems.contains(container.getItem(i).getItem())) {
                 return true;
             }
         }
         return false;
     }
+
+    public boolean isInTag(String target, String tag) {
+        if (target == null || tag == null) return false;
+        if (TagSupport.blockInTag(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(target)), tag)) return true;
+        if (TagSupport.itemInTag(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(target)), tag)) return true;
+        return TagSupport.entityInTag(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(target)), tag);
+    }
+
     public String getItemInContainer(int slot, double x, double y, double z) {
         BlockPos containerPos = new BlockPos((int) x, (int) y, (int) z);
         Container container = getContainer(containerPos);

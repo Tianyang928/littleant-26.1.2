@@ -34,7 +34,7 @@ public class AntFindEntityCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    int result = ant.setFindEntityTarget(entityType.value());
+                                                    int result = ant.setFindEntityTarget(List.of(entityType.value()));
                                                     if(result != -1) {
                                                         entityIds.add(result);
                                                     }

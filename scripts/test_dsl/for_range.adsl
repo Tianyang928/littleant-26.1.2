@@ -1,0 +1,9 @@
+@ai_start
+def test_for_range():
+    for i in range(3):
+        say(i)
+
+    for slot in range(2, 5):
+        if slot == 3:
+            continue()
+        say(slot)
