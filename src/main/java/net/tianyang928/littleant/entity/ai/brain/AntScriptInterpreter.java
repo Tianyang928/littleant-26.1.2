@@ -825,9 +825,6 @@ public final class AntScriptInterpreter {
                     return "";
                 }
             }
-            case "get_speed" -> {
-                return blackboard.getSpeed();
-            }
 
             // variables
             case "get_variable" -> {
@@ -1019,7 +1016,12 @@ public final class AntScriptInterpreter {
                     return false;
                 }
             }
-
+            case "is_running" -> {
+                return blackboard.isRunning();
+            }
+            case "is_crouching" -> {
+                return blackboard.isCrouching();
+            }
 
             default -> {
                 return false;

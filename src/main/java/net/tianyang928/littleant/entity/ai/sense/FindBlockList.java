@@ -1,55 +1,164 @@
 package net.tianyang928.littleant.entity.ai.sense;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class FindBlockList {
-    private static final int SEARCH_RADIUS = 64;
-    private static final int MAX_RESULTS = 256;
+    private final int SEARCH_RADIUS = 64;
     private final PathfinderMob mob;
 
-    public FindBlockList(PathfinderMob mob) { this.mob = mob; }
+    private final char[][][] isBlockOpaque = new char[2*SEARCH_RADIUS+1][2*SEARCH_RADIUS+1][2*SEARCH_RADIUS+1];
+    private static final HashSet<Vec3> sphericalShellVectorDict = new HashSet<>();
+
+    public FindBlockList(PathfinderMob mob) {
+        this.mob = mob;
+
+        // collect all possible vectors on the sphere
+        initSphericalShellVectorDict();
+        resetIsBlockOpaque();
+    }
+
+    private void initSphericalShellVectorDict() {
+        if(!sphericalShellVectorDict.isEmpty()) {
+            return;
+        }
+
+        int hi = SEARCH_RADIUS*SEARCH_RADIUS;
+        int lo = (SEARCH_RADIUS-1)*(SEARCH_RADIUS-1);
+        for(int x = 0; x <= SEARCH_RADIUS; x++) {
+            int x2 = x * x;
+            for(int y = 0; y <= SEARCH_RADIUS; y++) {
+                int s = x2 + y * y;
+                int z2_max=hi-s;
+                if(z2_max<=0) {
+                    // 补上x^2+y^2=SEARCH_RADIUS^2的情况
+                    if((SEARCH_RADIUS+1)*(SEARCH_RADIUS+1)-s > 0) {
+                        int z = 0;
+                        Vec3 norm = new Vec3(x, y, z).normalize();
+                        double nx = norm.x();
+                        double ny = norm.y();
+                        double nz = norm.z();
+                        sphericalShellVectorDict.add(new Vec3(nx, ny, nz));
+                        sphericalShellVectorDict.add(new Vec3(nx*-1, ny, nz));
+                        sphericalShellVectorDict.add(new Vec3(nx, ny*-1, nz));
+                        sphericalShellVectorDict.add(new Vec3(nx*-1, ny*-1, nz));
+                    }
+                    continue;
+                }
+                int z2_min=lo-s;
+                int z_low = Mth.floor(Math.sqrt(z2_min))+1;
+                int z_high = Mth.floor(Math.sqrt(z2_max));
+                for(int z = z_low; z <= z_high; z++) {
+                    // add all 8 vectors on the sphere
+                    // normal
+                    Vec3 norm = new Vec3(x, y, z).normalize();
+                    double nx = norm.x();
+                    double ny = norm.y();
+                    double nz = norm.z();
+                    sphericalShellVectorDict.add(new Vec3(nx, ny, nz));
+                    sphericalShellVectorDict.add(new Vec3(nx*-1, ny, nz));
+                    sphericalShellVectorDict.add(new Vec3(nx, ny*-1, nz));
+                    sphericalShellVectorDict.add(new Vec3(nx, ny, nz*-1));
+                    sphericalShellVectorDict.add(new Vec3(nx*-1, ny*-1, nz));
+                    sphericalShellVectorDict.add(new Vec3(nx*-1, ny, nz*-1));
+                    sphericalShellVectorDict.add(new Vec3(nx, ny*-1, nz*-1));
+                    sphericalShellVectorDict.add(new Vec3(nx*-1, ny*-1, nz*-1));
+                }
+            }
+        }
+    }
+
+    private void resetIsBlockOpaque() {
+        for(int x = 0; x <= isBlockOpaque.length-1; x++) {
+            for(int y = 0; y <= isBlockOpaque[x].length-1; y++) {
+                for(int z = 0; z <= isBlockOpaque[x][y].length-1; z++) {
+                    isBlockOpaque[x][y][z] = '0';
+                }
+            }
+        }
+    }
 
     public List<BlockPos> setTarget(List<Block> blocks, int requestedCount) {
-        if (blocks == null || blocks.isEmpty() || requestedCount <= 0) return List.of();
-        int limit = Math.min(requestedCount, MAX_RESULTS);
-        BlockPos center = mob.blockPosition();
-        List<BlockPos> results = new ArrayList<>();
+        resetIsBlockOpaque();
+        return findBlock(blocks, requestedCount);
+    }
 
-        // Scan complete shells, so all directions advance outward together.
-        for (int radius = 0; radius <= SEARCH_RADIUS; radius++) {
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -radius; y <= radius; y++) {
-                    for (int z = -radius; z <= radius; z++) {
-                        if (Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z)) != radius) continue;
-                        if (x * x + y * y + z * z > SEARCH_RADIUS * SEARCH_RADIUS) continue;
-                        BlockPos candidate = center.offset(x, y, z);
-                        if (blocks.contains(mob.level().getBlockState(candidate).getBlock()) && isVisible(candidate)) {
-                            results.add(candidate.immutable());
-                            if(results.size() >= limit) {
-                                results.sort(Comparator.comparingDouble(p -> p.distSqr(center)));
-                                return List.copyOf(results.subList(0, Math.min(limit, results.size())));
-                            }
+    private List<BlockPos> findBlock(List<Block> blocks, int requestedCount) {
+        HashSet<Vec3> sphericalShellVectorDictCopy = new HashSet<>(sphericalShellVectorDict);
+        BlockPos eyeBlockPos =
+                new BlockPos(
+                        Mth.floor(this.mob.getEyePosition().x),
+                        Mth.floor(this.mob.getEyePosition().y),
+                        Mth.floor(this.mob.getEyePosition().z)
+                );
+        Set<BlockPos> resultBlockPosSet = new HashSet<>();
+        int maxSteps = SEARCH_RADIUS * 4;
+        for (int i = 0; i < maxSteps; i++) {
+            Iterator<Vec3> sphericalShellVectorDictCopyIterator = sphericalShellVectorDictCopy.iterator();
+            while (sphericalShellVectorDictCopyIterator.hasNext()) {
+                Vec3 v = sphericalShellVectorDictCopyIterator.next();
+                // 沿射线前进一个很小的步长
+                Vec3 tempFloatPos = this.mob.getEyePosition().add(v.scale(0.25).scale(i));
+
+                BlockPos.MutableBlockPos tempBlockPos =
+                        new BlockPos.MutableBlockPos(
+                                Mth.floor(tempFloatPos.x),
+                                Mth.floor(tempFloatPos.y),
+                                Mth.floor(tempFloatPos.z)
+                        );
+                // 如果这条视线已经遇到过不透明的方块，就直接跳出
+                if(isBlockOpaque
+                        [tempBlockPos.getX()-eyeBlockPos.getX()+SEARCH_RADIUS]
+                        [tempBlockPos.getY()-eyeBlockPos.getY()+SEARCH_RADIUS]
+                        [tempBlockPos.getZ()-eyeBlockPos.getZ()+SEARCH_RADIUS] == 'Y') {
+                    sphericalShellVectorDictCopyIterator.remove();
+                    continue;
+                }
+                // 如果这条视线已经遇到过透明的方块，就继续前进
+                else if(isBlockOpaque
+                        [tempBlockPos.getX()-eyeBlockPos.getX()+SEARCH_RADIUS]
+                        [tempBlockPos.getY()-eyeBlockPos.getY()+SEARCH_RADIUS]
+                        [tempBlockPos.getZ()-eyeBlockPos.getZ()+SEARCH_RADIUS] == '0') {
+                    // 只有遇到为‘0’时，说明遇到没有遍历过的方块，才需要判断是否是目标方块
+                    BlockState state = this.mob.level().getBlockState(tempBlockPos);
+
+                    boolean canOcclude = state.canOcclude();
+                    if (canOcclude) {
+                        isBlockOpaque
+                                [tempBlockPos.getX() - eyeBlockPos.getX() + SEARCH_RADIUS]
+                                [tempBlockPos.getY() - eyeBlockPos.getY() + SEARCH_RADIUS]
+                                [tempBlockPos.getZ() - eyeBlockPos.getZ() + SEARCH_RADIUS] = 'Y';
+                        sphericalShellVectorDictCopyIterator.remove();
+                    } else {
+                        isBlockOpaque
+                                [tempBlockPos.getX() - eyeBlockPos.getX() + SEARCH_RADIUS]
+                                [tempBlockPos.getY() - eyeBlockPos.getY() + SEARCH_RADIUS]
+                                [tempBlockPos.getZ() - eyeBlockPos.getZ() + SEARCH_RADIUS] = 'N';
+                    }
+                    boolean isTarget = blocks.contains(state.getBlock());
+                    if (isTarget) {
+                        resultBlockPosSet.add(tempBlockPos.immutable());
+                        if(resultBlockPosSet.size() >= requestedCount) {
+                            List<BlockPos> resultBlockPosList = new ArrayList<>(resultBlockPosSet);
+                            resultBlockPosList.sort(Comparator.comparingDouble(p -> p.distSqr(eyeBlockPos)));
+                            return resultBlockPosList.subList(0, Math.min(requestedCount, resultBlockPosList.size()));
                         }
+                    }
+
+                    if(canOcclude || isTarget) {
+                        break;
                     }
                 }
             }
         }
-        results.sort(Comparator.comparingDouble(p -> p.distSqr(center)));
-        return List.copyOf(results.subList(0, Math.min(limit, results.size())));
-    }
-
-    private boolean isVisible(BlockPos pos) {
-        var hit = mob.level().clip(new ClipContext(mob.getEyePosition(), Vec3.atCenterOf(pos),
-                ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, mob));
-        return hit.getType() != HitResult.Type.MISS && hit.getBlockPos().equals(pos);
+        List<BlockPos> resultBlockPosList = new ArrayList<>(resultBlockPosSet);
+        resultBlockPosList.sort(Comparator.comparingDouble(p -> p.distSqr(eyeBlockPos)));
+        return resultBlockPosList.subList(0, Math.min(requestedCount, resultBlockPosList.size()));
     }
 }

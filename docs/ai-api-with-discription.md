@@ -860,7 +860,7 @@ Category: `sense` -- Shape: `BOOLEAN`
 Parameters:
 - `item` (`TEXT`), default `minecraft:stone`
 
-Description: Returns true if the ant has the specified item anywhere in its nine-slot inventory.
+Description: Item or item tags are available. Returns true if the ant has the specified item or tag of items anywhere in its nine-slot inventory.
 
 ### `get_item_in_inventory`
 
@@ -937,7 +937,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `block` (`TEXT`), default `minecraft:stone`
 
-Description: Searches within 64 blocks for the nearest visible block of the specified type and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
+Description: Block or block tags are available. Searches within 64 blocks for the nearest visible block of the specified type and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
 
 Return: LIST coordinate `[x,y,z]`, or `[]` when no block is found.
 
@@ -948,7 +948,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `entity` (`TEXT`), default `minecraft:pig`
 
-Description: Searches within 64 blocks for the nearest visible, living entity of the specified type and returns its **entity ID**. The ant itself is excluded.
+Description: Entity or entity tags are available. Searches within 64 blocks for the nearest visible, living entity of the specified type and returns its **entity ID**. The ant itself is excluded.
 
 Return: TEXT containing a numeric **entity ID**, or an empty string when no entity is found.
 
@@ -959,7 +959,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `block_entity` (`TEXT`), default `minecraft:chest`
 
-Description: Searches within 64 blocks for the nearest block entity whose block has the specified ID (for example, `minecraft:chest`) and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
+Description: Block or block tags are available. Searches within 64 blocks for the nearest block entity whose block has the specified ID (for example, `minecraft:chest`) and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
 
 Return: LIST coordinate `[x,y,z]`, or `[]` when no matching block entity is found.
 
@@ -981,7 +981,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `drop` (`TEXT`), default `minecraft:stone`
 
-Description: Searches within 64 blocks for the nearest living dropped-item entity containing the specified item and returns its position. Each evaluation performs a new world query. Use the result with `move_to_blockpos`; approaching the item is sufficient for pickup.
+Description: Item or item tags are available. Searches within 64 blocks for the nearest living dropped-item entity containing the specified item and returns its position. Each evaluation performs a new world query. Use the result with `move_to_blockpos`; approaching the item is sufficient for pickup.
 
 Return: LIST coordinate `[x,y,z]`, or `[]` when no matching drop is found.
 
@@ -993,7 +993,7 @@ Parameters:
 - `block` (`TEXT`), default `minecraft:stone`
 - `count` (`NUMBER`), default `256`
 
-Description: Searches within 64 blocks for visible blocks of the specified type, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
+Description: Block or block tags are available. Searches within 64 blocks for visible blocks of the specified type, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
 
 Return: LIST of coordinate lists in the format `[[x1,y1,z1],[x2,y2,z2]]`, or `[]` when there are no matches.
 
@@ -1005,7 +1005,7 @@ Parameters:
 - `entity` (`TEXT`), default `minecraft:pig`
 - `count` (`NUMBER`), default `256`
 
-Description: Searches within 64 blocks for visible, living entities of the specified type, sorts them nearest-first, and returns at most `count` entity IDs. The ant itself is excluded, and `count` is clamped to the range 0 through 256.
+Description: Entity or entity tags are available. Searches within 64 blocks for visible, living entities of the specified type, sorts them nearest-first, and returns at most `count` entity IDs. The ant itself is excluded, and `count` is clamped to the range 0 through 256.
 
 Return: LIST of numeric entity IDs in the format `[id1,id2]`, or `[]` when there are no matches.
 
@@ -1017,7 +1017,7 @@ Parameters:
 - `block_entity` (`TEXT`), default `minecraft:chest`
 - `count` (`NUMBER`), default `256`
 
-Description: Searches within 64 blocks for block entities whose block has the specified ID, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
+Description: Block or block tags are available. Searches within 64 blocks for block entities whose block has the specified ID, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
 
 Return: LIST of coordinate lists in the format `[[x1,y1,z1],[x2,y2,z2]]`, or `[]` when there are no matches.
 
@@ -1041,7 +1041,7 @@ Parameters:
 - `drop` (`TEXT`), default `minecraft:stone`
 - `count` (`NUMBER`), default `256`
 
-Description: Searches within 64 blocks for living dropped-item entities containing the specified item, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
+Description: Item or item tags are available. Searches within 64 blocks for living dropped-item entities containing the specified item, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
 
 Return: LIST of coordinate lists in the format `[[x1,y1,z1],[x2,y2,z2]]`, or `[]` when there are no matches.
 
@@ -1063,7 +1063,7 @@ Parameters:
 - `z` (`NUMBER`), default `0`; required
 - `item` (`TEXT`), default `minecraft:stone`
 
-Description: Returns true if the specified item exists in the container (e.g., chest) at the given coordinates.
+Description: Item or item tags are available. Returns true if the specified item or tag of items exists in the container (e.g., chest) at the given coordinates.
 
 ### `has_item_in_container_blockpos`
 
@@ -1073,7 +1073,7 @@ Parameters:
 - `blockpos` (`LIST`), default ``
 - `item` (`TEXT`), default `minecraft:stone`
 
-Description: Returns true if the specified item exists in the container at the coordinates given as a list `[x,y,z]`.
+Description: Item or item tags are available. Returns true if the specified item or tag of items exists in the container at the coordinates given as a list `[x,y,z]`.
 
 ### `get_item_in_container_xyz`
 
@@ -1119,13 +1119,31 @@ Parameters:
 
 Description: Returns the number of items in the specified slot of the container at the coordinates given as a list `[x,y,z]`.
 
-### `get_speed`
+### `is_running`
 
-Category: `sense` -- Shape: `REPORTER`
+Category: `sense` -- Shape: `BOOLEAN`
 
 Parameters: none
 
-Description: Returns the ant's current movement speed as a number.
+Description: Returns true if the ant is running, false otherwise.
+
+### `is_crouching`
+
+Category: `sense` -- Shape: `BOOLEAN`
+
+Parameters: none
+
+Description: Returns true if the ant is crouching (sneaking), false otherwise.
+
+### `is_in_tag`
+
+Category: `sense` -- Shape: `BOOLEAN`
+
+Parameters: 
+- `target` (`TEXT`), default ``
+- `tag` (`TEXT`), default ``
+
+Description: Returns true if the target entity is in the specified tag, false otherwise.
 
 ### `set_variable`
 

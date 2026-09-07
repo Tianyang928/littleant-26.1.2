@@ -304,10 +304,12 @@ public final class AntBlackboard {
         return BuiltInRegistries.ITEM.getKey(container.getItem(slot).getItem()).toString();
     }
 
+    public boolean isRunning(){
+        return this.ant.speedModifier == 1.25;
+    }
 
-
-    public String getSpeed(){
-        return String.valueOf(this.ant.speedModifier);
+    public boolean isCrouching(){
+        return this.ant.isCrouching();
     }
 
     // variables
