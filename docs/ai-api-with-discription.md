@@ -18,12 +18,12 @@ The ant inventory has nine hotbar slots, indexed `0` through `8`.
 
 For recurring `@tick_start` code, guard submissions with `already_has_goal(...)` or `already_has_goal_at_priority(...)`; otherwise the same goal may be enqueued every tick. Put follow-up behavior that depends on completion in a custom goal's `goal_tick_start` handler, or check goal state before submitting the next action.
 
-Reporter modules such as `find_block`, `find_block_entity`, and `find_drop` perform a fresh world query on every evaluation. Save a result in a variable and reuse it when several operations need the same position:
+Reporter modules such as `find_nearest_block`, `find_nearest_block_entity`, and `find_nearest_drop` perform a fresh world query on every evaluation. Save a result in a variable and reuse it when several operations need the same position:
 
 ```python
-target = find_block("minecraft:oak_log")
-if target != "":
-    submit_foreground_goal(move_to_blockpos(target))
+target = find_nearest_block("minecraft:oak_log")
+if target != []:
+    move_to_blockpos(target)
 ```
 
 Strings beginning with `vanilla:` identify **vanilla goals**. They are not Java methods that can be executed directly; they are string protocols recognized by the goal scheduler, such as `vanilla:break_block,x,y,z` and `vanilla:set_block,x,y,z`. Therefore, the return values of goal reporters such as `break_block_*`, `set_block_*`, crafting, container, and attack reporters are usually comma-separated string parameter lists intended for use with `submit_foreground_goal` or `submit_background_goal`.
@@ -70,11 +70,11 @@ Strings beginning with `vanilla:` identify **vanilla goals**. They are not Java 
 
 - `BOOLEAN` is a Boolean hexagonal block. A `BOOLEAN` can only connect to Boolean inputs.
 
-Except for `BOOLEAN`, the `TEXT`, `NUMBER`, and `LIST` are all passed as strings at runtime, so they can be nested or converted into one another. For example, a coordinate list `x,y,z` can be passed as text to a `say` module. Use a `BOOLEAN` reporter only when a true/false judgment is required, such as `greater_than` or `has_item_in_inventory`.
+Except for `BOOLEAN`, the `TEXT`, `NUMBER`, and `LIST` are all passed as strings at runtime, so they can be nested or converted into one another. List values use bracketed syntax: a position is `[x,y,z]`, while a list of positions is `[[x1,y1,z1],[x2,y2,z2]]`. Top-level commas separate list elements; commas inside nested brackets do not. Use a `BOOLEAN` reporter only when a true/false judgment is required, such as `greater_than` or `has_item_in_inventory`.
 
 ### Return Value Conventions
 
-- `sense` reporters usually return text; coordinates use `x,y,z`, entities use numeric IDs, and lists use comma-separated text.
+- `sense` reporters usually return text; positions use `[x,y,z]`, entities use numeric IDs, and lists use bracketed, comma-separated syntax such as `[a,b]`. An empty list is `[]`.
 - Arithmetic reporters return text that can be parsed as a number.
 - `goal` reporters return a vanilla goal string protocol or a Boolean value representing the goal state.
 - `COMMAND` and `HAT` do not produce connectable return values.
@@ -89,15 +89,15 @@ The DSL is a restricted Python-like language that can be compiled into the Scrat
 
 #### DSL Conditions
 
-The DSL supports `==`, `!=`, `>`, `<`, `>=`, `<=`, prefix `not` (or `!`), and Boolean composition with `and` / `or`. For example, `if target != "":` is valid and is compiled to the existing `equal` and `not` operator modules. Bare identifiers in module inputs are resolved as blackboard variables (or lists for LIST inputs), so `move_to_blockpos(target)` is equivalent to `move_to_blockpos(get_variable("target"))`.
+The DSL supports `==`, `!=`, `>`, `<`, `>=`, `<=`, prefix `not` (or `!`), and Boolean composition with `and` / `or`. For example, `if get_list("target") != []:` is valid and is compiled to the existing `equal` and `not` operator modules. Bare identifiers in module inputs are resolved as blackboard variables, or as named lists for `LIST` inputs; therefore `move_to_blockpos(target)` is equivalent to `move_to_blockpos(get_list("target"))`. Use `get_list("target")` explicitly when comparing a named list.
 
 #### Variables and Lists
 
-All variables and lists are global to the Ant instance, but not global to the whole game. Assignment `a = 1` writes a variable; `a = []` creates an empty list. List contents still require explicit list modules such as `add_value` and `set_list_kv`.
+All variables and lists are global to the Ant instance, but not global to the whole game. Assignment `a = 1` writes a variable; `a = []` creates an empty named list. To store a reporter's list result for reuse, call `set_list_list("a", reporter(...))`; a normal reporter assignment writes a scalar variable, which is distinct from a named list. List contents can also be changed with modules such as `add_value` and `set_list_kv`.
 
 #### Query Reuse
 
-World reporters are not memoized by the interpreter. A call such as `find_block("minecraft:oak_log")` searches the world each time it is evaluated. Assign the result once and reuse the variable for movement, goal construction, or further checks. This avoids repeated scans and also keeps all operations in one decision path consistent with the same position.
+World reporters are not memoized by the interpreter. A call such as `find_nearest_block("minecraft:oak_log")` searches the world each time it is evaluated. Assign the result once and reuse the variable for movement, goal construction, or further checks. This avoids repeated scans and also keeps all operations in one decision path consistent with the same position.
 
 ## Example
 
@@ -221,7 +221,7 @@ Category: `behavior` -- Shape: `COMMAND`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-Description: Enqueues a foreground movement task using a list-based coordinate format `x, y, z`. It returns immediately and does not block subsequent DSL commands. Behaves identically to `move_to_xyz` but accepts coordinates as a single list parameter.
+Description: Enqueues a foreground movement task using the coordinate list format `[x,y,z]`. It returns immediately and does not block subsequent DSL commands. Behaves identically to `move_to_xyz` but accepts coordinates as a single list parameter.
 
 ### `step_forward`
 
@@ -250,7 +250,7 @@ Category: `behavior` -- Shape: `COMMAND`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-Description: Sets the ant's head rotation to face the specified coordinates given as a list `x, y, z`. Behaves identically to `look_at_xyz` but accepts coordinates in list format.
+Description: Sets the ant's head rotation to face the specified coordinates given as a list `[x,y,z]`. Behaves identically to `look_at_xyz` but accepts coordinates in list format.
 
 ### `rotate`
 
@@ -322,7 +322,7 @@ Parameters:
 - `count` (`NUMBER`), default `10`; required
 - `body` (`BLOCK`), default ``
 
-Description: Executes the attached body block a specified number of times sequentially. The loop body runs to completion for each iteration before the next one begins.
+Description: Executes the attached body block a specified number of times sequentially. The loop body runs to completion for each iteration before the next one begins. Python-style `for ... in range(...)` loops are compiled into ordinary variable modules surrounding this block; `repeat` itself does not manage an iteration variable.
 
 ### `if`
 
@@ -458,6 +458,8 @@ Parameters:
 - `a` (`NUMBER`), default `0`; required
 - `b` (`NUMBER`), default `0`; required
 
+Description: Returns true if `a` is greater than or equal to `b`.
+
 ### `less_than_or_equal`
 
 Category: `operator` -- Shape: `BOOLEAN`
@@ -465,6 +467,8 @@ Category: `operator` -- Shape: `BOOLEAN`
 Parameters:
 - `a` (`NUMBER`), default `0`; required
 - `b` (`NUMBER`), default `0`; required
+
+Description: Returns true if `a` is less than or equal to `b`.
 
 ### `less_than`
 
@@ -538,7 +542,7 @@ Category: `operator` -- Shape: `REPORTER`
 Parameters:
 - `strings` (`LIST`), default ``
 
-Description: Concatenates all strings in a comma-separated list into a single string.
+Description: Concatenates all top-level values in a bracketed list, in order, into a single string. Nested lists are kept as individual values.
 
 ### `join_string_str`
 
@@ -580,7 +584,7 @@ Category: `goal` -- Shape: `REPORTER`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-Description: Constructs a goal string for breaking a block at coordinates given as a list `x, y, z`. Behaves identically to `break_block_xyz`.
+Description: Constructs a goal string for breaking a block at coordinates given as a list `[x,y,z]`. Behaves identically to `break_block_xyz`.
 
 ### `set_block_xyz`
 
@@ -602,7 +606,7 @@ Category: `goal` -- Shape: `REPORTER`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-Description: Constructs a goal string for placing a block at coordinates given as a list `x, y, z`. Behaves identically to `set_block_xyz`.
+Description: Constructs a goal string for placing a block at coordinates given as a list `[x,y,z]`. Behaves identically to `set_block_xyz`.
 
 ### `use_crafting_table_xyz`
 
@@ -622,7 +626,7 @@ Parameters:
 - `amount` (`NUMBER`), default `1`; required
 - `recipe_slots` (`TEXT`), default `minecraft:air`; required
 
-Description: Constructs a goal string for crafting items using a 3x3 crafting table at coordinates given as a list. Behaves identically to `use_crafting_table_xyz`.
+Description: Constructs a goal string for crafting items using a 3x3 crafting table at coordinates given as a list `[x,y,z]`. Behaves identically to `use_crafting_table_xyz`.
 
 ### `use_inventory_crafting`
 
@@ -668,7 +672,7 @@ Parameters:
 - `slot` (`NUMBER`), default `0`; required
 - `amount` (`NUMBER`), default `1`; required
 
-Description: Constructs a goal string for interacting with a container at coordinates given as a list. Behaves identically to `use_container_xyz`.
+Description: Constructs a goal string for interacting with a container at coordinates given as a list `[x,y,z]`. Behaves identically to `use_container_xyz`.
 
 ### `melee_attack`
 
@@ -740,7 +744,7 @@ Parameters:
 - `face` (`TEXT`), default `up`
 - `held_item` (`BOOLEAN`), default ``
 
-Description: Constructs a goal string for interacting with a block at coordinates given as a list. Behaves identically to `use_block_xyz`.
+Description: Constructs a goal string for interacting with a block at coordinates given as a list `[x,y,z]`. Behaves identically to `use_block_xyz`.
 
 ### `interact_entity`
 
@@ -798,7 +802,7 @@ Category: `sense` -- Shape: `REPORTER`
 
 Parameters: none
 
-Description: Returns the ant's current position as a comma-separated string in the format `x,y,z`.
+Description: Returns the ant's current position as a coordinate list in the format `[x,y,z]`.
 
 ### `distance_to_xyz`
 
@@ -818,7 +822,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-Description: Returns the Euclidean distance from the ant's current position to the coordinates given as a list `x, y, z`.
+Description: Returns the Euclidean distance from the ant's current position to the coordinates given as a list `[x,y,z]`.
 
 ### `get_block_xyz`
 
@@ -838,27 +842,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `blockpos` (`LIST`), default ``
 
-Description: Returns the block ID (as a string) at the coordinates given as a list `x, y, z`.
-
-### `get_entity_at_xyz`
-
-Category: `sense` -- Shape: `REPORTER`
-
-Parameters:
-- `x` (`NUMBER`), default `0`; required
-- `y` (`NUMBER`), default `0`; required
-- `z` (`NUMBER`), default `0`; required
-
-Description: Returns the **entity ID** of the entity located at the specified world coordinates, or a default value if no entity is present.
-
-### `get_entity_at_blockpos`
-
-Category: `sense` -- Shape: `REPORTER`
-
-Parameters:
-- `blockpos` (`LIST`), default ``
-
-Description: Returns the **entity ID** of the entity located at the coordinates given as a list `x, y, z`.
+Description: Returns the block ID (as a string) at the coordinates given as a list `[x,y,z]`.
 
 ### `get_entity_pos`
 
@@ -867,7 +851,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `id` (`NUMBER`), default ``
 
-Description: Returns the position of the entity with the specified ID as a comma-separated string `x,y,z`.
+Description: Returns the position of the entity with the specified ID as a coordinate list `[x,y,z]`, or `[]` if the entity cannot be found.
 
 ### `has_item_in_inventory`
 
@@ -946,56 +930,120 @@ Parameters: none
 
 Description: Returns the **entity ID** of the last entity that damaged the ant.
 
-### `find_block`
+### `find_nearest_block`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `block` (`TEXT`), default `minecraft:stone`
 
-Description: Searches for the nearest block (from the ant's current position) of the specified type and returns its position as a comma-separated string `x,y,z`. Each evaluation performs a new world query, so save the result when reusing it.
+Description: Searches within 64 blocks for the nearest visible block of the specified type and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
 
-Return: TEXT/LIST-compatible coordinate string `x,y,z`, or an empty string when no block is found.
+Return: LIST coordinate `[x,y,z]`, or `[]` when no block is found.
 
-### `find_entity`
+### `find_nearest_entity`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `entity` (`TEXT`), default `minecraft:pig`
 
-Description: Searches for the nearest entity of the specified type and returns its **entity ID**.
+Description: Searches within 64 blocks for the nearest visible, living entity of the specified type and returns its **entity ID**. The ant itself is excluded.
 
 Return: TEXT containing a numeric **entity ID**, or an empty string when no entity is found.
 
-### `find_block_entity`
+### `find_nearest_block_entity`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `block_entity` (`TEXT`), default `minecraft:chest`
 
-Description: Searches for the nearest block entity (e.g., chest, furnace) of the specified type and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
+Description: Searches within 64 blocks for the nearest block entity whose block has the specified ID (for example, `minecraft:chest`) and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
 
-### `find_pheromone`
+Return: LIST coordinate `[x,y,z]`, or `[]` when no matching block entity is found.
+
+### `find_nearest_pheromone`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `pheromone` (`TEXT`), default `home`
 
-Description: Searches for the nearest pheromone trail of the specified type and returns its position. Used for ant colony navigation and communication.
+Description: Searches within 64 blocks for the nearest pheromone block containing the specified pheromone type and returns its position. Used for ant colony navigation and communication.
 
-Return: TEXT/LIST-compatible coordinate string `x,y,z`, or an empty string when no trail is found.
+Return: LIST coordinate `[x,y,z]`, or `[]` when no matching pheromone is found.
 
-### `find_drop`
+### `find_nearest_drop`
 
 Category: `sense` -- Shape: `REPORTER`
 
 Parameters:
 - `drop` (`TEXT`), default `minecraft:stone`
 
-Description: Searches for the nearest dropped item of the specified type and returns its position. Each evaluation performs a new world query. Use the result with `move_to_blockpos`; approaching the item is sufficient for pickup.
+Description: Searches within 64 blocks for the nearest living dropped-item entity containing the specified item and returns its position. Each evaluation performs a new world query. Use the result with `move_to_blockpos`; approaching the item is sufficient for pickup.
+
+Return: LIST coordinate `[x,y,z]`, or `[]` when no matching drop is found.
+
+### `find_block_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `block` (`TEXT`), default `minecraft:stone`
+- `count` (`NUMBER`), default `256`
+
+Description: Searches within 64 blocks for visible blocks of the specified type, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
+
+Return: LIST of coordinate lists in the format `[[x1,y1,z1],[x2,y2,z2]]`, or `[]` when there are no matches.
+
+### `find_entity_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `entity` (`TEXT`), default `minecraft:pig`
+- `count` (`NUMBER`), default `256`
+
+Description: Searches within 64 blocks for visible, living entities of the specified type, sorts them nearest-first, and returns at most `count` entity IDs. The ant itself is excluded, and `count` is clamped to the range 0 through 256.
+
+Return: LIST of numeric entity IDs in the format `[id1,id2]`, or `[]` when there are no matches.
+
+### `find_block_entity_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `block_entity` (`TEXT`), default `minecraft:chest`
+- `count` (`NUMBER`), default `256`
+
+Description: Searches within 64 blocks for block entities whose block has the specified ID, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
+
+Return: LIST of coordinate lists in the format `[[x1,y1,z1],[x2,y2,z2]]`, or `[]` when there are no matches.
+
+### `find_pheromone_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `pheromone` (`TEXT`), default `home`
+- `count` (`NUMBER`), default `256`
+
+Description: Searches within 64 blocks for pheromone blocks containing the specified type, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
+
+Return: LIST of coordinate lists in the format `[[x1,y1,z1],[x2,y2,z2]]`, or `[]` when there are no matches.
+
+### `find_drop_list`
+
+Category: `sense` -- Shape: `REPORTER`
+
+Parameters:
+- `drop` (`TEXT`), default `minecraft:stone`
+- `count` (`NUMBER`), default `256`
+
+Description: Searches within 64 blocks for living dropped-item entities containing the specified item, sorts them nearest-first, and returns at most `count` positions. `count` is clamped to the range 0 through 256.
+
+Return: LIST of coordinate lists in the format `[[x1,y1,z1],[x2,y2,z2]]`, or `[]` when there are no matches.
 
 ### `get_surrounding_pheromone_types`
 
@@ -1003,15 +1051,7 @@ Category: `sense` -- Shape: `REPORTER`
 
 Parameters: none
 
-Description: Returns a comma-separated list of all pheromone types detected in the ant's surrounding area.
-
-### `find_nearest_entity`
-
-Category: `sense` -- Shape: `REPORTER`
-
-Parameters: none
-
-Description: Returns the **entity ID** of the nearest entity to the ant, regardless of type.
+Description: Returns all pheromone types detected within 64 blocks as a bracketed list such as `[home,food]`, or `[]` when none are detected.
 
 ### `has_item_in_container_xyz`
 
@@ -1033,7 +1073,7 @@ Parameters:
 - `blockpos` (`LIST`), default ``
 - `item` (`TEXT`), default `minecraft:stone`
 
-Description: Returns true if the specified item exists in the container at the coordinates given as a list `x, y, z`.
+Description: Returns true if the specified item exists in the container at the coordinates given as a list `[x,y,z]`.
 
 ### `get_item_in_container_xyz`
 
@@ -1055,7 +1095,7 @@ Parameters:
 - `blockpos` (`LIST`), default ``
 - `slot` (`NUMBER`), default `0`; required
 
-Description: Returns the item name, like `minecraft:stone`, in the specified slot of the container at the coordinates given as a list `x, y, z`.
+Description: Returns the item name, like `minecraft:stone`, in the specified slot of the container at the coordinates given as a list `[x,y,z]`.
 
 ### `get_item_count_in_container_xyz`
 
@@ -1067,7 +1107,7 @@ Parameters:
 - `z` (`NUMBER`), default `0`; required
 - `slot` (`NUMBER`), default `0`; required
 
-Description: Returns the number of items in the specified slot of the container at the coordinates given as a list `x, y, z`.
+Description: Returns the number of items in the specified slot of the container at the given coordinates.
 
 ### `get_item_count_in_container_blockpos`
 
@@ -1077,7 +1117,7 @@ Parameters:
 - `blockpos` (`LIST`), default ``
 - `slot` (`NUMBER`), default `0`; required
 
-Description: Returns the number of items in the specified slot of the container at the coordinates given as a list `x, y, z`.
+Description: Returns the number of items in the specified slot of the container at the coordinates given as a list `[x,y,z]`.
 
 ### `get_speed`
 
@@ -1122,7 +1162,7 @@ Category: `variables` -- Shape: `COMMAND`
 Parameters:
 - `name` (`TEXT`), default ``
 
-Description: Creates a new empty list with the given name. The list can store key-value pairs and is used for collecting structured data.
+Description: Creates or replaces a named list with an empty list `[]`.
 
 ### `get_list`
 
@@ -1131,7 +1171,7 @@ Category: `variables` -- Shape: `REPORTER`
 Parameters:
 - `name` (`TEXT`), default ``
 
-Description: Returns the entire list as a comma-separated string of its values.
+Description: Returns the entire named list in bracketed form, such as `[a,b]`. Nested list values remain nested, and a missing list returns `[]`.
 
 ### `add_list`
 
@@ -1141,7 +1181,7 @@ Parameters:
 - `name` (`TEXT`), default ``
 - `list` (`LIST`), default ``
 
-Description: Appends all values from one list to another named list.
+Description: Parses the bracketed `list` input and appends each of its top-level values to the named list. Nested lists are appended as single values.
 
 ### `add_value`
 
@@ -1162,7 +1202,7 @@ Parameters:
 - `key` (`NUMBER`), default ``
 - `value` (`TEXT`), default ``
 
-Description: Sets the value at a specific numeric key index in the named list. If the key already exists, the value is overwritten.
+Description: Sets the value at the specified zero-based numeric index in the named list. Missing preceding indexes are filled with empty values, and an existing value is overwritten.
 
 ### `set_list_list`
 
@@ -1172,7 +1212,7 @@ Parameters:
 - `name` (`TEXT`), default ``
 - `list` (`LIST`), default ``
 
-Description: Replaces the entire contents of the named list with the values from the provided list.
+Description: Parses the bracketed `list` input and replaces the entire named list with its top-level values. Nested lists are preserved as individual values.
 
 ### `get_list_value`
 
@@ -1182,7 +1222,7 @@ Parameters:
 - `name` (`TEXT`), default ``
 - `key` (`NUMBER`), default ``
 
-Description: Returns the value stored at the specified numeric key index in the named list.
+Description: Returns the value stored at the specified zero-based numeric index in the named list, or an empty string if the list or index does not exist.
 
 ### `set_list_permanent`
 

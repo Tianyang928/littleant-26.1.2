@@ -317,12 +317,6 @@
           "type": "BLOCK",
           "default": "",
           "required": false
-        },
-        {
-          "name": "variable",
-          "type": "TEXT",
-          "default": "",
-          "required": false
         }
       ]
     },

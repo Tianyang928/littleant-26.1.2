@@ -176,7 +176,6 @@ Category: `control` -- Shape: `C_SHAPE`
 Parameters:
 - `count` (`NUMBER`), default `10`; required
 - `body` (`BLOCK`), default ``
-- `variable` (`TEXT`), default ``
 
 ### `if`
 
