@@ -287,9 +287,17 @@ public final class AntBlackboard {
 
     public boolean isInTag(String target, String tag) {
         if (target == null || tag == null) return false;
-        if (TagSupport.blockInTag(BuiltInRegistries.BLOCK.getValue(Identifier.tryParse(target)), tag)) return true;
-        if (TagSupport.itemInTag(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(target)), tag)) return true;
-        return TagSupport.entityInTag(BuiltInRegistries.ENTITY_TYPE.getValue(Identifier.tryParse(target)), tag);
+        Identifier targetId = Identifier.tryParse(target.trim());
+        if (targetId == null) return false;
+
+        // Do not call getValue blindly: block/item registries are defaulted
+        // and would turn an unknown id into minecraft:air.
+        if (BuiltInRegistries.BLOCK.containsKey(targetId)
+                && TagSupport.blockInTag(BuiltInRegistries.BLOCK.getValue(targetId), tag)) return true;
+        if (BuiltInRegistries.ITEM.containsKey(targetId)
+                && TagSupport.itemInTag(BuiltInRegistries.ITEM.getValue(targetId), tag)) return true;
+        return BuiltInRegistries.ENTITY_TYPE.containsKey(targetId)
+                && TagSupport.entityInTag(BuiltInRegistries.ENTITY_TYPE.getValue(targetId), tag);
     }
 
     public String getItemInContainer(int slot, double x, double y, double z) {

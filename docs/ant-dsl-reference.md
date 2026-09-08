@@ -405,13 +405,16 @@ greet(x=1)     # 不支持
 在 `@tick_start` 中应检查重复目标，否则每个 tick 都可能再次提交：
 
 ```python
-@tick_start
-def mine_logs():
+@receive_goal
+def cut_log():
     target = find_nearest_block("minecraft:oak_log")
     if target != []:
-        goal = break_block_blockpos(target)
-        if not already_has_goal(goal):
-            submit_foreground_goal(goal)
+        submit_foreground_goal(break_block_blockpos(target))
+
+@tick_start
+def tick():
+   if not already_has_goal("cut_log"):
+        submit_foreground_goal("cut_log")
 ```
 
 世界查询 reporter 每次求值都会重新搜索。先赋值再复用可以避免重复扫描，并保证后续操作使用同一个查询结果。
@@ -435,7 +438,7 @@ def start():
                 say(log_pos)
 
         nearest = get_list_value("logs", 0)
-        submit_foreground_goal(break_block_blockpos(get_variable("nearest")))
+        submit_foreground_goal(break_block_blockpos(nearest))
 ```
 
 注意：`find_block_list(..., 8)` 最多返回 8 个结果，不保证一定有 8 个；越界的 `get_list_value` 返回空字符串。

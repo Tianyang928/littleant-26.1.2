@@ -1,6 +1,6 @@
 @receive_goal
 def a():
-    say("a")
+    say(food_level())
 
 @ai_start
 def start():

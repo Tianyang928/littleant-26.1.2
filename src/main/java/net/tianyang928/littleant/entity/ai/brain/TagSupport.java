@@ -25,14 +25,23 @@ public final class TagSupport {
     public static <T> List<T> values(Registry<T> registry, net.minecraft.resources.ResourceKey<Registry<T>> key, String value) {
         Identifier id = id(value);
         if (id == null) return List.of();
+
+        // Some Minecraft registries (notably blocks and items) are defaulted
+        // registries.  Their getValue(id) method returns the default entry
+        // (minecraft:air for blocks) when id is not registered.  Never use
+        // that method to decide whether an id is a real registry entry.
+        boolean explicitTag = value != null && value.trim().startsWith("#");
+        boolean directEntry = registry.containsKey(id);
         List<T> result = new ArrayList<>();
-        if (value != null && value.trim().startsWith("#") || (registry.getValue(id) == null)) {
+        if (explicitTag || !directEntry) {
             TagKey<T> tag = TagKey.create(key, id);
             for (Holder<T> holder : registry.getTagOrEmpty(tag)) result.add(holder.value());
         }
-        if (result.isEmpty()) {
+        if (result.isEmpty() && directEntry && !explicitTag) {
             T direct = registry.getValue(id);
-            if (direct != null) result.add(direct);
+            // containsKey above guarantees this is a genuine entry, even for
+            // a DefaultedRegistry.
+            result.add(direct);
         }
         return List.copyOf(result);
     }

@@ -128,6 +128,15 @@ public class FindBlockList {
                     // 只有遇到为‘0’时，说明遇到没有遍历过的方块，才需要判断是否是目标方块
                     BlockState state = this.mob.level().getBlockState(tempBlockPos);
 
+                    boolean isTarget = blocks.contains(state.getBlock());
+                    if (isTarget) {
+                        resultBlockPosSet.add(tempBlockPos.immutable());
+                        if(resultBlockPosSet.size() >= requestedCount) {
+                            List<BlockPos> resultBlockPosList = new ArrayList<>(resultBlockPosSet);
+                            resultBlockPosList.sort(Comparator.comparingDouble(p -> p.distSqr(eyeBlockPos)));
+                            return resultBlockPosList.subList(0, Math.min(requestedCount, resultBlockPosList.size()));
+                        }
+                    }
                     boolean canOcclude = state.canOcclude();
                     if (canOcclude) {
                         isBlockOpaque
@@ -140,19 +149,6 @@ public class FindBlockList {
                                 [tempBlockPos.getX() - eyeBlockPos.getX() + SEARCH_RADIUS]
                                 [tempBlockPos.getY() - eyeBlockPos.getY() + SEARCH_RADIUS]
                                 [tempBlockPos.getZ() - eyeBlockPos.getZ() + SEARCH_RADIUS] = 'N';
-                    }
-                    boolean isTarget = blocks.contains(state.getBlock());
-                    if (isTarget) {
-                        resultBlockPosSet.add(tempBlockPos.immutable());
-                        if(resultBlockPosSet.size() >= requestedCount) {
-                            List<BlockPos> resultBlockPosList = new ArrayList<>(resultBlockPosSet);
-                            resultBlockPosList.sort(Comparator.comparingDouble(p -> p.distSqr(eyeBlockPos)));
-                            return resultBlockPosList.subList(0, Math.min(requestedCount, resultBlockPosList.size()));
-                        }
-                    }
-
-                    if(canOcclude || isTarget) {
-                        break;
                     }
                 }
             }

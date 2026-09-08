@@ -700,7 +700,7 @@ public final class AntScriptInterpreter {
             }
             case "get_entity_pos" -> {
                 try {
-                    int entityId = (int)Double.parseDouble(inputNumber(block, "entity_id", "-1", blocks, active));
+                    int entityId = (int)Double.parseDouble(inputNumber(block, "id", "-1", blocks, active));
                     return blackboard.getEntityPos(entityId);
                 } catch (RuntimeException e) {
                     return "";
@@ -773,19 +773,19 @@ public final class AntScriptInterpreter {
                 return blackboard.getLastHurtByEntity();
             }
             case "find_nearest_block" -> {
-                String selectedBlock = inputNumber(block,"block","0",blocks,active);
+                String selectedBlock = inputNumber(block,"block","",blocks,active);
                 return blackboard.findNearestBlock(selectedBlock);
             }
             case "find_nearest_entity" -> {
-                String selectedEntity = inputNumber(block,"entity","0",blocks,active);
+                String selectedEntity = inputNumber(block,"entity","",blocks,active);
                 return blackboard.findNearestEntity(selectedEntity);
             }
             case "find_nearest_block_entity" -> {
-                String selectedBlockEntity = inputNumber(block,"block_entity","0",blocks,active);
+                String selectedBlockEntity = inputNumber(block,"block_entity","",blocks,active);
                 return blackboard.findNearestBlockEntity(selectedBlockEntity);
             }
             case "find_nearest_drop" -> {
-                String selectedDrop = inputNumber(block,"drop","0",blocks,active);
+                String selectedDrop = inputNumber(block,"drop","",blocks,active);
                 return blackboard.findNearestDrop(selectedDrop);
             }
             case "find_nearest_pheromone" -> {

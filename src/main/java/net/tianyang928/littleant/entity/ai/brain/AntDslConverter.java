@@ -45,12 +45,16 @@ public final class AntDslConverter {
             String op = l.text.substring(1).trim();
             index++;
             if (index < lines.size() && lines.get(index).text.startsWith("def ")) {
+                if (!ModuleRegistry.contains(op))
+                    throw new IllegalArgumentException("[AntDslConverter]Unknown decorator: " + op);
                 String definition = lines.get(index).text.substring(4);
                 int end = definition.indexOf('(');
                 String name = (end >= 0 ? definition.substring(0, end) : definition.replace(":", "")).trim();
                 Line d = lines.get(index++);
                 List<UUID> body = parseSuite(d.indent);
-                addChain(op, List.of(quote(name)), body, null);
+                List<String> eventArgs = ModuleRegistry.get(op).inputs().isEmpty()
+                        ? List.of() : List.of(quote(name));
+                addChain(op, eventArgs, body, null);
             } else {
                 List<UUID> body = parseSuite(l.indent);
                 addChain(op, List.of(), body, null);
@@ -85,13 +89,16 @@ public final class AntDslConverter {
                 index++;
                 int colon = s.indexOf(':');
                 UUID body = parseInline(s.substring(colon + 1).trim());
-                out.add(addStatement("if", List.of(s.substring(3, colon).trim(), "body:" + (body == null ? "" : body))));
+                if (body == null) throw new IllegalArgumentException("[AntDslConverter]Inline if body must be a module call: " + s);
+                out.add(addStatement("if", List.of(s.substring(3, colon).trim(), "body:" + body)));
                 continue;
             }
             if (s.startsWith("repeat(") && s.endsWith(":")) {
                 index++;
                 int p = s.indexOf('('), q = s.lastIndexOf(')');
                 List<UUID> b = parseSuite(l.indent);
+                if (b.isEmpty())
+                    throw new IllegalArgumentException("[AntDslConverter]repeat body cannot be empty: " + s);
                 out.add(addStatement("repeat", List.of(s.substring(p + 1, q), "body:" + first(b))));
                 continue;
             }
@@ -110,7 +117,8 @@ public final class AntDslConverter {
                 UUID initialize = addStatement("set_variable", List.of(quote(variable), "subtract(" + start + ",1)"));
                 UUID increment = addStatement("set_variable", List.of(quote(variable), "add(" + variable + ",1)"));
                 List<UUID> b = parseSuite(l.indent);
-                UUID bodyStart = b.isEmpty() ? null : b.getFirst();
+                if (b.isEmpty()) throw new IllegalArgumentException("[AntDslConverter]for body cannot be empty: " + s);
+                UUID bodyStart = b.getFirst();
                 blocks.compute(increment, (k, incrementBlock) -> new BrainBlock(incrementBlock.opcode(), incrementBlock.x(), incrementBlock.y(),
                         incrementBlock.id(), incrementBlock.inputs(), bodyStart, incrementBlock.parent()));
                 out.add(initialize);
@@ -120,6 +128,8 @@ public final class AntDslConverter {
             if (s.startsWith("while ") && s.endsWith(":")) {
                 index++;
                 List<UUID> b = parseSuite(l.indent);
+                if (b.isEmpty())
+                    throw new IllegalArgumentException("[AntDslConverter]while body cannot be empty: " + s);
                 out.add(addStatement("while", List.of(s.substring(6, s.length() - 1).trim(), "body:" + first(b))));
                 continue;
             }
@@ -127,7 +137,8 @@ public final class AntDslConverter {
                 index++;
                 int colon = s.indexOf(':');
                 UUID body = parseInline(s.substring(colon + 1).trim());
-                out.add(addStatement("while", List.of(s.substring(6, colon).trim(), "body:" + (body == null ? "" : body))));
+                if (body == null) throw new IllegalArgumentException("[AntDslConverter]Inline while body must be a module call: " + s);
+                out.add(addStatement("while", List.of(s.substring(6, colon).trim(), "body:" + body)));
                 continue;
             }
             if (s.equals("else:") || s.startsWith("elif "))
@@ -160,9 +171,12 @@ public final class AntDslConverter {
 
     /** Parse an if/elif/else chain into nested if_else modules. */
     private UUID parseIf(Line line) {
-        String condition = line.text.substring(3, line.text.length() - 1).trim();
+        int keywordLength = line.text.startsWith("elif ") ? 5 : 3;
+        String condition = line.text.substring(keywordLength, line.text.length() - 1).trim();
         index++;
         List<UUID> trueBody = parseSuite(line.indent);
+        if (trueBody.isEmpty())
+            throw new IllegalArgumentException("[AntDslConverter]if body cannot be empty: " + line.text);
         UUID falseBody = null;
         if (index < lines.size() && lines.get(index).indent == line.indent) {
             String next = lines.get(index).text;
@@ -210,11 +224,30 @@ public final class AntDslConverter {
             if (eq > 0) named.put(arg.substring(0, eq).trim(), arg.substring(eq + 1).trim());
             else positional.add(arg);
         }
+        for (String key : named.keySet()) {
+            if (d.inputs().stream().noneMatch(input -> input.name().equals(key)))
+                throw new IllegalArgumentException("[AntDslConverter]Unknown input '" + key + "' for module: " + name);
+        }
+        if (positional.size() > d.inputs().size())
+            throw new IllegalArgumentException("[AntDslConverter]Too many arguments for module: " + name);
+        int positionalIndex = 0;
         for (int i = 0; i < d.inputs().size(); i++) {
             InputDefinition def = d.inputs().get(i);
-            String a = named.getOrDefault(def.name(), i < positional.size() ? positional.get(i) : def.defaultValue());
-            if (a != null && a.startsWith("body:")) {
-                UUID id = UUID.fromString(a.substring(5));
+            String a;
+            if (named.containsKey(def.name())) {
+                a = named.get(def.name());
+            } else if (positionalIndex < positional.size()) {
+                a = positional.get(positionalIndex++);
+            } else {
+                a = def.defaultValue();
+            }
+            // Control-flow bodies are encoded internally as <input-name>:<UUID>.
+            // They are not DSL expressions: parsing the UUID as an expression
+            // would treat its '-' characters as subtraction operators (notably
+            // for if_else's body_if/body_else inputs).
+            String blockPrefix = def.name() + ":";
+            if (def.type() == ValueType.BLOCK && a != null && a.startsWith(blockPrefix)) {
+                UUID id = UUID.fromString(a.substring(blockPrefix.length()).trim());
                 in.add(new InputSlot(def.name(), def.type(), "", id));
             } else {
                 UUID child = expression(a, def.type());
@@ -335,21 +368,37 @@ public final class AntDslConverter {
         if (s.isBlank()) return r;
         int d = 0;
         int brackets = 0;
-        boolean q = false;
+        char quote = 0;
+        boolean escaped = false;
         StringBuilder b = new StringBuilder();
         for (char c : s.toCharArray()) {
-            if (c == '\"') q = !q;
-            if (c == ',' && !q && d == 0 && brackets == 0) {
+            if (escaped) {
+                escaped = false;
+                b.append(c);
+                continue;
+            }
+            if (quote != 0 && c == '\\') {
+                escaped = true;
+                b.append(c);
+                continue;
+            }
+            if (c == '\"' || c == '\'') {
+                if (quote == 0) quote = c;
+                else if (quote == c) quote = 0;
+            }
+            if (c == ',' && quote == 0 && d == 0 && brackets == 0) {
                 r.add(b.toString().trim());
                 b.setLength(0);
             } else {
-                if (c == '(' && !q) d++;
-                if (c == ')' && !q) d--;
-                if (c == '[' && !q) brackets++;
-                if (c == ']' && !q) brackets--;
+                if (c == '(' && quote == 0) d++;
+                if (c == ')' && quote == 0) d--;
+                if (c == '[' && quote == 0) brackets++;
+                if (c == ']' && quote == 0) brackets--;
                 b.append(c);
             }
         }
+        if (quote != 0 || d != 0 || brackets != 0)
+            throw new IllegalArgumentException("[AntDslConverter]Unbalanced quote, parentheses, or list brackets in arguments: " + s);
         r.add(b.toString().trim());
         return r;
     }
@@ -361,8 +410,24 @@ public final class AntDslConverter {
 
     private static int topLevelWord(String s, String word) {
         int depth = 0;
+        char quote = 0;
+        boolean escaped = false;
         for (int i = 0; i + word.length() <= s.length(); i++) {
             char c = s.charAt(i);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (quote != 0 && c == '\\') {
+                escaped = true;
+                continue;
+            }
+            if (c == '\"' || c == '\'') {
+                if (quote == 0) quote = c;
+                else if (quote == c) quote = 0;
+                continue;
+            }
+            if (quote != 0) continue;
             if (c == '(') depth++; else if (c == ')') depth--;
             if (depth == 0 && s.startsWith(word, i) && (i == 0 || Character.isWhitespace(s.charAt(i - 1))) && (i + word.length() == s.length() || Character.isWhitespace(s.charAt(i + word.length())))) return i;
         }
@@ -419,17 +484,35 @@ public final class AntDslConverter {
 
     private static int findNamedEquals(String s) {
         int depth = 0;
-        boolean quoted = false;
+        char quote = 0;
+        boolean escaped = false;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (c == '\'' || c == '"') quoted = !quoted;
-            if (quoted) continue;
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (quote != 0 && c == '\\') {
+                escaped = true;
+                continue;
+            }
+            if (c == '\'' || c == '"') {
+                if (quote == 0) quote = c;
+                else if (quote == c) quote = 0;
+                continue;
+            }
+            if (quote != 0) continue;
             if (c == '(') depth++;
             else if (c == ')') depth--;
-            else if (c == '=' && depth == 0
-                    && (i == 0 || s.charAt(i - 1) != '!' && s.charAt(i - 1) != '=')
-                    && (i + 1 >= s.length() || s.charAt(i + 1) != '=')) {
-                return i;
+            else if (c == '=' && depth == 0) {
+                // A named argument has an identifier on the left. Requiring
+                // that shape prevents comparison operators (<=, >=, !=, ==)
+                // in positional expressions from being mistaken for name=value.
+                String left = s.substring(0, i).trim();
+                if (left.matches("[A-Za-z_][A-Za-z0-9_]*")
+                        && (i + 1 >= s.length() || s.charAt(i + 1) != '=')) {
+                    return i;
+                }
             }
         }
         return -1;
