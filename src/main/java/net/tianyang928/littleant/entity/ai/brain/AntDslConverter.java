@@ -20,16 +20,18 @@ public final class AntDslConverter {
         functionNames.clear();
         listVariables.clear();
         lines = new ArrayList<>();
+        String lastLine = "";
         for (String raw : source.replace("\r", "").split("\n")) {
             String t = raw.stripTrailing();
             if (t.isBlank() || t.stripLeading().startsWith("#")) continue;
             int n = raw.length() - raw.stripLeading().length();
             lines.add(new Line(n, t.strip()));
-            if (t.strip().startsWith("def ")) {
+            if (t.strip().startsWith("def ") && !lastLine.strip().startsWith("@")) {
                 String definition = t.strip().substring(4);
                 int end = definition.indexOf('(');
                 functionNames.add((end >= 0 ? definition.substring(0, end) : definition.replace(":", "")).trim());
             }
+            lastLine = t;
         }
         index = 0;
         while (index < lines.size()) parseTop();
@@ -43,9 +45,12 @@ public final class AntDslConverter {
             String op = l.text.substring(1).trim();
             index++;
             if (index < lines.size() && lines.get(index).text.startsWith("def ")) {
+                String definition = lines.get(index).text.substring(4);
+                int end = definition.indexOf('(');
+                String name = (end >= 0 ? definition.substring(0, end) : definition.replace(":", "")).trim();
                 Line d = lines.get(index++);
                 List<UUID> body = parseSuite(d.indent);
-                addChain(op, List.of(), body, null);
+                addChain(op, List.of(quote(name)), body, null);
             } else {
                 List<UUID> body = parseSuite(l.indent);
                 addChain(op, List.of(), body, null);
@@ -106,8 +111,7 @@ public final class AntDslConverter {
                 UUID increment = addStatement("set_variable", List.of(quote(variable), "add(" + variable + ",1)"));
                 List<UUID> b = parseSuite(l.indent);
                 UUID bodyStart = b.isEmpty() ? null : b.getFirst();
-                BrainBlock incrementBlock = blocks.get(increment);
-                blocks.put(increment, new BrainBlock(incrementBlock.opcode(), incrementBlock.x(), incrementBlock.y(),
+                blocks.compute(increment, (k, incrementBlock) -> new BrainBlock(incrementBlock.opcode(), incrementBlock.x(), incrementBlock.y(),
                         incrementBlock.id(), incrementBlock.inputs(), bodyStart, incrementBlock.parent()));
                 out.add(initialize);
                 out.add(addStatement("repeat", List.of(count, "body:" + increment)));

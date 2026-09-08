@@ -1,0 +1,7 @@
+@receive_goal
+def a():
+    say("a")
+
+@ai_start
+def start():
+    submit_foreground_goal("a")

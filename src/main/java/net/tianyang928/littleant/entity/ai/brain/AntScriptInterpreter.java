@@ -186,14 +186,19 @@ public final class AntScriptInterpreter {
                     break;
                 }
                 EnumSet<Goal.Flag> flags = EnumSet.noneOf(Goal.Flag.class);
-                if (inputBoolean(block, "move_flag", false, blocks)) {
-                    flags.add(Goal.Flag.MOVE);
+                if(all_param.getFirst().contains("vanilla")) {
+                    flags = null;
                 }
-                if (inputBoolean(block, "look_flag", false, blocks)) {
-                    flags.add(Goal.Flag.LOOK);
-                }
-                if (inputBoolean(block, "jump_flag", false, blocks)) {
-                    flags.add(Goal.Flag.JUMP);
+                else {
+                    if (inputBoolean(block, "move_flag", false, blocks)) {
+                        flags.add(Goal.Flag.MOVE);
+                    }
+                    if (inputBoolean(block, "look_flag", false, blocks)) {
+                        flags.add(Goal.Flag.LOOK);
+                    }
+                    if (inputBoolean(block, "jump_flag", false, blocks)) {
+                        flags.add(Goal.Flag.JUMP);
+                    }
                 }
                 goalScheduler.submitBackground(block.id(), all_param.getFirst(), priority, flags, all_param.subList(1, all_param.size()),
                         receiveGoalRoots.getOrDefault(all_param.getFirst(), List.of()), goalTickRoots.getOrDefault(all_param.getFirst(), List.of()), currentTask);

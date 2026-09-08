@@ -26,7 +26,21 @@ def tick():
 - `@receive_goal`：匹配的自定义目标开始时执行一次。
 - `@goal_tick_start`：匹配的自定义目标活动期间每 tick 执行。
 
-装饰器目前只能写裸模块名，不能传参。例如只能写 `@receive_goal`，不能写 `@receive_goal("mine")`。自定义目标名需要在模块图中设置。
+值得注意的是，`@receive_goal`和`@goal_tick_start`装饰器目前只能写裸模块名，不能传参。例如只能写 `@receive_goal`，不能写 `@receive_goal("mine")`。自定义目标名需要在模块图中设置。
+同时`@receive_goal`和`@goal_tick_start`下一行的函数名为调用的goal名称。
+
+被装饰器修饰过的函数严格来说不算函数，所以不能调用，比如：
+
+```python
+@receive_goal
+def a():
+    say("a")
+    
+@ai_start
+def start():
+    a()         # 错误
+```
+
 
 ## 2. 行、缩进与注释
 

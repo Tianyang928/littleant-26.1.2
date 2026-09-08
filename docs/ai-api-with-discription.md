@@ -6,7 +6,8 @@ Generated from `ModuleRegistry` (the single source of truth). The DSL is restric
 
 ### Ant Entity
 
-The ant inventory has nine hotbar slots, indexed `0` through `8`.
+The Ant inventory has nine hotbar slots, indexed `0` through `8`.
+The initial food level of Ant is 20. The food level is decided by and only decided by Ant's move. The food level drops by 1 every the Ant moves 100 blocks.
 
 ### Goal Scheduling
 
@@ -26,7 +27,7 @@ if target != []:
     move_to_blockpos(target)
 ```
 
-Strings beginning with `vanilla:` identify **vanilla goals**. They are not Java methods that can be executed directly; they are string protocols recognized by the goal scheduler, such as `vanilla:break_block,x,y,z` and `vanilla:set_block,x,y,z`. Therefore, the return values of goal reporters such as `break_block_*`, `set_block_*`, crafting, container, and attack reporters are usually comma-separated string parameter lists intended for use with `submit_foreground_goal` or `submit_background_goal`.
+Strings beginning with `vanilla:` identify **vanilla goals**. They are preset goals. Instead of being executed directly, they are string protocols recognized by the goal scheduler, such as `vanilla:break_block,x,y,z` and `vanilla:set_block,x,y,z`. Therefore, the return values of goal reporters such as `break_block_*`, `set_block_*`, crafting, container, and attack reporters are usually comma-separated string parameter lists intended for use with `submit_foreground_goal` or `submit_background_goal`. By the way, when submitting vanilla goals, flag settings are effectless. Because vanilla goals already have their own flags.
 
 ### Categories
 
@@ -147,7 +148,7 @@ Parameters:
 - `look_flag` (`BOOLEAN`), default ``
 - `jump_flag` (`BOOLEAN`), default ``
 
-Description: Enqueues a goal in the background scheduler and returns immediately. It does not block the current DSL chain. Background tasks run concurrently unless they conflict with another task or an active foreground task. Higher priority tasks preempt lower priority ones when resource flags overlap. (priority: 1 preempt priority: 2)
+Description: Enqueues a goal in the background scheduler and returns immediately. It does not block the current DSL chain. Background tasks run concurrently unless they conflict with another task or an active foreground task. Smaller priority tasks preempt bigger priority ones when resource flags overlap. (priority: 1 preempt priority: 2)
 
 Return: No value. The goal argument is a comma-separated vanilla/custom goal string.
 
@@ -644,7 +645,7 @@ Category: `goal` -- Shape: `REPORTER`
 
 Parameters: none
 
-Description: Constructs a goal string for a specialized floating/swimming behavior. Used when the ant needs to navigate through water or avoid drowning.
+Description: Constructs a goal string for a specialized floating/swimming behavior. Used when the ant needs to navigate through water or avoid drowning. This goal ends as long as Ant is on land, so maybe you should add it every time when Ant is in water.
 
 ### `use_container_xyz`
 
@@ -666,7 +667,7 @@ Description: Constructs a goal string for interacting with a container (e.g., ch
 Category: `goal` -- Shape: `REPORTER`
 
 Parameters:
-- `blockpos` (`NUMBER`), default `0`; required
+- `blockpos` (`LIST`), default ``; required
 - `put_in` (`BOOLEAN`), default ``; required
 - `item` (`TEXT`), default `minecraft:stone`; required
 - `slot` (`NUMBER`), default `0`; required
@@ -700,7 +701,7 @@ Category: `goal` -- Shape: `BOOLEAN`
 Parameters:
 - `goal` (`TEXT`), default ``
 
-Description: Returns true if the specified goal name is already present in the scheduler (either active or queued). Useful for preventing duplicate goal submissions.
+Description: Input a goal name (If it's a vanilla goal, it should be in the format of `vanilla:goal_name`. If it's a custom goal, it should be in the format of `goal_name`).  Returns true if the specified goal name is already present in the scheduler (either active or queued). Useful for preventing duplicate goal submissions.
 
 ### `already_has_goal_at_priority`
 
@@ -937,7 +938,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `block` (`TEXT`), default `minecraft:stone`
 
-Description: Block or block tags are available. Searches within 64 blocks for the nearest visible block of the specified type and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
+Description: Block or block tags are available. Searches within 64 blocks for the nearest visible block (those that line of sight is not blocked by opaque blocks) of the specified type and returns its position. Each evaluation performs a new world query, so save the result when reusing it.
 
 Return: LIST coordinate `[x,y,z]`, or `[]` when no block is found.
 
@@ -981,7 +982,7 @@ Category: `sense` -- Shape: `REPORTER`
 Parameters:
 - `drop` (`TEXT`), default `minecraft:stone`
 
-Description: Item or item tags are available. Searches within 64 blocks for the nearest living dropped-item entity containing the specified item and returns its position. Each evaluation performs a new world query. Use the result with `move_to_blockpos`; approaching the item is sufficient for pickup.
+Description: Item or item tags are available. Searches within 64 blocks for the nearest living dropped-item entity containing the specified item and returns its position. Each evaluation performs a new world query. Use the result with `move_to_blockpos`; move to the item is enough for pickup.
 
 Return: LIST coordinate `[x,y,z]`, or `[]` when no matching drop is found.
 
