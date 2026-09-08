@@ -34,7 +34,7 @@ public final class AntGoalScheduler {
     public void submitBackground(UUID startBlock, String name, double priority, EnumSet<Goal.Flag> flags, List<String> args,
                                  List<UUID> startRoots, List<UUID> tickRoots, Task parent) {
         Task task = createTask(startBlock, name, priority, flags, args, startRoots, tickRoots, parent, false);
-        if (task == null || containsTask(task)) return;
+        if (task == null) return;
         attach(task, parent);
         // A spawned background child participates in the global scheduler, but must
         // not preempt its own ancestor while that ancestor is still submitting it.
@@ -52,21 +52,19 @@ public final class AntGoalScheduler {
     /** Adds a FIFO foreground task. Its resource flags come from the goal implementation. */
     public void submitForeground(UUID startBlock, String name, List<String> args, List<UUID> startRoots, List<UUID> tickRoots, Task parent) {
         Task task = createTask(startBlock, name, 0, null, args, startRoots, tickRoots, parent, true);
-        if (task == null || containsTask(task)) return;
+        if (task == null) return;
         attach(task, parent);
         enqueueForeground(task, false);
     }
 
     public void submitMoveTo(UUID sourceBlock, BlockPos target, Task parent) {
         Task task = new MoveToTask(sourceBlock, "vanilla:move_to",sequence++, target, parent);
-        if (containsTask(task)) return;
         attach(task, parent);
         enqueueForeground(task, false);
     }
 
     public void submitStepForward(UUID sourceBlock, double distance, Task parent) {
         Task task = new StepForwardTask(sourceBlock, "vanilla:step_forward",sequence++, distance, parent);
-        if (containsTask(task)) return;
         attach(task, parent);
         enqueueForeground(task, false);
     }
@@ -138,12 +136,7 @@ public final class AntGoalScheduler {
         if (foregroundActive == null && !foregroundQueue.isEmpty() && isParentActive(foregroundQueue.peekFirst())) {
             foregroundActive = foregroundQueue.removeFirst();
             foregroundActive.suspended = false;
-            for (Task task : List.copyOf(backgroundActive)) {
-                if (foregroundActive.conflictsWith(task)) {
-                    suspendTree(task, true);
-                    LittleAnt.LOGGER.info("[AntGoalScheduler] tickForeground: suspend background task {}, because of conflict with foreground task {}", task.name, foregroundActive.name);
-                }
-            }
+            suspendConflictingBackgroundRoots(foregroundActive);
         }
         if (foregroundActive != null && foregroundActive.tick(runner)) {
             finishTree(foregroundActive);
@@ -152,14 +145,52 @@ public final class AntGoalScheduler {
     }
 
     private void tickBackground(NeoGoalRunner runner) {
+        // Foreground work has strict precedence. Do not start or advance any
+        // background task while a top-level foreground task is active or queued.
+        // This also covers the tick in which one foreground task just finished
+        // but the next one has not yet been promoted.
+        if (hasTopLevelForeground()) return;
         promoteBackground();
         for (Task task : List.copyOf(backgroundActive)) {
+            // A running task may suspend another background task while
+            // advancing a nested foreground child. Do not tick that stale
+            // snapshot entry after it has been removed from active scheduling.
+            if (!backgroundActive.contains(task)) continue;
             if (!isBlockedByForeground(task) && task.tick(runner)) finishTree(task);
         }
         promoteBackground();
     }
 
-    private boolean isBlockedByForeground(Task task) { return foregroundActive != null && foregroundActive.conflictsWith(task); }
+    private boolean hasTopLevelForeground() {
+        return foregroundActive != null || !foregroundQueue.isEmpty();
+    }
+
+    /**
+     * A background task is blocked by top-level foreground work, or by a
+     * conflicting foreground child currently executing inside another
+     * background custom task. A nested child must not block its own ancestor.
+     */
+    private boolean isBlockedByForeground(Task task) {
+        if (hasTopLevelForeground()) return true;
+        for (Task owner : List.copyOf(backgroundActive)) {
+            if (nestedForegroundConflicts(owner.foregroundActive, task)) return true;
+        }
+        return false;
+    }
+
+    private boolean nestedForegroundConflicts(Task foregroundTask, Task candidate) {
+        if (foregroundTask == null) return false;
+        if (candidate != foregroundTask && !isAncestor(candidate, foregroundTask)
+                && subtreeConflicts(candidate, foregroundTask)) return true;
+        return nestedForegroundConflicts(foregroundTask.foregroundActive, candidate);
+    }
+
+    private boolean hasActiveBackgroundAncestor(Task task, Collection<Task> activeTasks) {
+        for (Task parent = task.parent; parent != null; parent = parent.parent) {
+            if (activeTasks.contains(parent)) return true;
+        }
+        return false;
+    }
 
     private boolean isParentActive(Task task) {
         return task.parent == null || isTaskActive(task.parent) && isParentActive(task.parent);
@@ -201,21 +232,13 @@ public final class AntGoalScheduler {
         if (first) queue.addFirst(task); else queue.addLast(task);
     }
 
-    private boolean containsTask(Task candidate) {
-        if (candidate.parent != null) return candidate.parent.children.stream().anyMatch(task -> task.sameInvocation(candidate));
-        return allTasks().stream().anyMatch(task -> task.sameInvocation(candidate));
-    }
-
-    private List<Task> allTasks() {
-        List<Task> tasks = new ArrayList<>(foregroundQueue);
-        if (foregroundActive != null) tasks.add(foregroundActive);
-        tasks.addAll(backgroundActive); tasks.addAll(backgroundQueue);
-        return tasks;
-    }
-
     /** Suspending a parent recursively stops every submitted descendant and preserves the subtree for resumption. */
     private void suspendTree(Task task, boolean requeueRoot) {
-        for (Task child : List.copyOf(task.children)) suspendTree(child, true);
+        // Requeue children in reverse insertion order because foreground
+        // suspension uses addFirst. This keeps the original FIFO order when a
+        // parent with several foreground children is suspended and resumed.
+        List<Task> children = List.copyOf(task.children);
+        for (int i = children.size() - 1; i >= 0; i--) suspendTree(children.get(i), true);
         task.suspend();
         task.suspended = requeueRoot;
         backgroundActive.remove(task); foregroundQueue.remove(task); backgroundQueue.remove(task);
@@ -273,12 +296,29 @@ public final class AntGoalScheduler {
             parent.foregroundActive = parent.foregroundQueue.removeFirst();
             parent.foregroundActive.suspended = false;
             Task child = parent.foregroundActive;
-            for (Task background : List.copyOf(backgroundActive)) {
-                if (!isAncestor(background, child) && child.conflictsWith(background)) suspendTree(background, true);
-            }
+            suspendConflictingBackgroundRoots(child);
         }
         Task child = parent.foregroundActive;
         if (child != null && child.tick(runner)) finishTree(child);
+    }
+
+    private void suspendConflictingBackgroundRoots(Task foregroundTask) {
+        List<Task> snapshot = List.copyOf(backgroundActive);
+        for (Task task : snapshot) {
+            if (hasActiveBackgroundAncestor(task, snapshot)) continue;
+            if (isAncestor(task, foregroundTask) || !subtreeConflicts(task, foregroundTask)) continue;
+            suspendTree(task, true);
+            LittleAnt.LOGGER.info("[AntGoalScheduler] tickNestedForeground: suspend background task {}, because foreground task {} conflicts",
+                    task.name, foregroundTask.name);
+        }
+    }
+
+    private boolean subtreeConflicts(Task task, Task foregroundTask) {
+        if (task.conflictsWith(foregroundTask)) return true;
+        for (Task child : task.children) {
+            if (subtreeConflicts(child, foregroundTask)) return true;
+        }
+        return false;
     }
 
     private boolean isAncestor(Task possibleAncestor, Task task) {
@@ -330,7 +370,7 @@ public final class AntGoalScheduler {
         int slots = name.equals("vanilla:use_crafting_table") ? 9 : 4;
         int expected = switch (name) { case "vanilla:use_crafting_table" -> 1 + slots + 3; case "vanilla:use_inventory_crafting" -> 1 + slots; default -> 1 + slots + 1; };
         if (args.size() != expected) return null;
-        int amount = Integer.parseInt(args.getFirst()); int offset = 1; BlockPos pos = BlockPos.ZERO;
+        int amount = (int)Double.parseDouble(args.getFirst()); int offset = 1; BlockPos pos = BlockPos.ZERO;
         if (name.equals("vanilla:use_crafting_table")) { pos = blockPos(args, 1); offset = 4; }
         List<ItemStack> items = new ArrayList<>(slots);
         for (int i = 0; i < slots; i++) {
@@ -353,13 +393,13 @@ public final class AntGoalScheduler {
         var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(4))).orElse(null);
         if (item == null) return null;
         UseContainerGoal goal = new UseContainerGoal(ant);
-        goal.setRequest(blockPos(args, 0), Boolean.parseBoolean(args.get(3)) ? UseContainerGoal.Operation.PUT : UseContainerGoal.Operation.TAKE, item, Integer.parseInt(args.get(5)), Integer.parseInt(args.get(6)));
+        goal.setRequest(blockPos(args, 0), Boolean.parseBoolean(args.get(3)) ? UseContainerGoal.Operation.PUT : UseContainerGoal.Operation.TAKE, item, (int)Double.parseDouble(args.get(5)), (int)Double.parseDouble(args.get(6)));
         return goal;
     }
 
     private Goal meleeGoal(List<String> args) {
         if (args.size() != 1) return null;
-        LivingEntity target = ant.level().getEntity(Integer.parseInt(args.getFirst())) instanceof LivingEntity living ? living : null;
+        LivingEntity target = ant.level().getEntity((int)Double.parseDouble(args.getFirst())) instanceof LivingEntity living ? living : null;
         return target == null ? null : new EntityMeleeAttackGoal(ant, target, true);
     }
 
@@ -376,7 +416,7 @@ public final class AntGoalScheduler {
 
     private Goal interactionEntityGoal(List<String> args) {
         if (args.size() != 2) return null;
-        return UseInteractionGoal.entity(ant, Integer.parseInt(args.get(0)),
+        return UseInteractionGoal.entity(ant, (int)Double.parseDouble(args.get(0)),
                 Boolean.parseBoolean(args.get(1)));
     }
 
@@ -408,7 +448,6 @@ public final class AntGoalScheduler {
             if (flags == null || other.flags == null) return false;
             return flags.stream().anyMatch(other.flags::contains);
         }
-        private boolean sameInvocation(Task other) { return startBlock.equals(other.startBlock) && parent == other.parent && foreground == other.foreground; }
         protected abstract boolean tick(NeoGoalRunner runner);
         protected void suspend() {}
         protected void stop() { suspend(); }

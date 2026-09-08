@@ -56,6 +56,7 @@ public final class AntScriptInterpreter {
         tickStarts.clear();
         receiveGoalRoots.clear();
         functionRoots.clear();
+        goalTickRoots.clear();
         goalScheduler.clear();
         pendingLoopControls.clear();
 
@@ -809,7 +810,7 @@ public final class AntScriptInterpreter {
             }
             case "get_item_in_container_xyz" -> {
                 try{
-                    int slot = Integer.parseInt(inputNumber(block, "slot", "0", blocks, active));
+                    int slot = (int)Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
                     double x = Double.parseDouble(inputNumber(block, "x", "0", blocks, active));
                     double y = Double.parseDouble(inputNumber(block, "y", "0", blocks, active));
                     double z = Double.parseDouble(inputNumber(block, "z", "0", blocks, active));
@@ -820,7 +821,7 @@ public final class AntScriptInterpreter {
             }
             case "get_item_in_container_blockpos" -> {
                 try{
-                    int slot = Integer.parseInt(inputNumber(block, "slot", "0", blocks, active));
+                    int slot = (int)Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));
                     List<String> blockposStr = listParts(inputNumber(block, "blockpos", "", blocks, active));
                     double x = Double.parseDouble(blockposStr.get(0));
                     double y = Double.parseDouble(blockposStr.get(1));

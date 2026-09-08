@@ -35,7 +35,7 @@ public final class AntDslConverter {
         }
         index = 0;
         while (index < lines.size()) parseTop();
-        if (blocks.size() > 256) throw new IllegalArgumentException("[AntDslConverter]Max module count is: 256");
+        if (blocks.size() > 1024) throw new IllegalArgumentException("[AntDslConverter]Max module count is: 1024");
         return blocks;
     }
 

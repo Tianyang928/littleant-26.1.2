@@ -1,0 +1,3119 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "id": "a99f599d-9a81-441c-b26e-e73afe287a49",
+      "opcode": "ai_start",
+      "x": 321,
+      "y": 43,
+      "inputs": {},
+      "next": {
+        "id": "93254118-89cb-412c-8a91-d3bce7747a92",
+        "opcode": "set_run",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "run": {
+            "type": "BOOLEAN",
+            "block": {
+              "id": "5debba5b-2132-4990-af41-7ca8544a13ae",
+              "opcode": "true",
+              "x": 0,
+              "y": 0,
+              "inputs": {}
+            }
+          }
+        },
+        "next": {
+          "id": "5c38168c-5c21-4af3-b746-7d1ab8ef6618",
+          "opcode": "say",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "message": {
+              "type": "TEXT",
+              "value": "cut log ready"
+            }
+          },
+          "next": {
+            "id": "fa958ffb-8f14-4a13-a210-bddc6f15a1b6",
+            "opcode": "new_list",
+            "x": 32,
+            "y": 20,
+            "inputs": {
+              "name": {
+                "type": "TEXT",
+                "value": "last_log"
+              }
+            },
+            "next": {
+              "id": "1c389e5f-51cf-425f-af46-6cf7ca34a87f",
+              "opcode": "new_list",
+              "x": 44,
+              "y": 20,
+              "inputs": {
+                "name": {
+                  "type": "TEXT",
+                  "value": "ignored_logs"
+                }
+              },
+              "next": {
+                "id": "37005720-6c7c-4849-a6be-d642cb620b40",
+                "opcode": "new_list",
+                "x": 56,
+                "y": 20,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "ignored_drops"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "dcb8ca73-fbab-40b7-99bd-b0c919230b1c",
+      "opcode": "receive_goal",
+      "x": 299,
+      "y": 429,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "eat_goal"
+        }
+      },
+      "next": {
+        "id": "2bfd7bb0-ffaa-4556-80db-b59f489b1175",
+        "opcode": "set_variable",
+        "x": 92,
+        "y": 20,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "i"
+          },
+          "value": {
+            "type": "NUMBER",
+            "block": {
+              "id": "1575f053-ca95-4440-a90f-eaf9e0c164e2",
+              "opcode": "subtract",
+              "x": 80,
+              "y": 20,
+              "inputs": {
+                "a": {
+                  "type": "NUMBER",
+                  "value": "0"
+                },
+                "b": {
+                  "type": "NUMBER",
+                  "value": "1"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "5f11627e-0f67-4e6e-a723-69a3b8ee362b",
+          "opcode": "repeat",
+          "x": 284,
+          "y": 20,
+          "inputs": {
+            "count": {
+              "type": "NUMBER",
+              "value": "9"
+            },
+            "body": {
+              "type": "BLOCK",
+              "block": {
+                "id": "3f60fd1d-52c5-4361-af57-cd1611210765",
+                "opcode": "set_variable",
+                "x": 128,
+                "y": 20,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "i"
+                  },
+                  "value": {
+                    "type": "NUMBER",
+                    "block": {
+                      "id": "8ccc27f8-f511-4373-94b7-e756af37d307",
+                      "opcode": "add",
+                      "x": 116,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "1cb0e086-16e6-45cb-86eb-bb5fe08cbbc6",
+                            "opcode": "get_variable",
+                            "x": 104,
+                            "y": 20,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "i"
+                              }
+                            }
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "1"
+                        }
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "id": "ff4c56b4-1c4a-4ecc-b3ef-da3a1c1ac7c2",
+                  "opcode": "if",
+                  "x": 272,
+                  "y": 20,
+                  "inputs": {
+                    "condition": {
+                      "type": "BOOLEAN",
+                      "block": {
+                        "id": "902ec294-fd70-4da9-9955-268e02839b31",
+                        "opcode": "or",
+                        "x": 260,
+                        "y": 20,
+                        "inputs": {
+                          "condition_a": {
+                            "type": "BOOLEAN",
+                            "block": {
+                              "id": "a1a172d1-204c-4d82-a6cc-a8f8ba5cc2ec",
+                              "opcode": "is_in_tag",
+                              "x": 212,
+                              "y": 20,
+                              "inputs": {
+                                "target": {
+                                  "type": "TEXT",
+                                  "block": {
+                                    "id": "dc719cf1-aba9-4b7c-ae78-81df3a2caf4f",
+                                    "opcode": "get_item_in_inventory",
+                                    "x": 200,
+                                    "y": 20,
+                                    "inputs": {
+                                      "slot": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "23b33e3f-e03d-4075-bde8-c5d99a3dca20",
+                                          "opcode": "get_variable",
+                                          "x": 188,
+                                          "y": 20,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "i"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "tag": {
+                                  "type": "TEXT",
+                                  "value": "meat"
+                                }
+                              }
+                            }
+                          },
+                          "condition_b": {
+                            "type": "BOOLEAN",
+                            "block": {
+                              "id": "5009ab70-c673-4e90-b47e-efb877fd798a",
+                              "opcode": "equal",
+                              "x": 248,
+                              "y": 20,
+                              "inputs": {
+                                "a": {
+                                  "type": "NUMBER",
+                                  "block": {
+                                    "id": "e0bc38f7-600d-4245-8495-a8b1775b1b79",
+                                    "opcode": "get_item_in_inventory",
+                                    "x": 236,
+                                    "y": 20,
+                                    "inputs": {
+                                      "slot": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "0eaf0d9a-9c04-4dd5-954b-1cc85ff9ff1f",
+                                          "opcode": "get_variable",
+                                          "x": 224,
+                                          "y": 20,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "i"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "b": {
+                                  "type": "NUMBER",
+                                  "value": "minecraft:bread"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "body": {
+                      "type": "BLOCK",
+                      "block": {
+                        "id": "3a2f4579-f0ed-4a23-82d5-e91a7498b5e4",
+                        "opcode": "switch_inventory_slot",
+                        "x": 152,
+                        "y": 20,
+                        "inputs": {
+                          "slot": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "0847f805-d605-4705-b480-91d180f14666",
+                              "opcode": "get_variable",
+                              "x": 140,
+                              "y": 20,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "i"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "id": "316251e3-38a9-40dd-a9b7-dca3fcad6448",
+                          "opcode": "submit_foreground_goal",
+                          "x": 176,
+                          "y": 20,
+                          "inputs": {
+                            "goal": {
+                              "type": "TEXT",
+                              "block": {
+                                "id": "8b78f4fc-830d-4945-b65d-524f1157753d",
+                                "opcode": "use_item",
+                                "x": 164,
+                                "y": 20,
+                                "inputs": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "039f09d4-962c-4e5a-ae35-6edb209d41fc",
+      "opcode": "function_start",
+      "x": 526,
+      "y": 38,
+      "inputs": {
+        "name": {
+          "type": "TEXT",
+          "value": "switch_to_axe"
+        }
+      },
+      "next": {
+        "id": "bbba3405-968b-45bf-8a04-0be938930415",
+        "opcode": "set_variable",
+        "x": 320,
+        "y": 20,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "z"
+          },
+          "value": {
+            "type": "NUMBER",
+            "block": {
+              "id": "168fcd3b-82bd-44eb-a912-52b16878a92a",
+              "opcode": "subtract",
+              "x": 308,
+              "y": 20,
+              "inputs": {
+                "a": {
+                  "type": "NUMBER",
+                  "value": "0"
+                },
+                "b": {
+                  "type": "NUMBER",
+                  "value": "1"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "21bac5fd-0468-4a32-9d7e-bb4a983f2578",
+          "opcode": "repeat",
+          "x": 392,
+          "y": 20,
+          "inputs": {
+            "count": {
+              "type": "NUMBER",
+              "value": "9"
+            },
+            "body": {
+              "type": "BLOCK",
+              "block": {
+                "id": "f1b96362-afdd-44a3-b4d4-f981a4091598",
+                "opcode": "set_variable",
+                "x": 356,
+                "y": 20,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "z"
+                  },
+                  "value": {
+                    "type": "NUMBER",
+                    "block": {
+                      "id": "c2e335dc-2100-4cde-848d-d04c30994901",
+                      "opcode": "add",
+                      "x": 344,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "0b41d9a1-d281-40ca-9e22-c24dd587ebd9",
+                            "opcode": "get_variable",
+                            "x": 332,
+                            "y": 20,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "z"
+                              }
+                            }
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "1"
+                        }
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "id": "0061724d-b52d-42e8-8d64-60a1d20d493a",
+                  "opcode": "if",
+                  "x": 0,
+                  "y": 0,
+                  "inputs": {
+                    "condition": {
+                      "type": "BOOLEAN",
+                      "block": {
+                        "id": "3a2a590c-e01a-4d5d-9997-567b77464cff",
+                        "opcode": "is_in_tag",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "target": {
+                            "type": "TEXT",
+                            "block": {
+                              "id": "c5fad0b1-7b7e-4c33-8097-ea8213df1483",
+                              "opcode": "get_item_in_inventory",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "slot": {
+                                  "type": "NUMBER",
+                                  "block": {
+                                    "id": "0b4061bb-2281-425a-8b55-45b8883c5f38",
+                                    "opcode": "get_variable",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "z"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "tag": {
+                            "type": "TEXT",
+                            "value": "axes"
+                          }
+                        }
+                      }
+                    },
+                    "body": {
+                      "type": "BLOCK",
+                      "block": {
+                        "id": "37595cd3-199d-4137-a6d3-09ba75c70022",
+                        "opcode": "switch_inventory_slot",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "slot": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "f59e3151-1ddd-48a8-bf77-cbfcd0d000ca",
+                              "opcode": "get_variable",
+                              "x": 368,
+                              "y": 20,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "z"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "id": "2e44456e-d2d7-46ba-a34f-abddaab4b42a",
+                          "opcode": "break",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "2e7d6ea2-4194-4bd9-bf71-7a3e88d73239",
+      "opcode": "receive_goal",
+      "x": 980,
+      "y": 20,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "cut_log"
+        }
+      },
+      "next": {
+        "id": "d906b163-e768-472c-b4cf-a94a94c42cb2",
+        "opcode": "set_list_list",
+        "x": 428,
+        "y": 20,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "log_target"
+          },
+          "list": {
+            "type": "LIST",
+            "block": {
+              "id": "8a252105-8420-487c-870d-161adf23bf96",
+              "opcode": "find_block_list",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "block": {
+                  "type": "TEXT",
+                  "value": "logs"
+                },
+                "count": {
+                  "type": "NUMBER",
+                  "value": "8"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "7279a0da-804d-4c6c-b5b6-d609c6f3204e",
+          "opcode": "if_else",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "condition": {
+              "type": "BOOLEAN",
+              "block": {
+                "id": "58321ac2-1e1f-41ea-a35e-a594d0281fb0",
+                "opcode": "not",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "condition": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "c3241a09-ebb1-410f-9800-c957aaad45c5",
+                      "opcode": "equal",
+                      "x": 944,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "65d873a1-6879-45a0-85f8-1bc812306c1f",
+                            "opcode": "get_list",
+                            "x": 932,
+                            "y": 20,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "log_target"
+                              }
+                            }
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "[]"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "body_if": {
+              "type": "BLOCK",
+              "block": {
+                "id": "db3236a4-0e13-4de3-9f7f-c2f1df86a227",
+                "opcode": "set_variable",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "ignored_log_num"
+                  },
+                  "value": {
+                    "type": "NUMBER",
+                    "value": "0"
+                  }
+                },
+                "next": {
+                  "id": "d1bf6665-731c-43f2-a326-8461aacc9b25",
+                  "opcode": "set_variable",
+                  "x": 464,
+                  "y": 20,
+                  "inputs": {
+                    "name": {
+                      "type": "TEXT",
+                      "value": "j"
+                    },
+                    "value": {
+                      "type": "NUMBER",
+                      "block": {
+                        "id": "8cdf628a-75b3-4831-9943-a72166d48d73",
+                        "opcode": "subtract",
+                        "x": 452,
+                        "y": 20,
+                        "inputs": {
+                          "a": {
+                            "type": "NUMBER",
+                            "value": "0"
+                          },
+                          "b": {
+                            "type": "NUMBER",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "id": "a6f5666f-b0c7-4f36-901e-7a6df4c5489f",
+                    "opcode": "repeat",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "count": {
+                        "type": "NUMBER",
+                        "value": "8"
+                      },
+                      "body": {
+                        "type": "BLOCK",
+                        "block": {
+                          "id": "4a23cb76-6b40-44d4-919b-d80e14026c86",
+                          "opcode": "set_variable",
+                          "x": 500,
+                          "y": 20,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "j"
+                            },
+                            "value": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "00a6c89c-1fab-4131-8364-16f6840407b5",
+                                "opcode": "add",
+                                "x": 488,
+                                "y": 20,
+                                "inputs": {
+                                  "a": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "2037eb33-5ab8-4f81-8407-8a7819493049",
+                                      "opcode": "get_variable",
+                                      "x": 476,
+                                      "y": 20,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "j"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "b": {
+                                    "type": "NUMBER",
+                                    "value": "1"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "id": "1810b4dc-a808-480c-8bec-21490092321e",
+                            "opcode": "set_variable",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "temp"
+                              },
+                              "value": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "626501c7-d7b4-4702-ab79-00265d9fcde2",
+                                  "opcode": "get_list_value",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "name": {
+                                      "type": "TEXT",
+                                      "value": "log_target"
+                                    },
+                                    "key": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "3d833592-5fcd-4fd2-a79c-24b9e4b8d54a",
+                                        "opcode": "get_variable",
+                                        "x": 512,
+                                        "y": 20,
+                                        "inputs": {
+                                          "name": {
+                                            "type": "TEXT",
+                                            "value": "j"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "next": {
+                              "id": "74a5f9f4-ac73-47d3-9e06-0bf1181bfc2a",
+                              "opcode": "if",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "condition": {
+                                  "type": "BOOLEAN",
+                                  "block": {
+                                    "id": "bdb10038-0989-4e9e-a627-da1bcb1fe79e",
+                                    "opcode": "contain_str",
+                                    "x": 728,
+                                    "y": 20,
+                                    "inputs": {
+                                      "source": {
+                                        "type": "TEXT",
+                                        "block": {
+                                          "id": "30f9aab1-d373-4773-9dee-f0ec5cb4fa25",
+                                          "opcode": "get_list",
+                                          "x": 704,
+                                          "y": 20,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "ignored_logs"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "target": {
+                                        "type": "TEXT",
+                                        "block": {
+                                          "id": "7d5307d0-0953-4f73-b178-988f07d5606e",
+                                          "opcode": "get_variable",
+                                          "x": 716,
+                                          "y": 20,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "temp"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "body": {
+                                  "type": "BLOCK",
+                                  "block": {
+                                    "id": "305893ff-f589-42d1-bfb9-2ec97e5b489f",
+                                    "opcode": "set_variable",
+                                    "x": 680,
+                                    "y": 20,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "ignored_log_num"
+                                      },
+                                      "value": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "f1af1828-97cf-4c91-8961-41bb04f14de6",
+                                          "opcode": "add",
+                                          "x": 668,
+                                          "y": 20,
+                                          "inputs": {
+                                            "a": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "808b909f-4845-4d2e-a121-d7dce5059d5c",
+                                                "opcode": "get_variable",
+                                                "x": 656,
+                                                "y": 20,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "ignored_log_num"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "b": {
+                                              "type": "NUMBER",
+                                              "value": "1"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "id": "a0aa61e9-ba77-4ecf-9e04-ca236e13ca34",
+                                      "opcode": "continue",
+                                      "x": 692,
+                                      "y": 20,
+                                      "inputs": {}
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "id": "6748a9f0-5f4b-41dd-9023-31126a56c1cc",
+                                "opcode": "add_value",
+                                "x": 776,
+                                "y": 20,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "ignored_logs"
+                                  },
+                                  "value": {
+                                    "type": "TEXT",
+                                    "block": {
+                                      "id": "617dd705-9a77-41f0-a572-df2b34b35024",
+                                      "opcode": "get_variable",
+                                      "x": 632,
+                                      "y": 20,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "temp"
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "next": {
+                                  "id": "008717c9-38ad-43b1-abec-8281267d39e1",
+                                  "opcode": "submit_foreground_goal",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "goal": {
+                                      "type": "TEXT",
+                                      "block": {
+                                        "id": "d055c571-c6b8-4644-b755-cbbb18b03143",
+                                        "opcode": "break_block_blockpos",
+                                        "x": 764,
+                                        "y": 20,
+                                        "inputs": {
+                                          "blockpos": {
+                                            "type": "LIST",
+                                            "block": {
+                                              "id": "f6e5ff3a-c76b-41d3-99cb-1866aeee473c",
+                                              "opcode": "get_variable",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "temp"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "id": "eb9e6ca5-2b38-4518-ab32-4f5df8630937",
+                                    "opcode": "if",
+                                    "x": 620,
+                                    "y": 20,
+                                    "inputs": {
+                                      "condition": {
+                                        "type": "BOOLEAN",
+                                        "block": {
+                                          "id": "05b82f74-3d17-4ba8-8439-ad38db3f2f79",
+                                          "opcode": "or",
+                                          "x": 608,
+                                          "y": 20,
+                                          "inputs": {
+                                            "condition_a": {
+                                              "type": "BOOLEAN",
+                                              "block": {
+                                                "id": "79f932ae-27c2-453e-9a9f-86d5d34389b4",
+                                                "opcode": "equal",
+                                                "x": 572,
+                                                "y": 20,
+                                                "inputs": {
+                                                  "a": {
+                                                    "type": "NUMBER",
+                                                    "block": {
+                                                      "id": "d0bb42a7-7d7b-40ca-bef1-daeec6989a45",
+                                                      "opcode": "get_variable",
+                                                      "x": 560,
+                                                      "y": 20,
+                                                      "inputs": {
+                                                        "name": {
+                                                          "type": "TEXT",
+                                                          "value": "temp"
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "b": {
+                                                    "type": "NUMBER",
+                                                    "value": "[]"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "condition_b": {
+                                              "type": "BOOLEAN",
+                                              "block": {
+                                                "id": "aecff83b-5ed7-42b6-849b-1db707191548",
+                                                "opcode": "equal",
+                                                "x": 596,
+                                                "y": 20,
+                                                "inputs": {
+                                                  "a": {
+                                                    "type": "NUMBER",
+                                                    "block": {
+                                                      "id": "636af0bb-5a61-4262-aede-96032b47ffff",
+                                                      "opcode": "get_variable",
+                                                      "x": 584,
+                                                      "y": 20,
+                                                      "inputs": {
+                                                        "name": {
+                                                          "type": "TEXT",
+                                                          "value": "temp"
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "b": {
+                                                    "type": "NUMBER",
+                                                    "value": ""
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "body": {
+                                        "type": "BLOCK",
+                                        "block": {
+                                          "id": "687029c8-93dd-4477-b7dc-0b3a3361e879",
+                                          "opcode": "continue",
+                                          "x": 548,
+                                          "y": 20,
+                                          "inputs": {}
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "id": "7f06dd86-f896-4faa-8b17-3d7cc829a38e",
+                      "opcode": "if",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "condition": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "a98bab6e-ff32-46b0-871e-cde1ae8fa94b",
+                            "opcode": "equal",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "a": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "6f7d5c7e-180d-4266-8c82-52b411fa822f",
+                                  "opcode": "get_variable",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "name": {
+                                      "type": "TEXT",
+                                      "value": "ignored_log_num"
+                                    }
+                                  }
+                                }
+                              },
+                              "b": {
+                                "type": "NUMBER",
+                                "value": "8"
+                              }
+                            }
+                          }
+                        },
+                        "body": {
+                          "type": "BLOCK",
+                          "block": {
+                            "id": "200ac0f2-e447-4103-80f8-d9f1a8f5e11c",
+                            "opcode": "move_to_xyz",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "x": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "7f22db30-06bb-4428-a568-dfa2096ea559",
+                                  "opcode": "add",
+                                  "x": 824,
+                                  "y": 20,
+                                  "inputs": {
+                                    "a": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "f57de460-ca65-49dc-a3d3-6030eebb232d",
+                                        "opcode": "x",
+                                        "x": 800,
+                                        "y": 20,
+                                        "inputs": {}
+                                      }
+                                    },
+                                    "b": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "410d8c82-b9f2-4564-b537-75fcf0060fcc",
+                                        "opcode": "random",
+                                        "x": 812,
+                                        "y": 20,
+                                        "inputs": {
+                                          "min": {
+                                            "type": "NUMBER",
+                                            "value": "-16"
+                                          },
+                                          "max": {
+                                            "type": "NUMBER",
+                                            "value": "16"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "y": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "d8019e5e-c2bb-416a-83c7-8b5ccb1cc705",
+                                  "opcode": "y",
+                                  "x": 836,
+                                  "y": 20,
+                                  "inputs": {}
+                                }
+                              },
+                              "z": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "ea443ae7-9787-4d69-8d6a-ebf1d2a0db88",
+                                  "opcode": "add",
+                                  "x": 872,
+                                  "y": 20,
+                                  "inputs": {
+                                    "a": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "130aac05-3466-42ea-81ad-c671abb10637",
+                                        "opcode": "z",
+                                        "x": 848,
+                                        "y": 20,
+                                        "inputs": {}
+                                      }
+                                    },
+                                    "b": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "0cc04187-e367-4e2c-808a-1fe733d092dc",
+                                        "opcode": "random",
+                                        "x": 860,
+                                        "y": 20,
+                                        "inputs": {
+                                          "min": {
+                                            "type": "NUMBER",
+                                            "value": "-16"
+                                          },
+                                          "max": {
+                                            "type": "NUMBER",
+                                            "value": "16"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "body_else": {
+              "type": "BLOCK",
+              "block": {
+                "id": "5e8c2289-55c5-4544-84c9-3300acc1cf10",
+                "opcode": "move_to_xyz",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "x": {
+                    "type": "NUMBER",
+                    "block": {
+                      "id": "80a03953-4870-48cb-ad16-d6f9a7af45fe",
+                      "opcode": "add",
+                      "x": 824,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "fe6285de-cee3-4b73-80bc-6087bbb6507a",
+                            "opcode": "x",
+                            "x": 800,
+                            "y": 20,
+                            "inputs": {}
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "e16e9b41-6192-4d31-9631-1ccd879156d8",
+                            "opcode": "random",
+                            "x": 812,
+                            "y": 20,
+                            "inputs": {
+                              "min": {
+                                "type": "NUMBER",
+                                "value": "-16"
+                              },
+                              "max": {
+                                "type": "NUMBER",
+                                "value": "16"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "y": {
+                    "type": "NUMBER",
+                    "block": {
+                      "id": "e09d1b32-dc53-4211-ba23-61403d2c73f2",
+                      "opcode": "y",
+                      "x": 836,
+                      "y": 20,
+                      "inputs": {}
+                    }
+                  },
+                  "z": {
+                    "type": "NUMBER",
+                    "block": {
+                      "id": "88189a14-05ee-45f0-bd5a-1a31a49b59d1",
+                      "opcode": "add",
+                      "x": 872,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "8ec401fe-4b5f-409e-b8aa-9d74b83c6bbd",
+                            "opcode": "z",
+                            "x": 848,
+                            "y": 20,
+                            "inputs": {}
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "c5b966a3-f2fe-4f8a-a4e0-9bc2e6d89b02",
+                            "opcode": "random",
+                            "x": 860,
+                            "y": 20,
+                            "inputs": {
+                              "min": {
+                                "type": "NUMBER",
+                                "value": "-16"
+                              },
+                              "max": {
+                                "type": "NUMBER",
+                                "value": "16"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "id": "dacc50c7-5e4b-4bea-8523-17c58a2c791c",
+            "opcode": "submit_foreground_goal",
+            "x": 0,
+            "y": 0,
+            "inputs": {
+              "goal": {
+                "type": "TEXT",
+                "value": "pick_up_drops"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c54c3133-b5c1-457c-80e8-8a65b3564c27",
+      "opcode": "receive_goal",
+      "x": 1839,
+      "y": 558,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "put_to_chest"
+        }
+      },
+      "next": {
+        "id": "f6cfca16-c3a5-410a-b143-c909155ef57e",
+        "opcode": "set_list_list",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "chest_pos"
+          },
+          "list": {
+            "type": "LIST",
+            "block": {
+              "id": "d5e4c4ac-f944-4ff7-88dc-2803a7e8a8fc",
+              "opcode": "find_nearest_block_entity",
+              "x": 1988,
+              "y": 20,
+              "inputs": {
+                "block_entity": {
+                  "type": "TEXT",
+                  "value": "minecraft:chest"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "e3ed3e5e-155c-4d12-8417-19019653431b",
+          "opcode": "set_variable",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "name": {
+              "type": "TEXT",
+              "value": "t"
+            },
+            "value": {
+              "type": "NUMBER",
+              "block": {
+                "id": "f50f0600-167c-4022-902a-e02f2e15b719",
+                "opcode": "subtract",
+                "x": 2012,
+                "y": 20,
+                "inputs": {
+                  "a": {
+                    "type": "NUMBER",
+                    "value": "0"
+                  },
+                  "b": {
+                    "type": "NUMBER",
+                    "value": "1"
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "id": "aadd3eaf-98aa-43c8-b4da-f74e44f01902",
+            "opcode": "repeat",
+            "x": 2516,
+            "y": 20,
+            "inputs": {
+              "count": {
+                "type": "NUMBER",
+                "value": "9"
+              },
+              "body": {
+                "type": "BLOCK",
+                "block": {
+                  "id": "1c1f719f-923a-4c5e-965c-e597a5e63661",
+                  "opcode": "set_variable",
+                  "x": 2060,
+                  "y": 20,
+                  "inputs": {
+                    "name": {
+                      "type": "TEXT",
+                      "value": "t"
+                    },
+                    "value": {
+                      "type": "NUMBER",
+                      "block": {
+                        "id": "53485083-23a8-4160-8d15-0af0802353e8",
+                        "opcode": "add",
+                        "x": 2048,
+                        "y": 20,
+                        "inputs": {
+                          "a": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "2c7e8a92-8085-4988-9efd-f5b2507dc019",
+                              "opcode": "get_variable",
+                              "x": 2036,
+                              "y": 20,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "t"
+                                }
+                              }
+                            }
+                          },
+                          "b": {
+                            "type": "NUMBER",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "id": "58f61811-4930-417e-b5ab-7d5baefa2596",
+                    "opcode": "if",
+                    "x": 2504,
+                    "y": 20,
+                    "inputs": {
+                      "condition": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "98ec11ac-03a9-4809-8ed1-ed33ac98a0bc",
+                          "opcode": "is_in_tag",
+                          "x": 2492,
+                          "y": 20,
+                          "inputs": {
+                            "target": {
+                              "type": "TEXT",
+                              "block": {
+                                "id": "ca62a913-2a23-41c0-9f06-6a89918f34df",
+                                "opcode": "get_item_in_inventory",
+                                "x": 2480,
+                                "y": 20,
+                                "inputs": {
+                                  "slot": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "d8e173d4-a6f3-4db7-aefa-c9d97a262c09",
+                                      "opcode": "get_variable",
+                                      "x": 2468,
+                                      "y": 20,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "t"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "tag": {
+                              "type": "TEXT",
+                              "value": "logs"
+                            }
+                          }
+                        }
+                      },
+                      "body": {
+                        "type": "BLOCK",
+                        "block": {
+                          "id": "db40fc95-d6ea-41be-9191-8605cc5847f4",
+                          "opcode": "set_variable",
+                          "x": 2096,
+                          "y": 20,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "name"
+                            },
+                            "value": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "5aca3001-a970-40f8-8f79-7376fe9440d5",
+                                "opcode": "get_item_in_inventory",
+                                "x": 2084,
+                                "y": 20,
+                                "inputs": {
+                                  "slot": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "ee3bc658-c0a6-47b7-929a-2b38b6e637fd",
+                                      "opcode": "get_variable",
+                                      "x": 2072,
+                                      "y": 20,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "t"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "id": "2c244524-406a-47ff-a063-d48be8233ff1",
+                            "opcode": "set_variable",
+                            "x": 2120,
+                            "y": 20,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "s"
+                              },
+                              "value": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "69e996a3-d0c0-496e-b145-ab2952f1bd33",
+                                  "opcode": "subtract",
+                                  "x": 2108,
+                                  "y": 20,
+                                  "inputs": {
+                                    "a": {
+                                      "type": "NUMBER",
+                                      "value": "0"
+                                    },
+                                    "b": {
+                                      "type": "NUMBER",
+                                      "value": "1"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "next": {
+                              "id": "bf416acc-5ec0-4d13-ba12-22a126c8384f",
+                              "opcode": "repeat",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "count": {
+                                  "type": "NUMBER",
+                                  "value": "27"
+                                },
+                                "body": {
+                                  "type": "BLOCK",
+                                  "block": {
+                                    "id": "39b5aa1a-655b-479d-8408-92b66685654b",
+                                    "opcode": "set_variable",
+                                    "x": 2156,
+                                    "y": 20,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "s"
+                                      },
+                                      "value": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "0d922afb-b67e-498f-b13c-46885d90df4b",
+                                          "opcode": "add",
+                                          "x": 2144,
+                                          "y": 20,
+                                          "inputs": {
+                                            "a": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "8923fb66-f934-47ef-b075-eb825a3bb3da",
+                                                "opcode": "get_variable",
+                                                "x": 2132,
+                                                "y": 20,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "s"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "b": {
+                                              "type": "NUMBER",
+                                              "value": "1"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "id": "749aace6-21e3-4d78-840a-a35123ed5c8d",
+                                      "opcode": "if_else",
+                                      "x": 2444,
+                                      "y": 20,
+                                      "inputs": {
+                                        "condition": {
+                                          "type": "BOOLEAN",
+                                          "block": {
+                                            "id": "505873fa-93c0-4942-b061-559b3da3b304",
+                                            "opcode": "and",
+                                            "x": 2432,
+                                            "y": 20,
+                                            "inputs": {
+                                              "condition_a": {
+                                                "type": "BOOLEAN",
+                                                "block": {
+                                                  "id": "43a7a55a-0e71-4fae-86b2-f8630e30f650",
+                                                  "opcode": "equal",
+                                                  "x": 2372,
+                                                  "y": 20,
+                                                  "inputs": {
+                                                    "a": {
+                                                      "type": "NUMBER",
+                                                      "block": {
+                                                        "id": "cfccb31d-4634-48da-96df-c90986530501",
+                                                        "opcode": "get_item_in_container_blockpos",
+                                                        "x": 2348,
+                                                        "y": 20,
+                                                        "inputs": {
+                                                          "blockpos": {
+                                                            "type": "LIST",
+                                                            "block": {
+                                                              "id": "71ff7f2a-100a-4764-b414-7010f6c40c7b",
+                                                              "opcode": "get_list",
+                                                              "x": 2324,
+                                                              "y": 20,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "chest_pos"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "slot": {
+                                                            "type": "NUMBER",
+                                                            "block": {
+                                                              "id": "e976101c-2f7e-47dd-9467-3fa7835dfae2",
+                                                              "opcode": "get_variable",
+                                                              "x": 2336,
+                                                              "y": 20,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "s"
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "b": {
+                                                      "type": "NUMBER",
+                                                      "block": {
+                                                        "id": "31f17a5e-4dfe-4bb7-be62-fe4cba397f8f",
+                                                        "opcode": "get_variable",
+                                                        "x": 2360,
+                                                        "y": 20,
+                                                        "inputs": {
+                                                          "name": {
+                                                            "type": "TEXT",
+                                                            "value": "name"
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "condition_b": {
+                                                "type": "BOOLEAN",
+                                                "block": {
+                                                  "id": "37d3750a-da3a-4dcd-9d05-8431728db0d8",
+                                                  "opcode": "less_than",
+                                                  "x": 2420,
+                                                  "y": 20,
+                                                  "inputs": {
+                                                    "a": {
+                                                      "type": "NUMBER",
+                                                      "block": {
+                                                        "id": "c3914132-8819-4701-b1c4-4425e97b9d34",
+                                                        "opcode": "get_item_count_in_container_blockpos",
+                                                        "x": 2408,
+                                                        "y": 20,
+                                                        "inputs": {
+                                                          "blockpos": {
+                                                            "type": "LIST",
+                                                            "block": {
+                                                              "id": "9c0c8dda-ba73-4ff6-b92e-ab96c362b146",
+                                                              "opcode": "get_list",
+                                                              "x": 2384,
+                                                              "y": 20,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "chest_pos"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "slot": {
+                                                            "type": "NUMBER",
+                                                            "block": {
+                                                              "id": "df2c6203-04d1-494e-80c4-eb4de6daa781",
+                                                              "opcode": "get_variable",
+                                                              "x": 2396,
+                                                              "y": 20,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "s"
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "b": {
+                                                      "type": "NUMBER",
+                                                      "value": "64"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "body_if": {
+                                          "type": "BLOCK",
+                                          "block": {
+                                            "id": "634baa06-1257-489e-a576-5d56bd3ac697",
+                                            "opcode": "submit_foreground_goal",
+                                            "x": 0,
+                                            "y": 0,
+                                            "inputs": {
+                                              "goal": {
+                                                "type": "TEXT",
+                                                "block": {
+                                                  "id": "156ee5b1-84cd-4f74-b9a5-82c71baf26cc",
+                                                  "opcode": "use_container_blockpos",
+                                                  "x": 2624,
+                                                  "y": 20,
+                                                  "inputs": {
+                                                    "blockpos": {
+                                                      "type": "LIST",
+                                                      "block": {
+                                                        "id": "4be537f7-7dc0-4307-8c9b-b9d9ddb5b8a8",
+                                                        "opcode": "get_list",
+                                                        "x": 0,
+                                                        "y": 0,
+                                                        "inputs": {
+                                                          "name": {
+                                                            "type": "TEXT",
+                                                            "value": "chest_pos"
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "put_in": {
+                                                      "type": "BOOLEAN",
+                                                      "block": {
+                                                        "id": "e5591131-ecd7-45f6-b85f-a29b441ae473",
+                                                        "opcode": "true",
+                                                        "x": 2588,
+                                                        "y": 20,
+                                                        "inputs": {}
+                                                      }
+                                                    },
+                                                    "item": {
+                                                      "type": "TEXT",
+                                                      "block": {
+                                                        "id": "7e3be3e8-05a1-4fac-9340-ed2c3ed2a899",
+                                                        "opcode": "get_variable",
+                                                        "x": 2600,
+                                                        "y": 20,
+                                                        "inputs": {
+                                                          "name": {
+                                                            "type": "TEXT",
+                                                            "value": "name"
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "slot": {
+                                                      "type": "NUMBER",
+                                                      "block": {
+                                                        "id": "8afe2006-61ae-4e39-b5b5-ab0512492fb1",
+                                                        "opcode": "get_variable",
+                                                        "x": 2612,
+                                                        "y": 20,
+                                                        "inputs": {
+                                                          "name": {
+                                                            "type": "TEXT",
+                                                            "value": "s"
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "amount": {
+                                                      "type": "NUMBER",
+                                                      "value": "64"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "next": {
+                                              "id": "7b20f40a-7b31-40c7-ab42-0d8af6dc2d76",
+                                              "opcode": "break",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {}
+                                            }
+                                          }
+                                        },
+                                        "body_else": {
+                                          "type": "BLOCK",
+                                          "block": {
+                                            "id": "74cf3cc5-2a25-42b3-8151-daeddabec4b5",
+                                            "opcode": "if",
+                                            "x": 0,
+                                            "y": 0,
+                                            "inputs": {
+                                              "condition": {
+                                                "type": "BOOLEAN",
+                                                "block": {
+                                                  "id": "e341297d-abaa-4902-896c-a349c09c62b6",
+                                                  "opcode": "equal",
+                                                  "x": 0,
+                                                  "y": 0,
+                                                  "inputs": {
+                                                    "a": {
+                                                      "type": "NUMBER",
+                                                      "block": {
+                                                        "id": "f21fa3e8-1b71-44e4-a191-31d9407450ce",
+                                                        "opcode": "get_item_count_in_container_blockpos",
+                                                        "x": 2288,
+                                                        "y": 20,
+                                                        "inputs": {
+                                                          "blockpos": {
+                                                            "type": "LIST",
+                                                            "block": {
+                                                              "id": "a8dea56d-f15a-453d-8b48-f231947e3109",
+                                                              "opcode": "get_list",
+                                                              "x": 2264,
+                                                              "y": 20,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "chest_pos"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "slot": {
+                                                            "type": "NUMBER",
+                                                            "block": {
+                                                              "id": "c51fa732-60c0-492f-855b-bf24c5a536f8",
+                                                              "opcode": "get_variable",
+                                                              "x": 2276,
+                                                              "y": 20,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "s"
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    },
+                                                    "b": {
+                                                      "type": "NUMBER",
+                                                      "value": "0"
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "body": {
+                                                "type": "BLOCK",
+                                                "block": {
+                                                  "id": "9ef08e73-cc31-4726-a416-c21178497974",
+                                                  "opcode": "submit_foreground_goal",
+                                                  "x": 0,
+                                                  "y": 0,
+                                                  "inputs": {
+                                                    "goal": {
+                                                      "type": "TEXT",
+                                                      "block": {
+                                                        "id": "b44bfdeb-883a-4ed6-bba7-7d7be6bd3304",
+                                                        "opcode": "use_container_blockpos",
+                                                        "x": 0,
+                                                        "y": 0,
+                                                        "inputs": {
+                                                          "blockpos": {
+                                                            "type": "LIST",
+                                                            "block": {
+                                                              "id": "65d7dd18-f59b-441f-bac5-ba6df0238ea8",
+                                                              "opcode": "get_list",
+                                                              "x": 0,
+                                                              "y": 0,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "chest_pos"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "put_in": {
+                                                            "type": "BOOLEAN",
+                                                            "block": {
+                                                              "id": "7d91100d-dc04-4d06-861f-d4744f016fec",
+                                                              "opcode": "true",
+                                                              "x": 2588,
+                                                              "y": 20,
+                                                              "inputs": {}
+                                                            }
+                                                          },
+                                                          "item": {
+                                                            "type": "TEXT",
+                                                            "block": {
+                                                              "id": "aece225f-1564-4ec9-8a0d-889a5112d773",
+                                                              "opcode": "get_variable",
+                                                              "x": 0,
+                                                              "y": 0,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "name"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "slot": {
+                                                            "type": "NUMBER",
+                                                            "block": {
+                                                              "id": "de8bd14e-eab5-457a-b843-01b2af0c7d39",
+                                                              "opcode": "get_variable",
+                                                              "x": 0,
+                                                              "y": 0,
+                                                              "inputs": {
+                                                                "name": {
+                                                                  "type": "TEXT",
+                                                                  "value": "s"
+                                                                }
+                                                              }
+                                                            }
+                                                          },
+                                                          "amount": {
+                                                            "type": "NUMBER",
+                                                            "value": "64"
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "next": {
+                                                    "id": "927fdd4e-883f-4d98-ae11-39244404ecb7",
+                                                    "opcode": "break",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {}
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "71aa12dc-5aae-46a7-9698-a9b206df6a7f",
+      "opcode": "tick_start",
+      "x": 2476,
+      "y": 14,
+      "inputs": {},
+      "next": {
+        "id": "828e28c2-093f-4e61-a02f-91d65feacc23",
+        "opcode": "if",
+        "x": 2780,
+        "y": 20,
+        "inputs": {
+          "condition": {
+            "type": "BOOLEAN",
+            "block": {
+              "id": "d7c52ae0-c1db-410a-b900-d34649a5278d",
+              "opcode": "and",
+              "x": 2768,
+              "y": 20,
+              "inputs": {
+                "condition_a": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "4500a442-8d46-4da9-9498-d09ab0be6336",
+                    "opcode": "is_in_water",
+                    "x": 2720,
+                    "y": 20,
+                    "inputs": {}
+                  }
+                },
+                "condition_b": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "a261d00a-f916-4177-9fb8-f934eb865a1e",
+                    "opcode": "not",
+                    "x": 2756,
+                    "y": 20,
+                    "inputs": {
+                      "condition": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "7dd457fc-19d8-469a-a0e7-63b4d9c6dc5b",
+                          "opcode": "already_has_goal",
+                          "x": 2744,
+                          "y": 20,
+                          "inputs": {
+                            "goal": {
+                              "type": "TEXT",
+                              "block": {
+                                "id": "14a6f738-694e-4810-9d28-f5c0c383b0ef",
+                                "opcode": "better_float",
+                                "x": 2732,
+                                "y": 20,
+                                "inputs": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "body": {
+            "type": "BLOCK",
+            "block": {
+              "id": "c4b67a80-0a68-4863-9bf1-4e9f660c898a",
+              "opcode": "submit_background_goal",
+              "x": 2708,
+              "y": 20,
+              "inputs": {
+                "goal": {
+                  "type": "TEXT",
+                  "block": {
+                    "id": "4b575d63-ba08-4112-9c48-7ce18c9c576e",
+                    "opcode": "better_float",
+                    "x": 2660,
+                    "y": 20,
+                    "inputs": {}
+                  }
+                },
+                "priority": {
+                  "type": "NUMBER",
+                  "value": "1"
+                },
+                "move_flag": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "f568c54f-48bb-4ba4-96f3-d1c77688a5cf",
+                    "opcode": "false",
+                    "x": 2672,
+                    "y": 20,
+                    "inputs": {}
+                  }
+                },
+                "look_flag": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "60552e7b-b881-4733-8731-6c9ebb2635fb",
+                    "opcode": "false",
+                    "x": 2684,
+                    "y": 20,
+                    "inputs": {}
+                  }
+                },
+                "jump_flag": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "f38b17ca-9eb3-4346-85a7-9040cd43c5fb",
+                    "opcode": "true",
+                    "x": 2696,
+                    "y": 20,
+                    "inputs": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "fb520e1d-e52c-4fab-9113-a016ba846923",
+          "opcode": "if",
+          "x": 2900,
+          "y": 20,
+          "inputs": {
+            "condition": {
+              "type": "BOOLEAN",
+              "block": {
+                "id": "923733e4-c2ae-476f-b1c1-7d73ec2cfc89",
+                "opcode": "and",
+                "x": 2888,
+                "y": 20,
+                "inputs": {
+                  "condition_a": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "0234b7ee-b624-4cfc-bd7a-4dc66e8179c1",
+                      "opcode": "less_than_or_equal",
+                      "x": 2852,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "fbb061cf-0c30-4be9-b912-5ff5f4bd0810",
+                            "opcode": "food_level",
+                            "x": 2840,
+                            "y": 20,
+                            "inputs": {}
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "6"
+                        }
+                      }
+                    }
+                  },
+                  "condition_b": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "8978b5cd-3a39-4611-9c82-c2f810345abf",
+                      "opcode": "not",
+                      "x": 2876,
+                      "y": 20,
+                      "inputs": {
+                        "condition": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "7208e261-2516-42f6-9a7b-185a34a03bf4",
+                            "opcode": "already_has_goal",
+                            "x": 2864,
+                            "y": 20,
+                            "inputs": {
+                              "goal": {
+                                "type": "TEXT",
+                                "value": "eat_goal"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "body": {
+              "type": "BLOCK",
+              "block": {
+                "id": "f253d3c1-0f70-4959-a6c5-7d86dd949184",
+                "opcode": "submit_background_goal",
+                "x": 2828,
+                "y": 20,
+                "inputs": {
+                  "goal": {
+                    "type": "TEXT",
+                    "value": "eat_goal"
+                  },
+                  "priority": {
+                    "type": "NUMBER",
+                    "value": "2"
+                  },
+                  "move_flag": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "eaa601ac-7882-4cdc-acf1-7c19d7dad284",
+                      "opcode": "true",
+                      "x": 2792,
+                      "y": 20,
+                      "inputs": {}
+                    }
+                  },
+                  "look_flag": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "de252aff-ad21-4efb-bd0f-dc95bd8c1ed1",
+                      "opcode": "false",
+                      "x": 2804,
+                      "y": 20,
+                      "inputs": {}
+                    }
+                  },
+                  "jump_flag": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "85cba3f3-df03-4a97-a6f0-51cecb832c15",
+                      "opcode": "false",
+                      "x": 2816,
+                      "y": 20,
+                      "inputs": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "id": "ad7d8708-15d5-4840-b5b3-200028b29139",
+            "opcode": "if",
+            "x": 2948,
+            "y": 20,
+            "inputs": {
+              "condition": {
+                "type": "BOOLEAN",
+                "block": {
+                  "id": "4f700551-9b3f-4aac-be11-fc1de69e59a2",
+                  "opcode": "not",
+                  "x": 2936,
+                  "y": 20,
+                  "inputs": {
+                    "condition": {
+                      "type": "BOOLEAN",
+                      "block": {
+                        "id": "43e8f4b0-ccb6-4da5-8989-cd26ac1b668c",
+                        "opcode": "already_has_goal",
+                        "x": 2924,
+                        "y": 20,
+                        "inputs": {
+                          "goal": {
+                            "type": "TEXT",
+                            "value": "eat_goal"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "body": {
+                "type": "BLOCK",
+                "block": {
+                  "id": "7b0bcf00-6443-470f-8d39-441531d939e0",
+                  "opcode": "call_function",
+                  "x": 0,
+                  "y": 0,
+                  "inputs": {
+                    "name": {
+                      "type": "TEXT",
+                      "value": "switch_to_axe"
+                    }
+                  }
+                }
+              }
+            },
+            "next": {
+              "id": "afebddb5-10f6-4aa1-b7ca-912f077ae230",
+              "opcode": "if",
+              "x": 3068,
+              "y": 20,
+              "inputs": {
+                "condition": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "011fa960-b3cc-429d-aaf8-0e198f2645d4",
+                    "opcode": "not",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "condition": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "8ef0fd14-8add-4d8d-b38d-6d303df3655c",
+                          "opcode": "already_has_goal",
+                          "x": 2972,
+                          "y": 20,
+                          "inputs": {
+                            "goal": {
+                              "type": "TEXT",
+                              "value": "put_to_chest"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "body": {
+                  "type": "BLOCK",
+                  "block": {
+                    "id": "93858248-e531-4781-9896-e802e9d9a2fe",
+                    "opcode": "call_function",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "name": {
+                        "type": "TEXT",
+                        "value": "check_need_chest"
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "id": "4b87cd1a-e5ec-4e80-aed4-3dce22c882ee",
+                "opcode": "if",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "condition": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "4fd31fea-7713-4ab9-a1bb-44f966c044a2",
+                      "opcode": "not",
+                      "x": 3224,
+                      "y": 20,
+                      "inputs": {
+                        "condition": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "61b6cbbe-15a0-481f-ae74-c52064e005c0",
+                            "opcode": "already_has_goal",
+                            "x": 3212,
+                            "y": 20,
+                            "inputs": {
+                              "goal": {
+                                "type": "TEXT",
+                                "value": "cut_log"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "body": {
+                    "type": "BLOCK",
+                    "block": {
+                      "id": "bee3198a-5dee-41bd-9034-2cb3557354c7",
+                      "opcode": "submit_background_goal",
+                      "x": 3200,
+                      "y": 20,
+                      "inputs": {
+                        "goal": {
+                          "type": "TEXT",
+                          "value": "cut_log"
+                        },
+                        "priority": {
+                          "type": "NUMBER",
+                          "value": "5"
+                        },
+                        "move_flag": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "939fe38e-4460-47cc-b69b-ddec7d3c56da",
+                            "opcode": "true",
+                            "x": 3164,
+                            "y": 20,
+                            "inputs": {}
+                          }
+                        },
+                        "look_flag": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "d6998b85-c9e8-42f7-8305-35add6f3195c",
+                            "opcode": "true",
+                            "x": 3176,
+                            "y": 20,
+                            "inputs": {}
+                          }
+                        },
+                        "jump_flag": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "3111af41-f8cd-48a6-bc71-18d01047da1c",
+                            "opcode": "false",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {}
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "54baf2f3-9f19-4121-846e-10f6cc1b9f4e",
+      "opcode": "receive_goal",
+      "x": 1402,
+      "y": 54,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "pick_up_drops"
+        }
+      },
+      "next": {
+        "id": "8ba897e9-5119-4dc9-85fa-44ca659a9e5d",
+        "opcode": "set_list_list",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "drop_target"
+          },
+          "list": {
+            "type": "LIST",
+            "block": {
+              "id": "a7f2ef55-ae0f-4094-828d-24aff9fa5395",
+              "opcode": "find_drop_list",
+              "x": 992,
+              "y": 20,
+              "inputs": {
+                "drop": {
+                  "type": "TEXT",
+                  "value": "logs"
+                },
+                "count": {
+                  "type": "NUMBER",
+                  "value": "8"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "8a1db7c3-31a7-4ef7-af48-affe35845c35",
+          "opcode": "if",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "condition": {
+              "type": "BOOLEAN",
+              "block": {
+                "id": "4e22dbbe-865f-4c80-8c86-a13ce24aba45",
+                "opcode": "not",
+                "x": 1364,
+                "y": 20,
+                "inputs": {
+                  "condition": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "bd56f612-b574-43db-9ab3-a37e9a121cc5",
+                      "opcode": "equal",
+                      "x": 1352,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "858fdef1-8d7d-4c62-b287-cbd70364c956",
+                            "opcode": "get_list",
+                            "x": 1340,
+                            "y": 20,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "drop_target"
+                              }
+                            }
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "[]"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "body": {
+              "type": "BLOCK",
+              "block": {
+                "id": "4cde3d98-f9fb-40ee-a336-eebe6ee67039",
+                "opcode": "set_variable",
+                "x": 1028,
+                "y": 20,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "n"
+                  },
+                  "value": {
+                    "type": "NUMBER",
+                    "block": {
+                      "id": "4cd50f55-e345-4e70-bab5-8bab688c063b",
+                      "opcode": "subtract",
+                      "x": 1016,
+                      "y": 20,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "value": "0"
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "1"
+                        }
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "id": "4194c1de-db59-4c94-b7bc-412671db86d3",
+                  "opcode": "repeat",
+                  "x": 1328,
+                  "y": 20,
+                  "inputs": {
+                    "count": {
+                      "type": "NUMBER",
+                      "value": "8"
+                    },
+                    "body": {
+                      "type": "BLOCK",
+                      "block": {
+                        "id": "04aac3f0-bfce-4bf0-a25b-bd3ae67afd8e",
+                        "opcode": "set_variable",
+                        "x": 1064,
+                        "y": 20,
+                        "inputs": {
+                          "name": {
+                            "type": "TEXT",
+                            "value": "n"
+                          },
+                          "value": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "e46143f9-aded-4b59-8e6b-2b12243227d3",
+                              "opcode": "add",
+                              "x": 1052,
+                              "y": 20,
+                              "inputs": {
+                                "a": {
+                                  "type": "NUMBER",
+                                  "block": {
+                                    "id": "258cb674-f0f5-42da-946f-c006b97d0a6c",
+                                    "opcode": "get_variable",
+                                    "x": 1040,
+                                    "y": 20,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "n"
+                                      }
+                                    }
+                                  }
+                                },
+                                "b": {
+                                  "type": "NUMBER",
+                                  "value": "1"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "id": "e07be35e-d522-4d3c-9eed-aa697cc2f9ab",
+                          "opcode": "set_variable",
+                          "x": 1100,
+                          "y": 20,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "temp"
+                            },
+                            "value": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "8aa8e4c3-ebf3-481f-b585-8252e5dbb98e",
+                                "opcode": "get_list_value",
+                                "x": 1088,
+                                "y": 20,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "drop_target"
+                                  },
+                                  "key": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "eaec4d09-21f6-40bf-94a2-437d93691840",
+                                      "opcode": "get_variable",
+                                      "x": 1076,
+                                      "y": 20,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "n"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "id": "a79ed126-2208-4c1a-8714-b3a32840e571",
+                            "opcode": "if",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "condition": {
+                                "type": "BOOLEAN",
+                                "block": {
+                                  "id": "54f4cf1e-3ed5-4172-b649-ec11802c99be",
+                                  "opcode": "or",
+                                  "x": 1172,
+                                  "y": 20,
+                                  "inputs": {
+                                    "condition_a": {
+                                      "type": "BOOLEAN",
+                                      "block": {
+                                        "id": "1134b62e-dc16-44e3-b669-1edb2ea1728d",
+                                        "opcode": "equal",
+                                        "x": 1136,
+                                        "y": 20,
+                                        "inputs": {
+                                          "a": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "a8a1c8b9-d532-448a-86ed-0d7cd2f71694",
+                                              "opcode": "get_variable",
+                                              "x": 1124,
+                                              "y": 20,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "temp"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "b": {
+                                            "type": "NUMBER",
+                                            "value": "[]"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "condition_b": {
+                                      "type": "BOOLEAN",
+                                      "block": {
+                                        "id": "872a1df1-ac89-4993-b96f-63d0e7ce8ac3",
+                                        "opcode": "equal",
+                                        "x": 1160,
+                                        "y": 20,
+                                        "inputs": {
+                                          "a": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "4a3ddcde-b870-4d0b-a5a9-d5a9aab0342b",
+                                              "opcode": "get_variable",
+                                              "x": 1148,
+                                              "y": 20,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "temp"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "b": {
+                                            "type": "NUMBER",
+                                            "value": ""
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "body": {
+                                "type": "BLOCK",
+                                "block": {
+                                  "id": "979c7127-bedb-49ce-9387-64e897585058",
+                                  "opcode": "continue",
+                                  "x": 1112,
+                                  "y": 20,
+                                  "inputs": {}
+                                }
+                              }
+                            },
+                            "next": {
+                              "id": "570968d7-b8e0-44c1-8539-3df174e71046",
+                              "opcode": "add_value",
+                              "x": 1208,
+                              "y": 20,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "ignored_drops"
+                                },
+                                "value": {
+                                  "type": "TEXT",
+                                  "block": {
+                                    "id": "51db959f-f621-4a85-8693-8dcc4c534c52",
+                                    "opcode": "get_variable",
+                                    "x": 1196,
+                                    "y": 20,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "temp"
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "next": {
+                                "id": "88a419d8-5d9a-4856-bd6e-e1b4be4e2d16",
+                                "opcode": "if",
+                                "x": 1268,
+                                "y": 20,
+                                "inputs": {
+                                  "condition": {
+                                    "type": "BOOLEAN",
+                                    "block": {
+                                      "id": "a40dfe86-613e-4cad-9467-1f78fad9a86d",
+                                      "opcode": "contain_str",
+                                      "x": 1256,
+                                      "y": 20,
+                                      "inputs": {
+                                        "source": {
+                                          "type": "TEXT",
+                                          "block": {
+                                            "id": "3cd648f9-788f-42f6-a3bb-d8cf632636ce",
+                                            "opcode": "get_list",
+                                            "x": 1232,
+                                            "y": 20,
+                                            "inputs": {
+                                              "name": {
+                                                "type": "TEXT",
+                                                "value": "ignored_logs"
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "target": {
+                                          "type": "TEXT",
+                                          "block": {
+                                            "id": "b8c93301-7bc3-48df-991a-57727597486e",
+                                            "opcode": "get_variable",
+                                            "x": 1244,
+                                            "y": 20,
+                                            "inputs": {
+                                              "name": {
+                                                "type": "TEXT",
+                                                "value": "temp"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "body": {
+                                    "type": "BLOCK",
+                                    "block": {
+                                      "id": "a0b4737b-a012-4883-9f42-fe1f9a23df80",
+                                      "opcode": "continue",
+                                      "x": 1220,
+                                      "y": 20,
+                                      "inputs": {}
+                                    }
+                                  }
+                                },
+                                "next": {
+                                  "id": "27f889e9-93aa-46cc-b9a9-499ce80b9a1a",
+                                  "opcode": "move_to_blockpos",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "blockpos": {
+                                      "type": "LIST",
+                                      "block": {
+                                        "id": "97acffe9-1ffd-4f66-9996-b2ea9fd6e5d0",
+                                        "opcode": "get_list_value",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "name": {
+                                            "type": "TEXT",
+                                            "value": "drop_target"
+                                          },
+                                          "key": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "4b83111d-7baf-4d70-ae29-ab07973a7a64",
+                                              "opcode": "get_variable",
+                                              "x": 1424,
+                                              "y": 20,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "n"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "64cad9c6-a13e-4e98-a2b9-f7f171204682",
+      "opcode": "function_start",
+      "x": 1842,
+      "y": 127,
+      "inputs": {
+        "name": {
+          "type": "TEXT",
+          "value": "check_need_chest"
+        }
+      },
+      "next": {
+        "id": "daf4002e-4561-49ec-99d2-f69b3ce8fdb1",
+        "opcode": "set_variable",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "total_log_num"
+          },
+          "value": {
+            "type": "NUMBER",
+            "value": "0"
+          }
+        },
+        "next": {
+          "id": "eb681b07-7e07-449d-ba45-cf072a2e8891",
+          "opcode": "set_variable",
+          "x": 1820,
+          "y": 20,
+          "inputs": {
+            "name": {
+              "type": "TEXT",
+              "value": "t"
+            },
+            "value": {
+              "type": "NUMBER",
+              "block": {
+                "id": "e1c2cfc0-2851-40ce-96c8-e7fd75e7b3f5",
+                "opcode": "subtract",
+                "x": 1808,
+                "y": 20,
+                "inputs": {
+                  "a": {
+                    "type": "NUMBER",
+                    "value": "0"
+                  },
+                  "b": {
+                    "type": "NUMBER",
+                    "value": "1"
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "id": "eb6fcb07-17b2-4366-931c-4377c8283b64",
+            "opcode": "repeat",
+            "x": 1976,
+            "y": 20,
+            "inputs": {
+              "count": {
+                "type": "NUMBER",
+                "value": "9"
+              },
+              "body": {
+                "type": "BLOCK",
+                "block": {
+                  "id": "b469e3af-92c4-421d-b88b-ecf6b2087c4b",
+                  "opcode": "set_variable",
+                  "x": 1856,
+                  "y": 20,
+                  "inputs": {
+                    "name": {
+                      "type": "TEXT",
+                      "value": "t"
+                    },
+                    "value": {
+                      "type": "NUMBER",
+                      "block": {
+                        "id": "50d3576e-29e6-45d0-8934-0701a030032b",
+                        "opcode": "add",
+                        "x": 1844,
+                        "y": 20,
+                        "inputs": {
+                          "a": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "055012ad-1487-4d0b-829b-61c109a0c120",
+                              "opcode": "get_variable",
+                              "x": 1832,
+                              "y": 20,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "t"
+                                }
+                              }
+                            }
+                          },
+                          "b": {
+                            "type": "NUMBER",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "id": "3d7ca775-1b86-4096-a0fa-9469a63246af",
+                    "opcode": "if",
+                    "x": 1964,
+                    "y": 20,
+                    "inputs": {
+                      "condition": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "5e2bebf7-3e37-4aba-873a-d543f22b0f3b",
+                          "opcode": "is_in_tag",
+                          "x": 1952,
+                          "y": 20,
+                          "inputs": {
+                            "target": {
+                              "type": "TEXT",
+                              "block": {
+                                "id": "9f4c48e4-d2a9-43a4-8090-69d8f2199238",
+                                "opcode": "get_item_in_inventory",
+                                "x": 1940,
+                                "y": 20,
+                                "inputs": {
+                                  "slot": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "b788cd58-bdc0-4a4e-9fb9-ca98d3050ee4",
+                                      "opcode": "get_variable",
+                                      "x": 1928,
+                                      "y": 20,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "t"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "tag": {
+                              "type": "TEXT",
+                              "value": "logs"
+                            }
+                          }
+                        }
+                      },
+                      "body": {
+                        "type": "BLOCK",
+                        "block": {
+                          "id": "508affcc-b36b-4662-a65a-e71c8b95d700",
+                          "opcode": "set_variable",
+                          "x": 1916,
+                          "y": 20,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "total_log_num"
+                            },
+                            "value": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "b33216c9-d959-46a4-9afd-ea30cff2e3fc",
+                                "opcode": "add",
+                                "x": 1904,
+                                "y": 20,
+                                "inputs": {
+                                  "a": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "a7073bf1-0fdd-4df5-8b58-fca43cec80c6",
+                                      "opcode": "get_variable",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "total_log_num"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "b": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "48532d8d-7744-49f9-95a1-6ab1c7f0a9d8",
+                                      "opcode": "get_item_count_in_inventory",
+                                      "x": 1892,
+                                      "y": 20,
+                                      "inputs": {
+                                        "slot": {
+                                          "type": "NUMBER",
+                                          "block": {
+                                            "id": "44c9d4e6-68d7-4a3e-8ad0-d08821146493",
+                                            "opcode": "get_variable",
+                                            "x": 1880,
+                                            "y": 20,
+                                            "inputs": {
+                                              "name": {
+                                                "type": "TEXT",
+                                                "value": "t"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "next": {
+              "id": "2016add1-5e8a-4569-af5f-4530fc6b3695",
+              "opcode": "if",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "condition": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "869b8cce-2546-4921-8302-ddd951137344",
+                    "opcode": "greater_than_or_equal",
+                    "x": 2540,
+                    "y": 20,
+                    "inputs": {
+                      "a": {
+                        "type": "NUMBER",
+                        "block": {
+                          "id": "5f568a33-eaa3-44a5-b915-563c6439b2ab",
+                          "opcode": "get_variable",
+                          "x": 2528,
+                          "y": 20,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "total_log_num"
+                            }
+                          }
+                        }
+                      },
+                      "b": {
+                        "type": "NUMBER",
+                        "value": "64"
+                      }
+                    }
+                  }
+                },
+                "body": {
+                  "type": "BLOCK",
+                  "block": {
+                    "id": "10e65596-004b-44fd-a5c8-48ec39ffb66f",
+                    "opcode": "submit_background_goal",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "goal": {
+                        "type": "TEXT",
+                        "value": "put_to_chest"
+                      },
+                      "priority": {
+                        "type": "NUMBER",
+                        "value": "3"
+                      },
+                      "move_flag": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "6ebe9c14-0123-42ec-98c6-2cb925e5add9",
+                          "opcode": "true",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {}
+                        }
+                      },
+                      "look_flag": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "e37b9adc-d23b-42aa-b5da-df35a308e202",
+                          "opcode": "true",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {}
+                        }
+                      },
+                      "jump_flag": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "294e3361-e70d-49f9-8535-3b93dbd01d76",
+                          "opcode": "false",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

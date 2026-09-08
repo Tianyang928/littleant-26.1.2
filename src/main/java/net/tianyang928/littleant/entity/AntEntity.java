@@ -212,7 +212,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     }
 
     public void addBrainBlock(String opcode, int x, int y, UUID id) {
-        if (this.brainBlocks.size() < 256 && ModuleRegistry.contains(opcode)) {
+        if (this.brainBlocks.size() < 1024 && ModuleRegistry.contains(opcode)) {
             this.brainBlocks.put(id, new BrainBlock(opcode, x, y, id,
                     ModuleRegistry.createDefaultInputs(opcode), null, null));
         }

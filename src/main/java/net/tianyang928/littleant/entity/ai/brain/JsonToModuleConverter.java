@@ -17,8 +17,8 @@ public final class JsonToModuleConverter {
         for (JsonElement element : root.getAsJsonArray("blocks")) {
             parseChain(element, null, result, 0);
         }
-        if (result.size() > 256) {
-            throw new IllegalArgumentException("模块数量不能超过 256");
+        if (result.size() > 1024) {
+            throw new IllegalArgumentException("模块数量不能超过 1024");
         }
         return result;
     }
@@ -38,8 +38,8 @@ public final class JsonToModuleConverter {
         if (out.containsKey(id)) {
             return id;
         }
-        if (out.size() >= 256) {
-            throw new IllegalArgumentException("模块数量不能超过 256");
+        if (out.size() >= 1024) {
+            throw new IllegalArgumentException("模块数量不能超过 1024");
         }
         String opcode = required(json, "opcode");
         if (!ModuleRegistry.contains(opcode)) {

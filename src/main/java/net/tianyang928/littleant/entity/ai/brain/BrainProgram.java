@@ -11,7 +11,7 @@ public final class BrainProgram {
     private final LinkedHashMap<UUID, ProgramBlock> blocks = new LinkedHashMap<>();
     public Collection<ProgramBlock> blocks() { return blocks.values(); }
     public ProgramBlock get(UUID id) { return blocks.get(id); }
-    public void put(ProgramBlock block) { if (blocks.size() < 256) blocks.put(block.id(), block); }
+    public void put(ProgramBlock block) { if (blocks.size() < 1024) blocks.put(block.id(), block); }
     public void remove(UUID id) { blocks.remove(id); blocks.values().forEach(b -> b.disconnect(id)); }
     public Map<UUID, ProgramBlock> snapshot() { return Map.copyOf(blocks); }
     public UUID first() { return blocks.values().stream().filter(b -> b.parent() == null).findFirst().map(ProgramBlock::id).orElse(null); }

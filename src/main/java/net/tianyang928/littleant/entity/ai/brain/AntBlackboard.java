@@ -191,7 +191,7 @@ public final class AntBlackboard {
     }
 
     public String getY() {
-        return String.valueOf(Math.ceil(this.ant.getY()));
+        return String.valueOf((int)Math.ceil(this.ant.getY()));
     }
 
     public String getZ() {
@@ -199,7 +199,7 @@ public final class AntBlackboard {
     }
 
     public String getPos() {
-        return "[" + this.ant.position().x + "," + this.ant.position().y + "," + this.ant.position().z + "]";
+        return "[" + getX() + "," + getY() + "," + getZ() + "]";
     }
 
     public String findNearestBlock(String block) {

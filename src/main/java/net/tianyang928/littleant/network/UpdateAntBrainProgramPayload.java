@@ -78,7 +78,7 @@ public record UpdateAntBrainProgramPayload(int containerId, String program) impl
 
     private static LinkedHashMap<UUID, BrainBlock> decodeAndValidate(String source) {
         JsonArray array = JsonParser.parseString(source).getAsJsonArray();
-        if (array.size() > 256) throw new IllegalArgumentException("too many blocks");
+        if (array.size() > 1024) throw new IllegalArgumentException("too many blocks");
         LinkedHashMap<UUID, BrainBlock> result = new LinkedHashMap<>();
         for (JsonElement element : array) {
             JsonObject json = element.getAsJsonObject();
