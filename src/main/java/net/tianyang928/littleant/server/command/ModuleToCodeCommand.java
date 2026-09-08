@@ -34,12 +34,12 @@ public final class ModuleToCodeCommand {
                                 }
                             }
                             if (count == 0) {
-                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                 return 0;
                             }
                             int matched = count;
                             context.getSource().sendSuccess(
-                                    () -> Component.literal("已让 " + matched + " 个 Ant 从module转换为代码"), true);
+                                    () -> Component.translatable("command.littleant.module_to_code.assigned", matched), true);
                             return count;
                 })));
     }

@@ -58,15 +58,15 @@ public final class AntUseContainerCommand {
             }
         }
         if (count == 0) {
-            context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+            context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
             return 0;
         }
         int matched = count;
         context.getSource().sendSuccess(() -> {
             try {
-                return Component.literal(
-                        "已让 " + matched + " 个 Ant " + (operation == UseContainerGoal.Operation.PUT ? "放入" : "取出")
-                                + " " + amount + " 个 " + item.createItemStack(1).getDisplayName().getString() + "，容器槽位 " + slot);
+                return Component.translatable("command.littleant.container.success", matched,
+                        operation == UseContainerGoal.Operation.PUT ? Component.translatable("command.littleant.container.put") : Component.translatable("command.littleant.container.take"), amount,
+                        item.createItemStack(1).getDisplayName(), slot);
             } catch (CommandSyntaxException e) {
                 throw new RuntimeException(e);
             }

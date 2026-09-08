@@ -1,6 +1,8 @@
 package net.tianyang928.littleant.server.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceArgument;
 import net.minecraft.core.Holder;
@@ -24,7 +26,11 @@ public class AntFindEntityCommand {
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("entity", ResourceArgument.resource(buildContext, Registries.ENTITY_TYPE))
-                                        .executes(context -> {
+                                        .executes(context -> execute(context, 1))
+                                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 256))
+                                        .executes(context -> execute(context, IntegerArgumentType.getInteger(context, "count")))))));
+    }
+    private static int execute(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context, int requestedCount) throws CommandSyntaxException {
                                             String name = StringArgumentType.getString(context, "name");
                                             Holder.Reference<EntityType<?>> entityType = ResourceArgument.getSummonableEntityType(context, "entity");
                                             ServerLevel level = context.getSource().getLevel();
@@ -34,25 +40,21 @@ public class AntFindEntityCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    int result = ant.setFindEntityTarget(List.of(entityType.value()));
-                                                    if(result != -1) {
-                                                        entityIds.add(result);
-                                                    }
+                                                    entityIds.addAll(ant.setFindEntityListTarget(List.of(entityType.value()), requestedCount));
                                                     count++;
                                                 }
                                             }
                                             if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                                 return 0;
                                             }
                                             if (entityIds.isEmpty()) {
-                                                context.getSource().sendFailure(Component.literal("未找到目标实体" + entityType.value()));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.find.none", entityType.value()));
                                                 return 0;
                                             }
                                             int matched = count;
                                             context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 查找 " + entityType.value() + " id分别为" + entityIds), true);
+                                                    () -> Component.translatable("command.littleant.find.result", name, entityType.value().toString(), entityIds.toString()), true);
                                             return count;
-                                        }))));
     }
 }

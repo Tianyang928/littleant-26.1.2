@@ -84,11 +84,11 @@ public class AntCraftItemCommand {
             }
         }
         if (count == 0) {
-            context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+            context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
             return 0;
         }
         int matched = count;
-        context.getSource().sendSuccess(() -> Component.literal("已让 " + matched + " 个 Ant 执行合成调试"), true);
+        context.getSource().sendSuccess(() -> Component.translatable("command.littleant.craft.success", matched), true);
         return count;
     }
 }

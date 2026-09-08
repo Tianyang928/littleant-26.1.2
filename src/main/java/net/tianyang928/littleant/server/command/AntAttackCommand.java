@@ -33,19 +33,19 @@ public class AntAttackCommand {
                                                         ant.setMeleeAttackTarget(target);
                                                     }
                                                     else{
-                                                        context.getSource().sendFailure(Component.literal("未找到 ID 为 " + entityId + " 的实体"));
+                                                        context.getSource().sendFailure(Component.translatable("command.littleant.entity_not_found", entityId));
                                                         return 0;
                                                     }
                                                     count++;
                                                 }
                                             }
                                             if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                                 return 0;
                                             }
                                             int matched = count;
                                             context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 攻击 " + target.getName()), true);
+                                                    () -> Component.translatable("command.littleant.attack.success", matched, target.getName()), true);
                                             return count;
                                         }))));
     }

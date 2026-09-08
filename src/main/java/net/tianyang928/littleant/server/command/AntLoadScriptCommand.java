@@ -32,24 +32,24 @@ public final class AntLoadScriptCommand {
                                                 // 文件读取完成后在主线程执行
                                                 readModuleFile(Path.of(StringArgumentType.getString(context, "source"))).thenAccept(ant::runScript).exceptionally(error -> {
                                                     LittleAnt.LOGGER.error("Error processing module", error);
-                                                    context.getSource().sendFailure(Component.literal("脚本无效: " + error.getMessage()));
+                                                    context.getSource().sendFailure(Component.translatable("command.littleant.script.invalid", error.getMessage()));
                                                     return null;
                                                 });
 
-                                                context.getSource().sendSuccess(() -> Component.literal("脚本已执行"), true);
+                                                context.getSource().sendSuccess(() -> Component.translatable("command.littleant.script.started"), true);
                                             } catch (RuntimeException exception) {
-                                                context.getSource().sendFailure(Component.literal("脚本无效: " + exception.getMessage()));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.script.invalid", exception.getMessage()));
                                             }
                                             count++;
                                         }
                                     }
                                     if (count == 0) {
-                                        context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                        context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                         return 0;
                                     }
                                     int matched = count;
                                     context.getSource().sendSuccess(
-                                            () -> Component.literal("已让 " + matched + " 个 Ant 执行脚本"), true);
+                                            () -> Component.translatable("command.littleant.script.assigned", matched), true);
                                     return count;
                                 }))));
     }

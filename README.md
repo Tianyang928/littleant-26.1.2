@@ -22,7 +22,7 @@ Press `Shift + right-click` to open the Ant Entity's programming GUI.
 ## LittleAnt DSL
 
 The `/antloadscript` command and the in-game program editor also accept a small,
-Python-like DSL. It is compiled into the same Scratch module graph; it is not
+Python-like DSL. It is compiled into the module graph; it is not
 arbitrary Python and cannot import libraries or access the filesystem.
 
 ```python
@@ -33,9 +33,12 @@ def main():
     step_forward(1)
 ```
 
+## A Little Tip
+I highly recommand you use English instead of Chinese to program the Ant. Because some of the Chinese characters are relatively vague because of the screen resolution.
+
 ## Future Features
 
-- Add preset of Ant AI using those scratch-like modules.
+- Add more preset of Ant AI using those scratch-like modules.
 - Add more containers that the Ant can operate (anvil, enchanting table, for example).
 - Improve the programming GUI's appearance.
 - Add carrier that the Ant can use.

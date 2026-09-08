@@ -33,12 +33,12 @@ public class AntSetBlockCommand {
                                                 }
                                             }
                                             if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                                 return 0;
                                             }
                                             int matched = count;
                                             context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 放置 " + pos), true);
+                                                    () -> Component.translatable("command.littleant.set.success", matched, pos.toString()), true);
                                             return count;
                                         }))));
     }

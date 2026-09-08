@@ -223,7 +223,7 @@ public final class AntGoalScheduler {
     private void attach(Task task, Task parent) {
         if (parent != null) {
             parent.children.add(task);
-            LittleAnt.LOGGER.info("[AntGoalScheduler] attach task {} to parent {}", task.name, parent.name);
+            //LittleAnt.LOGGER.info("[AntGoalScheduler] attach task {} to parent {}", task.name, parent.name);
         }
     }
 
@@ -266,7 +266,7 @@ public final class AntGoalScheduler {
         }
         // Background children were spawned, not awaited. Once their owner finishes
         // they will also finish / re-parent to null parent.
-        LittleAnt.LOGGER.info("[AntGoalScheduler] finishTree: stop task {}", task.name);
+        //LittleAnt.LOGGER.info("[AntGoalScheduler] finishTree: stop task {}", task.name);
         for (Task child : List.copyOf(task.children)) {
             if (!child.foreground) {
                 child.parent = null;

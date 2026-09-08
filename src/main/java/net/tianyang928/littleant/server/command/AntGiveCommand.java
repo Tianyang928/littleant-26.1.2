@@ -40,12 +40,12 @@ public class AntGiveCommand {
                                                         }
                                                     }
                                                     if (antCount == 0) {
-                                                        context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                        context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                                         return 0;
                                                     }
                                                     int matched = antCount;
                                                     context.getSource().sendSuccess(
-                                                            () -> Component.literal("已给 " + matched + " 个 Ant " + itemStack.getDisplayName() + " " + itemCount + " 个"), true);
+                                                            () -> Component.translatable("command.littleant.give.success", matched, itemStack.getDisplayName(), itemCount), true);
                                                     return antCount;
                                                 })))));
     }

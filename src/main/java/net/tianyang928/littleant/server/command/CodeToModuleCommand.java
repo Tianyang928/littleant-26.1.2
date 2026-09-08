@@ -28,20 +28,20 @@ public final class CodeToModuleCommand {
                                             try {
                                                 var blocks = new JsonToModuleConverter().convert(JsonParser.parseString(StringArgumentType.getString(context, "source")).getAsJsonObject());
                                                 ant.replaceBrainBlocks(blocks);
-                                                context.getSource().sendSuccess(() -> Component.literal("已导入 " + blocks.size() + " 个模块"), true);
+                                                context.getSource().sendSuccess(() -> Component.translatable("command.littleant.code_to_module.success", blocks.size()), true);
                                             } catch (RuntimeException exception) {
-                                                context.getSource().sendFailure(Component.literal("代码无效: " + exception.getMessage()));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.code.invalid", exception.getMessage()));
                                             }
                                             count++;
                                         }
                                     }
                                     if (count == 0) {
-                                        context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                        context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                         return 0;
                                     }
                                     int matched = count;
                                     context.getSource().sendSuccess(
-                                            () -> Component.literal("已让 " + matched + " 个 Ant 从代码转换为模块"), true);
+                                            () -> Component.translatable("command.littleant.code_to_module.assigned", matched), true);
                                     return count;
                         }))));
     }

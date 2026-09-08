@@ -1,6 +1,7 @@
 package net.tianyang928.littleant.server.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
@@ -23,34 +24,34 @@ public class AntFindBlockCommand {
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("block", BlockStateArgument.block(buildContext))
-                                        .executes(context -> {
+                                        .executes(context -> execute(context, 1))
+                                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 256))
+                                        .executes(context -> execute(context, IntegerArgumentType.getInteger(context, "count")))))));
+    }
+
+    private static int execute(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context, int requestedCount) {
                                             String name = StringArgumentType.getString(context, "name");
                                             BlockInput blockInput = BlockStateArgument.getBlock(context, "block");
                                             ServerLevel level = context.getSource().getLevel();
 
                                             Block block = blockInput.getState().getBlock();
-                                            BlockPos resultPos = null;
                                             int count = 0;
                                             for (var entity : level.getEntities().getAll()) {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    resultPos = ant.setFindBlockTarget(List.of(block));
-                                                    if(resultPos!=null){
-                                                        BlockPos finalResultPos = resultPos;
-                                                        context.getSource().sendSuccess(() -> Component.literal(name + " 已找到 " + block.getName() + " 在 " + finalResultPos), true);
-                                                    }
+                                                    List<BlockPos> resultPos = ant.setFindBlockListTarget(List.of(block), requestedCount);
+                                                    if (!resultPos.isEmpty()) context.getSource().sendSuccess(() -> Component.translatable("command.littleant.find.result", name, block.getName(), resultPos.toString()), true);
                                                     count++;
                                                 }
                                             }
                                             if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                                 return 0;
                                             }
                                             int matched = count;
                                             context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 查找 " + block.getName()), true);
+                                                    () -> Component.translatable("command.littleant.find.assigned", matched, block.getName()), true);
                                             return count;
-                                        }))));
     }
 }

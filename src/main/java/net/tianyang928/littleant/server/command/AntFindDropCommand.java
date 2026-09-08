@@ -1,6 +1,7 @@
 package net.tianyang928.littleant.server.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.item.ItemArgument;
@@ -25,7 +26,11 @@ public class AntFindDropCommand {
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("item", ItemArgument.item(buildContext))
-                                        .executes(context -> {
+                                        .executes(context -> execute(context, 1))
+                                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 256))
+                                        .executes(context -> execute(context, IntegerArgumentType.getInteger(context, "count")))))));
+    }
+    private static int execute(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context, int requestedCount) throws CommandSyntaxException {
                                             String name = StringArgumentType.getString(context, "name");
                                             ItemInput itemInput = ItemArgument.getItem(context, "item");
                                             Item item = itemInput.item().value();
@@ -36,29 +41,26 @@ public class AntFindDropCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    net.minecraft.core.BlockPos result = ant.setFindDropTarget(List.of(item));
-                                                    if(result != null) positions.add(result);
+                                                    positions.addAll(ant.setFindDropListTarget(List.of(item), requestedCount));
                                                     count++;
                                                 }
                                             }
                                             if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                                 return 0;
                                             }
                                             if (positions.isEmpty()) {
-                                                context.getSource().sendFailure(Component.literal("附近未找到掉落物 " + itemInput.createItemStack(1).getDisplayName().getString()));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.find.none", itemInput.createItemStack(1).getDisplayName()));
                                                 return 0;
                                             }
-                                            int matched = count;
                                             context.getSource().sendSuccess(
                                                     () -> {
                                                         try {
-                                                            return Component.literal("已让 " + matched + " 个 Ant 查找掉落物 " + itemInput.createItemStack(1).getDisplayName().getString() + "，位置 " + positions);
+                                                            return Component.translatable("command.littleant.find.result", name, itemInput.createItemStack(1).getDisplayName(), positions.toString());
                                                         } catch (CommandSyntaxException e) {
                                                             throw new RuntimeException(e);
                                                         }
                                                     }, true);
                                             return count;
-                                        }))));
     }
 }

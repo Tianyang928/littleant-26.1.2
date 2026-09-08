@@ -1,6 +1,7 @@
 package net.tianyang928.littleant.server.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
@@ -24,14 +25,18 @@ public class AntFindBlockEntityCommand {
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("block_entity", BlockStateArgument.block(buildContext))
-                                        .executes(context -> {
+                                        .executes(context -> execute(context, 1))
+                                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 256))
+                                        .executes(context -> execute(context, IntegerArgumentType.getInteger(context, "count")))))));
+    }
+    private static int execute(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context, int requestedCount) {
                                             String name = StringArgumentType.getString(context, "name");
                                             BlockInput blockInput = BlockStateArgument.getBlock(context, "block_entity");
                                             ServerLevel level = context.getSource().getLevel();
 
                                             BlockState blockState = blockInput.getState();
                                             if(!blockState.hasBlockEntity()){
-                                                context.getSource().sendFailure(Component.literal("该块没有实体"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.find.invalid_block_entity"));
                                                 return 0;
                                             }
                                             List<BlockPos> resultPos = new ArrayList<>();
@@ -40,25 +45,21 @@ public class AntFindBlockEntityCommand {
                                                 if (entity instanceof AntEntity ant
                                                         && ant.hasCustomName()
                                                         && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                                                    BlockPos result = ant.setFindBlockEntityTarget(List.of(blockState.getBlock()));
-                                                    if(result != null) {
-                                                        resultPos.add(result);
-                                                    }
+                                                    resultPos.addAll(ant.setFindBlockEntityListTarget(List.of(blockState.getBlock()), requestedCount));
                                                     count++;
                                                 }
                                             }
                                             if (count == 0) {
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + name + "\" 的 Ant"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.ant_not_found", name));
                                                 return 0;
                                             }
                                             if(resultPos.isEmpty()){
-                                                context.getSource().sendFailure(Component.literal("未找到名为 \"" + blockState.getBlock().getName() + "\" 的方块实体"));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.find.none", blockState.getBlock().getName()));
                                                 return 0;
                                             }
                                             int matched = count;
                                             context.getSource().sendSuccess(
-                                                    () -> Component.literal("已让 " + matched + " 个 Ant 查找 " + blockState.getBlock().getName() + " 在 " + resultPos), true);
+                                                    () -> Component.translatable("command.littleant.find.result", name, blockState.getBlock().getName(), resultPos.toString()), true);
                                             return count;
-                                        }))));
     }
 }
