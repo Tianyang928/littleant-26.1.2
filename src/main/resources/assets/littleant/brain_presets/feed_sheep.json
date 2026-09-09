@@ -1,0 +1,1038 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "id": "21d01a2e-dd32-48bc-9b89-491a36252037",
+      "opcode": "ai_start",
+      "x": 165,
+      "y": 108,
+      "inputs": {},
+      "next": {
+        "id": "073392cf-5964-4043-8106-42f8456f6da6",
+        "opcode": "say",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "message": {
+            "type": "TEXT",
+            "value": "start feeding sheep"
+          }
+        },
+        "next": {
+          "id": "6f696492-6fc9-40a3-8134-8d09bef23edf",
+          "opcode": "new_list",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "name": {
+              "type": "TEXT",
+              "value": "fed_sheep"
+            }
+          },
+          "next": {
+            "id": "f4e11eb8-1cb0-497c-a6a6-da19b90c6f54",
+            "opcode": "set_variable",
+            "x": 0,
+            "y": 0,
+            "inputs": {
+              "name": {
+                "type": "TEXT",
+                "value": "last_feed_time"
+              },
+              "value": {
+                "type": "NUMBER",
+                "block": {
+                  "id": "77dfd051-1996-40f7-aa1e-b2e2d2370f90",
+                  "opcode": "time",
+                  "x": 0,
+                  "y": 0,
+                  "inputs": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "822df331-f75b-456e-af7c-850ce08c8d70",
+      "opcode": "tick_start",
+      "x": 668,
+      "y": 134,
+      "inputs": {},
+      "next": {
+        "id": "fec4d369-8a7a-44bc-832c-2d91f1f20398",
+        "opcode": "set_variable",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "i"
+          },
+          "value": {
+            "type": "NUMBER",
+            "value": "-1"
+          }
+        },
+        "next": {
+          "id": "a17a8728-70fc-445b-a108-90351961c6a1",
+          "opcode": "set_variable",
+          "x": 244,
+          "y": 170,
+          "inputs": {
+            "name": {
+              "type": "TEXT",
+              "value": "has_sheep_food"
+            },
+            "value": {
+              "type": "NUMBER",
+              "value": "false"
+            }
+          },
+          "next": {
+            "id": "8b87dcdb-988c-4743-bde2-aa87bf0d1492",
+            "opcode": "repeat",
+            "x": 244,
+            "y": 170,
+            "inputs": {
+              "count": {
+                "type": "NUMBER",
+                "value": "9"
+              },
+              "body": {
+                "type": "BLOCK",
+                "block": {
+                  "id": "aed781ff-86a4-4660-9def-6ee9737a7671",
+                  "opcode": "set_variable",
+                  "x": 0,
+                  "y": 0,
+                  "inputs": {
+                    "name": {
+                      "type": "TEXT",
+                      "value": "i"
+                    },
+                    "value": {
+                      "type": "NUMBER",
+                      "block": {
+                        "id": "45ec6ede-0283-4836-877a-423653428608",
+                        "opcode": "add",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "a": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "203205f1-6e10-49ec-b933-e2344697b4e3",
+                              "opcode": "get_variable",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "i"
+                                }
+                              }
+                            }
+                          },
+                          "b": {
+                            "type": "NUMBER",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "id": "6630f71c-ece9-4de0-8ec3-678c2eeaef51",
+                    "opcode": "if",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "condition": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "7942b6b3-9acf-48dc-83dd-fad510a28a3e",
+                          "opcode": "is_in_tag",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "target": {
+                              "type": "TEXT",
+                              "block": {
+                                "id": "1b15a606-aee7-438a-a30d-fa7a58049a9b",
+                                "opcode": "get_item_in_inventory",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "slot": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "682c74f4-ebd2-4093-bc26-b7dfbfed3ef5",
+                                      "opcode": "get_variable",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "i"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "tag": {
+                              "type": "TEXT",
+                              "value": "sheep_food"
+                            }
+                          }
+                        }
+                      },
+                      "body": {
+                        "type": "BLOCK",
+                        "block": {
+                          "id": "9cf9dfe0-589b-4008-88f6-3101f7debec0",
+                          "opcode": "switch_inventory_slot",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "slot": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "54095418-03e7-450f-b246-22ce5e98b02f",
+                                "opcode": "get_variable",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "i"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "id": "c6afa7db-f276-4025-9cd0-6e483fe40926",
+                            "opcode": "set_variable",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "has_sheep_food"
+                              },
+                              "value": {
+                                "type": "NUMBER",
+                                "value": "true"
+                              }
+                            },
+                            "next": {
+                              "id": "aa32c2aa-7429-4061-bdf2-e9584f860e79",
+                              "opcode": "break",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "next": {
+              "id": "302c13f6-a57e-47a6-bc7a-a8eac28d9a85",
+              "opcode": "if",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "condition": {
+                  "type": "BOOLEAN",
+                  "block": {
+                    "id": "fb60d346-d67d-44af-87a6-1798f6cbf291",
+                    "opcode": "and",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "condition_a": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "f7e904f5-6df1-48b4-b7eb-2e7149915a59",
+                          "opcode": "equal",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "a": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "02438bd6-2e84-4ae4-9d7a-403dc3facc95",
+                                "opcode": "get_variable",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "has_sheep_food"
+                                  }
+                                }
+                              }
+                            },
+                            "b": {
+                              "type": "NUMBER",
+                              "value": "true"
+                            }
+                          }
+                        }
+                      },
+                      "condition_b": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "3d7690be-5b44-4b76-9744-138c9295becd",
+                          "opcode": "not",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "condition": {
+                              "type": "BOOLEAN",
+                              "block": {
+                                "id": "6e37c2b3-1595-44fe-93b2-44e424498baf",
+                                "opcode": "already_has_goal",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "goal": {
+                                    "type": "TEXT",
+                                    "value": "feed_sheep"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "body": {
+                  "type": "BLOCK",
+                  "block": {
+                    "id": "afdac914-8770-45a8-b092-d9cba6e024b7",
+                    "opcode": "submit_background_goal",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "goal": {
+                        "type": "TEXT",
+                        "value": "feed_sheep"
+                      },
+                      "priority": {
+                        "type": "NUMBER",
+                        "value": "1"
+                      },
+                      "move_flag": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "33ac06eb-2042-42df-9711-7913dc5e1e36",
+                          "opcode": "true",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {}
+                        }
+                      },
+                      "look_flag": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "616eca9b-d226-43a2-be24-b708b21dff85",
+                          "opcode": "true",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {}
+                        }
+                      },
+                      "jump_flag": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "9eea0114-a327-4530-adb0-9e1d8b682404",
+                          "opcode": "false",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "id": "2427cf81-6711-4b6b-b2c4-040a30c00fb4",
+                "opcode": "if",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "condition": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "05f610ed-688c-44de-b7ad-ec7b66614a01",
+                      "opcode": "greater_than",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "dc66c2b6-e4e6-404e-804f-c593e91313b4",
+                            "opcode": "subtract",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "a": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "64a15026-8646-4b79-b6d5-da90414e77c7",
+                                  "opcode": "time",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {}
+                                }
+                              },
+                              "b": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "40ac0bc8-0655-4945-b283-1da7d8852e22",
+                                  "opcode": "get_variable",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "name": {
+                                      "type": "TEXT",
+                                      "value": "last_feed_time"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "6000"
+                        }
+                      }
+                    }
+                  },
+                  "body": {
+                    "type": "BLOCK",
+                    "block": {
+                      "id": "cd5dd606-8912-4374-a97c-cbb18791b759",
+                      "opcode": "set_variable",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "name": {
+                          "type": "TEXT",
+                          "value": "last_feed_time"
+                        },
+                        "value": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "79d5bc10-d392-4b08-8fb3-6fb962c2bd5a",
+                            "opcode": "time",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {}
+                          }
+                        }
+                      },
+                      "next": {
+                        "id": "119e155c-ac32-4b4b-bd99-6ab2cc539a60",
+                        "opcode": "clear_list",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "name": {
+                            "type": "TEXT",
+                            "value": "fed_sheep"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "5b025cfe-e3fb-4968-b4da-310a9292f32f",
+      "opcode": "receive_goal",
+      "x": 85,
+      "y": 276,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "feed_sheep"
+        }
+      },
+      "next": {
+        "id": "48e9589f-4171-4f7a-9aec-ed361e5daa24",
+        "opcode": "set_list_list",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "temp_sheep"
+          },
+          "list": {
+            "type": "LIST",
+            "block": {
+              "id": "0a2cce2b-18c4-4d29-b294-8a566052038a",
+              "opcode": "find_entity_list",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "entity": {
+                  "type": "TEXT",
+                  "value": "minecraft:sheep"
+                },
+                "count": {
+                  "type": "NUMBER",
+                  "value": "8"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "230309a8-127a-4f27-93d7-0e95d85a95b0",
+          "opcode": "set_variable",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "name": {
+              "type": "TEXT",
+              "value": "j"
+            },
+            "value": {
+              "type": "NUMBER",
+              "value": "-1"
+            }
+          },
+          "next": {
+            "id": "908a5854-1477-427c-b607-2392ebc3dffe",
+            "opcode": "set_variable",
+            "x": 0,
+            "y": 0,
+            "inputs": {
+              "name": {
+                "type": "TEXT",
+                "value": "total_ignore_num"
+              },
+              "value": {
+                "type": "NUMBER",
+                "value": "0"
+              }
+            },
+            "next": {
+              "id": "705a3630-57ef-4be4-a8e8-6fbd752fe283",
+              "opcode": "repeat",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "count": {
+                  "type": "NUMBER",
+                  "value": "8"
+                },
+                "body": {
+                  "type": "BLOCK",
+                  "block": {
+                    "id": "06a5958b-b4fe-4aed-a36f-0179fa0f26ec",
+                    "opcode": "set_variable",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "name": {
+                        "type": "TEXT",
+                        "value": "j"
+                      },
+                      "value": {
+                        "type": "NUMBER",
+                        "block": {
+                          "id": "90ccfc2b-738e-423b-9e01-af3e5c90dc32",
+                          "opcode": "add",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "a": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "0549e427-0682-4ebd-9741-813f629735ab",
+                                "opcode": "get_variable",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "j"
+                                  }
+                                }
+                              }
+                            },
+                            "b": {
+                              "type": "NUMBER",
+                              "value": "1"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "id": "23ccf8f7-86a0-4a70-9582-33ae724e58d6",
+                      "opcode": "if",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "condition": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "fd7f8cc2-8232-4953-bdfc-9bcba3067ad1",
+                            "opcode": "not",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "condition": {
+                                "type": "BOOLEAN",
+                                "block": {
+                                  "id": "73766b09-2141-4b1d-9a4d-5e1d0ea0e21c",
+                                  "opcode": "equal",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "a": {
+                                      "type": "NUMBER",
+                                      "value": ""
+                                    },
+                                    "b": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "76f08014-1000-41b3-a1d0-843e7b30c746",
+                                        "opcode": "get_list_value",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "name": {
+                                            "type": "TEXT",
+                                            "value": "temp_sheep"
+                                          },
+                                          "key": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "2731e71f-3b84-478d-bb02-3fce12a8ba4a",
+                                              "opcode": "get_variable",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "j"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "body": {
+                          "type": "BLOCK",
+                          "block": {
+                            "id": "a5cc6c59-72ff-48d5-ab53-76d8fb0eb1bd",
+                            "opcode": "if",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "condition": {
+                                "type": "BOOLEAN",
+                                "block": {
+                                  "id": "95d4a1e2-ef0b-4f0f-9b61-e222da26e029",
+                                  "opcode": "not",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "condition": {
+                                      "type": "BOOLEAN",
+                                      "block": {
+                                        "id": "54906b0c-1f18-44b5-b96e-bb1079f8e42c",
+                                        "opcode": "contain_str",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "source": {
+                                            "type": "TEXT",
+                                            "block": {
+                                              "id": "1816b499-9efa-439e-9e06-02e663c839bd",
+                                              "opcode": "get_list",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "fed_sheep"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "target": {
+                                            "type": "TEXT",
+                                            "block": {
+                                              "id": "3ff2b0e8-3189-48df-b72a-3f824cc025f5",
+                                              "opcode": "get_list_value",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "temp_sheep"
+                                                },
+                                                "key": {
+                                                  "type": "NUMBER",
+                                                  "block": {
+                                                    "id": "cac6658e-0bf4-4dfa-8190-dcec3f96d0fb",
+                                                    "opcode": "get_variable",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "name": {
+                                                        "type": "TEXT",
+                                                        "value": "j"
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "body": {
+                                "type": "BLOCK",
+                                "block": {
+                                  "id": "ce31c94e-5192-4047-aba0-ff593aafd50e",
+                                  "opcode": "submit_foreground_goal",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "goal": {
+                                      "type": "TEXT",
+                                      "block": {
+                                        "id": "b4082dad-1f42-498f-8fbb-dc02dab2c6a1",
+                                        "opcode": "interact_entity",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "target": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "8599f22b-1ece-42e4-8c4c-231c9be8dbb8",
+                                              "opcode": "get_list_value",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "temp_sheep"
+                                                },
+                                                "key": {
+                                                  "type": "NUMBER",
+                                                  "block": {
+                                                    "id": "04b8b676-e1b1-46c8-b75e-8b02a4ca95d7",
+                                                    "opcode": "get_variable",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "name": {
+                                                        "type": "TEXT",
+                                                        "value": "j"
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "held_item": {
+                                            "type": "BOOLEAN",
+                                            "block": {
+                                              "id": "1db061ed-e0e6-483e-8735-c5ba58e454ff",
+                                              "opcode": "true",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {}
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "id": "907a0b69-c07b-4b74-98e8-df845841e85b",
+                                    "opcode": "add_value",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "fed_sheep"
+                                      },
+                                      "value": {
+                                        "type": "TEXT",
+                                        "block": {
+                                          "id": "2d5ada24-3d6a-4e6c-9efc-75e665970282",
+                                          "opcode": "get_list_value",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "temp_sheep"
+                                            },
+                                            "key": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "4d3e1dd8-0164-439f-bd66-f41ded10295e",
+                                                "opcode": "get_variable",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "j"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "id": "1d2d1159-3479-45c7-8c98-6f75802a0a89",
+                                      "opcode": "continue",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {}
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "next": {
+                              "id": "9cbca1c4-0fe1-4559-a2af-6fc2e1f25e13",
+                              "opcode": "set_variable",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "total_ignore_num"
+                                },
+                                "value": {
+                                  "type": "NUMBER",
+                                  "block": {
+                                    "id": "5289abb0-2062-4b78-a5b4-8641d3b60a7c",
+                                    "opcode": "add",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "a": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "6bc027ba-abd1-439f-a031-81a469aa02b0",
+                                          "opcode": "get_variable",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "total_ignore_num"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "b": {
+                                        "type": "NUMBER",
+                                        "value": "1"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "id": "f796e1e4-7b7e-4ddb-a049-7f28e359dc10",
+                "opcode": "if",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "condition": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "4bf6a7f1-ed79-4688-bb45-d97ae5576d00",
+                      "opcode": "equal",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "ddeb4363-6f4b-4291-b7e7-0872eba6f7bc",
+                            "opcode": "get_variable",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "total_ignore_num"
+                              }
+                            }
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": "8"
+                        }
+                      }
+                    }
+                  },
+                  "body": {
+                    "type": "BLOCK",
+                    "block": {
+                      "id": "02edeafc-4cc3-4bd1-85ab-4bebb72e0b21",
+                      "opcode": "move_to_xyz",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "x": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "0d10d5c2-42c1-445f-8a9d-97a34e070bae",
+                            "opcode": "add",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "a": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "12b98811-9ca4-453f-85b9-b27e102e5d0c",
+                                  "opcode": "x",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {}
+                                }
+                              },
+                              "b": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "a8aee58e-f606-4e4e-baf8-1a7455aef3e8",
+                                  "opcode": "random",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "min": {
+                                      "type": "NUMBER",
+                                      "value": "-16"
+                                    },
+                                    "max": {
+                                      "type": "NUMBER",
+                                      "value": "16"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "y": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "9ddf4890-569f-4325-b038-e867b0cbb715",
+                            "opcode": "y",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {}
+                          }
+                        },
+                        "z": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "78b68f3b-c8fd-4140-bc03-9be7ee3bcd3f",
+                            "opcode": "add",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "a": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "7b28bfa9-cd4d-4211-8661-8b42bdc0921a",
+                                  "opcode": "z",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {}
+                                }
+                              },
+                              "b": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "705937c7-0722-4359-acb7-2da398c47878",
+                                  "opcode": "random",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "min": {
+                                      "type": "NUMBER",
+                                      "value": "-16"
+                                    },
+                                    "max": {
+                                      "type": "NUMBER",
+                                      "value": "16"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

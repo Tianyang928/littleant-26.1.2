@@ -52,3 +52,5 @@ editbox和加载文本同步问题 √
 获取聊天信息的模块和被聊天信息触发的模块
 
 去掉already_has_goal模块，增加goal_is_running, goal_is_queued, goal_is_finished模块
+
+ant丢出物品

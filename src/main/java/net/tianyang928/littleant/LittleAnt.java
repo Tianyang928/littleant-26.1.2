@@ -122,6 +122,7 @@ public class LittleAnt {
         CodeToModuleCommand.register(event);
         AntLoadScriptCommand.register(event);
         AntFindPheromoneCommand.register(event);
-        AntAttackCommand.register(event);
+        //TODO: I don't know why but attack command doesn work. Tell me if you find out why.
+        //AntAttackCommand.register(event);
     }
 }

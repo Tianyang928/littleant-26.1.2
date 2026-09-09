@@ -1,0 +1,2158 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "id": "eb36a35e-18e9-4c08-bb22-dbe348a6028a",
+      "opcode": "ai_start",
+      "x": 84,
+      "y": 73,
+      "inputs": {},
+      "next": {
+        "id": "02de6899-75bf-44f6-be35-f897a3f1670d",
+        "opcode": "say",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "message": {
+            "type": "TEXT",
+            "value": "start_ploughing"
+          }
+        },
+        "next": {
+          "id": "fe9141e3-52b6-4865-bc67-babc866ec0ec",
+          "opcode": "move_to_blockpos",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "blockpos": {
+              "type": "LIST",
+              "block": {
+                "id": "9ae0f1a1-50a8-4183-851c-d4a13f7543f3",
+                "opcode": "find_nearest_block",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "block": {
+                    "type": "TEXT",
+                    "value": "minecraft:water"
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "id": "edc80170-0d27-40b0-b89b-fb18405a64e9",
+            "opcode": "new_list",
+            "x": 0,
+            "y": 0,
+            "inputs": {
+              "name": {
+                "type": "TEXT",
+                "value": "water_positions"
+              }
+            },
+            "next": {
+              "id": "a2311d0b-a3bc-4312-8df9-3cafc0df2fcd",
+              "opcode": "submit_foreground_goal",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "goal": {
+                  "type": "TEXT",
+                  "value": "find_water"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "ecfc8123-fca3-4848-9792-5a95fd2b8e91",
+      "opcode": "tick_start",
+      "x": 749,
+      "y": 69,
+      "inputs": {},
+      "next": {
+        "id": "2767ee00-e7be-4b41-9633-3cd162049990",
+        "opcode": "if",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "condition": {
+            "type": "BOOLEAN",
+            "block": {
+              "id": "7477f4d8-e51f-4722-bbf9-3ca371edf045",
+              "opcode": "is_in_water",
+              "x": 0,
+              "y": 0,
+              "inputs": {}
+            }
+          },
+          "body": {
+            "type": "BLOCK",
+            "block": {
+              "id": "eabe797b-3d22-4be6-8b9f-ad15bcccf2ef",
+              "opcode": "submit_foreground_goal",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "goal": {
+                  "type": "TEXT",
+                  "block": {
+                    "id": "5b25258d-78c3-4e38-b7c3-81c299517d61",
+                    "opcode": "better_float",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "1be6083c-abe3-4afc-9176-94cfec4d49ce",
+      "opcode": "receive_goal",
+      "x": 457,
+      "y": 98,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "find_water"
+        }
+      },
+      "next": {
+        "id": "bc14d355-23bf-4a8d-92ee-5d2cd994b368",
+        "opcode": "set_list_list",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "water_temp"
+          },
+          "list": {
+            "type": "LIST",
+            "block": {
+              "id": "eeade6e3-0d60-4c07-ab39-f3701dabede1",
+              "opcode": "find_block_list",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "block": {
+                  "type": "TEXT",
+                  "value": "minecraft:water"
+                },
+                "count": {
+                  "type": "NUMBER",
+                  "value": "32"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "bb8926bd-56b7-4b9c-886b-ba7d29ba6154",
+          "opcode": "set_variable",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "name": {
+              "type": "TEXT",
+              "value": "j"
+            },
+            "value": {
+              "type": "NUMBER",
+              "value": "-1"
+            }
+          },
+          "next": {
+            "id": "942a20c1-9fea-4fc6-9543-2fe74e079d1b",
+            "opcode": "repeat",
+            "x": 0,
+            "y": 0,
+            "inputs": {
+              "count": {
+                "type": "NUMBER",
+                "value": "16"
+              },
+              "body": {
+                "type": "BLOCK",
+                "block": {
+                  "id": "0cda8576-35e2-486d-89d8-1b554aa42abf",
+                  "opcode": "set_variable",
+                  "x": 0,
+                  "y": 0,
+                  "inputs": {
+                    "name": {
+                      "type": "TEXT",
+                      "value": "j"
+                    },
+                    "value": {
+                      "type": "NUMBER",
+                      "block": {
+                        "id": "182f00ef-309c-4d34-a4e7-215dfa87d2c7",
+                        "opcode": "add",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "a": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "94fc620b-959a-4a2f-820b-d13b9e1af03f",
+                              "opcode": "get_variable",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "j"
+                                }
+                              }
+                            }
+                          },
+                          "b": {
+                            "type": "NUMBER",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "id": "0e801f1d-13cc-4931-b45c-f62c86547c3a",
+                    "opcode": "set_list_list",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "name": {
+                        "type": "TEXT",
+                        "value": "current_water"
+                      },
+                      "list": {
+                        "type": "LIST",
+                        "block": {
+                          "id": "02911335-3ae9-4b91-bdba-a24f6155127f",
+                          "opcode": "get_list_value",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "water_temp"
+                            },
+                            "key": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "500db460-f038-4348-83c3-ab513e5c35ce",
+                                "opcode": "get_variable",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "j"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "id": "1bc6f482-b4d8-49cf-b38c-4f019f2ae9a4",
+                      "opcode": "if",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "condition": {
+                          "type": "BOOLEAN",
+                          "block": {
+                            "id": "49888d31-163a-4c6b-89b4-dc1301855869",
+                            "opcode": "not",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "condition": {
+                                "type": "BOOLEAN",
+                                "block": {
+                                  "id": "326fa19c-33c6-4bb7-b370-ee3b1af4d869",
+                                  "opcode": "equal",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "a": {
+                                      "type": "NUMBER",
+                                      "value": "[]"
+                                    },
+                                    "b": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "46a0b967-70fe-49cb-a811-6dac44e93010",
+                                        "opcode": "get_list",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "name": {
+                                            "type": "TEXT",
+                                            "value": "current_water"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "body": {
+                          "type": "BLOCK",
+                          "block": {
+                            "id": "12208a50-44db-4dae-acb4-3973b36d0d2d",
+                            "opcode": "if",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "condition": {
+                                "type": "BOOLEAN",
+                                "block": {
+                                  "id": "9486649a-436f-4250-8c29-86fbb7fbf4a0",
+                                  "opcode": "and",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "condition_a": {
+                                      "type": "BOOLEAN",
+                                      "block": {
+                                        "id": "fb3f0692-7dec-4ed5-92b8-114a21132de2",
+                                        "opcode": "equal",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "a": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "e33e1d73-bf75-4096-b9d6-0cca6601c2fa",
+                                              "opcode": "get_block_xyz",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "x": {
+                                                  "type": "NUMBER",
+                                                  "block": {
+                                                    "id": "6d491847-127c-428e-9efd-2f53806c54a6",
+                                                    "opcode": "add",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "a": {
+                                                        "type": "NUMBER",
+                                                        "block": {
+                                                          "id": "c60286f5-b14f-403c-a5ee-3b4f21e29d26",
+                                                          "opcode": "get_list_value",
+                                                          "x": 0,
+                                                          "y": 0,
+                                                          "inputs": {
+                                                            "name": {
+                                                              "type": "TEXT",
+                                                              "value": "current_water"
+                                                            },
+                                                            "key": {
+                                                              "type": "NUMBER",
+                                                              "value": "0"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "b": {
+                                                        "type": "NUMBER",
+                                                        "value": "1"
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "y": {
+                                                  "type": "NUMBER",
+                                                  "block": {
+                                                    "id": "3ab8fedf-3c6d-4445-ba51-d347941496d3",
+                                                    "opcode": "get_list_value",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "name": {
+                                                        "type": "TEXT",
+                                                        "value": "current_water"
+                                                      },
+                                                      "key": {
+                                                        "type": "NUMBER",
+                                                        "value": "1"
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "z": {
+                                                  "type": "NUMBER",
+                                                  "block": {
+                                                    "id": "31f8e0da-6ae6-4e6f-930b-d5725affb5dd",
+                                                    "opcode": "add",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "a": {
+                                                        "type": "NUMBER",
+                                                        "block": {
+                                                          "id": "6e34e1cc-e29e-42e1-b392-7f6070d6829d",
+                                                          "opcode": "get_list_value",
+                                                          "x": 0,
+                                                          "y": 0,
+                                                          "inputs": {
+                                                            "name": {
+                                                              "type": "TEXT",
+                                                              "value": "current_water"
+                                                            },
+                                                            "key": {
+                                                              "type": "NUMBER",
+                                                              "value": "2"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "b": {
+                                                        "type": "NUMBER",
+                                                        "value": "0"
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "b": {
+                                            "type": "NUMBER",
+                                            "value": "minecraft:water"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "condition_b": {
+                                      "type": "BOOLEAN",
+                                      "block": {
+                                        "id": "475bce00-40c7-4444-8654-df3900398353",
+                                        "opcode": "and",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "condition_a": {
+                                            "type": "BOOLEAN",
+                                            "block": {
+                                              "id": "e43033e7-5251-423c-9adc-82e22e612c86",
+                                              "opcode": "equal",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "a": {
+                                                  "type": "NUMBER",
+                                                  "block": {
+                                                    "id": "3b1aef45-3109-482f-9130-3bddd0fa8b72",
+                                                    "opcode": "get_block_xyz",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "x": {
+                                                        "type": "NUMBER",
+                                                        "block": {
+                                                          "id": "9d3812dc-3ab2-4e05-9da4-46659bd60e04",
+                                                          "opcode": "add",
+                                                          "x": 0,
+                                                          "y": 0,
+                                                          "inputs": {
+                                                            "a": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "b755dfae-0dc8-46c2-85d9-9932f2f0a069",
+                                                                "opcode": "get_list_value",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "name": {
+                                                                    "type": "TEXT",
+                                                                    "value": "current_water"
+                                                                  },
+                                                                  "key": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "0"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "b": {
+                                                              "type": "NUMBER",
+                                                              "value": "0"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "y": {
+                                                        "type": "NUMBER",
+                                                        "block": {
+                                                          "id": "213cf27f-9723-4592-ae5f-70a2be553efd",
+                                                          "opcode": "get_list_value",
+                                                          "x": 0,
+                                                          "y": 0,
+                                                          "inputs": {
+                                                            "name": {
+                                                              "type": "TEXT",
+                                                              "value": "current_water"
+                                                            },
+                                                            "key": {
+                                                              "type": "NUMBER",
+                                                              "value": "1"
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "z": {
+                                                        "type": "NUMBER",
+                                                        "block": {
+                                                          "id": "f19e1728-32af-4441-9406-dfc011f72c40",
+                                                          "opcode": "add",
+                                                          "x": 0,
+                                                          "y": 0,
+                                                          "inputs": {
+                                                            "a": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "b423057f-d9f6-43fe-9fea-1117d35db8ba",
+                                                                "opcode": "get_list_value",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "name": {
+                                                                    "type": "TEXT",
+                                                                    "value": "current_water"
+                                                                  },
+                                                                  "key": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "2"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "b": {
+                                                              "type": "NUMBER",
+                                                              "value": "1"
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "b": {
+                                                  "type": "NUMBER",
+                                                  "value": "minecraft:water"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "condition_b": {
+                                            "type": "BOOLEAN",
+                                            "block": {
+                                              "id": "ab99a8b0-f0ba-44cf-a324-4cf01baa96aa",
+                                              "opcode": "and",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "condition_a": {
+                                                  "type": "BOOLEAN",
+                                                  "block": {
+                                                    "id": "8e487118-4908-4050-88d4-39bcee51355e",
+                                                    "opcode": "equal",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "a": {
+                                                        "type": "NUMBER",
+                                                        "block": {
+                                                          "id": "b11cff57-b695-4a39-bd78-1a2c8d602e6c",
+                                                          "opcode": "get_block_xyz",
+                                                          "x": 0,
+                                                          "y": 0,
+                                                          "inputs": {
+                                                            "x": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "554e373c-d015-4dd4-a83f-6941a7765254",
+                                                                "opcode": "add",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "a": {
+                                                                    "type": "NUMBER",
+                                                                    "block": {
+                                                                      "id": "6ce77578-7bbb-49d4-a742-685e156e1e7e",
+                                                                      "opcode": "get_list_value",
+                                                                      "x": 0,
+                                                                      "y": 0,
+                                                                      "inputs": {
+                                                                        "name": {
+                                                                          "type": "TEXT",
+                                                                          "value": "current_water"
+                                                                        },
+                                                                        "key": {
+                                                                          "type": "NUMBER",
+                                                                          "value": "0"
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "b": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "-1"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "y": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "53b2939d-1ed0-4d17-a2d8-33b3d19c14eb",
+                                                                "opcode": "get_list_value",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "name": {
+                                                                    "type": "TEXT",
+                                                                    "value": "current_water"
+                                                                  },
+                                                                  "key": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "1"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "z": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "ed95d31f-c425-4510-8203-f5ae20b9c2da",
+                                                                "opcode": "add",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "a": {
+                                                                    "type": "NUMBER",
+                                                                    "block": {
+                                                                      "id": "6e421a3f-cdba-4386-8615-4aaff46018b0",
+                                                                      "opcode": "get_list_value",
+                                                                      "x": 0,
+                                                                      "y": 0,
+                                                                      "inputs": {
+                                                                        "name": {
+                                                                          "type": "TEXT",
+                                                                          "value": "current_water"
+                                                                        },
+                                                                        "key": {
+                                                                          "type": "NUMBER",
+                                                                          "value": "2"
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "b": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "0"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "b": {
+                                                        "type": "NUMBER",
+                                                        "value": "minecraft:water"
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "condition_b": {
+                                                  "type": "BOOLEAN",
+                                                  "block": {
+                                                    "id": "bada17b8-23ca-4aa5-952e-47085a95db39",
+                                                    "opcode": "equal",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "a": {
+                                                        "type": "NUMBER",
+                                                        "block": {
+                                                          "id": "1b61fda8-6a6a-4e5b-bf09-cd0348d27995",
+                                                          "opcode": "get_block_xyz",
+                                                          "x": 0,
+                                                          "y": 0,
+                                                          "inputs": {
+                                                            "x": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "47f7a1dc-4fad-4457-ae01-25ad7a7c7b94",
+                                                                "opcode": "add",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "a": {
+                                                                    "type": "NUMBER",
+                                                                    "block": {
+                                                                      "id": "f1240354-3b09-4c0a-bfaf-5f59261ee370",
+                                                                      "opcode": "get_list_value",
+                                                                      "x": 0,
+                                                                      "y": 0,
+                                                                      "inputs": {
+                                                                        "name": {
+                                                                          "type": "TEXT",
+                                                                          "value": "current_water"
+                                                                        },
+                                                                        "key": {
+                                                                          "type": "NUMBER",
+                                                                          "value": "0"
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "b": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "0"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "y": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "b759b9f0-296c-4e61-8f69-5d45bf5744a5",
+                                                                "opcode": "get_list_value",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "name": {
+                                                                    "type": "TEXT",
+                                                                    "value": "current_water"
+                                                                  },
+                                                                  "key": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "1"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "z": {
+                                                              "type": "NUMBER",
+                                                              "block": {
+                                                                "id": "8cdd09d8-d657-4e5d-af57-2b0b93764fe1",
+                                                                "opcode": "add",
+                                                                "x": 0,
+                                                                "y": 0,
+                                                                "inputs": {
+                                                                  "a": {
+                                                                    "type": "NUMBER",
+                                                                    "block": {
+                                                                      "id": "199edd8d-14a9-410f-8b25-87fd6d02d248",
+                                                                      "opcode": "get_list_value",
+                                                                      "x": 0,
+                                                                      "y": 0,
+                                                                      "inputs": {
+                                                                        "name": {
+                                                                          "type": "TEXT",
+                                                                          "value": "current_water"
+                                                                        },
+                                                                        "key": {
+                                                                          "type": "NUMBER",
+                                                                          "value": "2"
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  "b": {
+                                                                    "type": "NUMBER",
+                                                                    "value": "-1"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      },
+                                                      "b": {
+                                                        "type": "NUMBER",
+                                                        "value": "minecraft:water"
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "body": {
+                                "type": "BLOCK",
+                                "block": {
+                                  "id": "c444ab67-bad7-48b4-93da-0a23383fc128",
+                                  "opcode": "continue",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {}
+                                }
+                              }
+                            },
+                            "next": {
+                              "id": "98e7d3ad-0ab6-497f-b5df-6668bc6d121e",
+                              "opcode": "add_value",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "water_positions"
+                                },
+                                "value": {
+                                  "type": "TEXT",
+                                  "block": {
+                                    "id": "37ace05e-ec6a-405f-b023-35bcb7a1362a",
+                                    "opcode": "get_list",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "current_water"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "next": {
+              "id": "9a8d7d34-7126-45cb-9878-10f7ec46b790",
+              "opcode": "set_variable",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "name": {
+                  "type": "TEXT",
+                  "value": "hoe_slot"
+                },
+                "value": {
+                  "type": "NUMBER",
+                  "value": "-1"
+                }
+              },
+              "next": {
+                "id": "6689feec-a46e-4bf8-b0db-4b7abdcee239",
+                "opcode": "set_variable",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "s"
+                  },
+                  "value": {
+                    "type": "NUMBER",
+                    "value": "-1"
+                  }
+                },
+                "next": {
+                  "id": "e533763d-bfd5-4079-b7f8-4e1a496863de",
+                  "opcode": "repeat",
+                  "x": 42,
+                  "y": 246,
+                  "inputs": {
+                    "count": {
+                      "type": "NUMBER",
+                      "value": "9"
+                    },
+                    "body": {
+                      "type": "BLOCK",
+                      "block": {
+                        "id": "53432ebd-3ab9-4235-9287-fde4da4a81ae",
+                        "opcode": "set_variable",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "name": {
+                            "type": "TEXT",
+                            "value": "s"
+                          },
+                          "value": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "e5aff322-7fc5-4040-9cea-7f392dd63a53",
+                              "opcode": "add",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "a": {
+                                  "type": "NUMBER",
+                                  "value": "1"
+                                },
+                                "b": {
+                                  "type": "NUMBER",
+                                  "block": {
+                                    "id": "3ef1830a-0686-4481-bbc7-7d6ddf1e865f",
+                                    "opcode": "get_variable",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "s"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "id": "c0c9ae45-4f1d-49e0-aec2-d8a7fd54f2ba",
+                          "opcode": "if",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "condition": {
+                              "type": "BOOLEAN",
+                              "block": {
+                                "id": "f0027be4-f43d-48ba-a4a0-03ca552288e3",
+                                "opcode": "is_in_tag",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "target": {
+                                    "type": "TEXT",
+                                    "block": {
+                                      "id": "8f653341-16fb-44ec-87df-b4c88ee47328",
+                                      "opcode": "get_item_in_inventory",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {
+                                        "slot": {
+                                          "type": "NUMBER",
+                                          "block": {
+                                            "id": "1c12eb02-0c61-4b6a-b8e4-11e853732ff9",
+                                            "opcode": "get_variable",
+                                            "x": 0,
+                                            "y": 0,
+                                            "inputs": {
+                                              "name": {
+                                                "type": "TEXT",
+                                                "value": "s"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "tag": {
+                                    "type": "TEXT",
+                                    "value": "hoes"
+                                  }
+                                }
+                              }
+                            },
+                            "body": {
+                              "type": "BLOCK",
+                              "block": {
+                                "id": "a3ab0753-f8f5-48ef-8281-656836835946",
+                                "opcode": "switch_inventory_slot",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "slot": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "20dcf807-c55a-4d5a-b7b3-92a16510c9ae",
+                                      "opcode": "get_variable",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "s"
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "next": {
+                                  "id": "c003475b-f31d-45c9-9f91-eb3f70490529",
+                                  "opcode": "set_variable",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "name": {
+                                      "type": "TEXT",
+                                      "value": "hoe_slot"
+                                    },
+                                    "value": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "d8b615ad-1059-4a9b-8033-648b20d80ba4",
+                                        "opcode": "get_variable",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "name": {
+                                            "type": "TEXT",
+                                            "value": "s"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "id": "dc185a1f-20c4-4b1c-a58f-028e54f57cf5",
+                                    "opcode": "break",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {}
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "id": "d70a2904-d325-4543-b146-260477e5f70c",
+                    "opcode": "if",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "condition": {
+                        "type": "BOOLEAN",
+                        "block": {
+                          "id": "34ad01f8-d0d3-4646-873d-d72ffd43a545",
+                          "opcode": "not",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "condition": {
+                              "type": "BOOLEAN",
+                              "block": {
+                                "id": "dcf1b349-f4a0-47ca-98ef-d4425b589076",
+                                "opcode": "equal",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "a": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "9240962b-7b66-42d3-a52b-1c7e10bd8193",
+                                      "opcode": "get_variable",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "hoe_slot"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "b": {
+                                    "type": "NUMBER",
+                                    "value": "-1"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "body": {
+                        "type": "BLOCK",
+                        "block": {
+                          "id": "2d4b8bae-814a-4e77-8d56-af17506246ef",
+                          "opcode": "submit_foreground_goal",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "goal": {
+                              "type": "TEXT",
+                              "value": "plant"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "c7c65b41-6bc7-4c16-bd7e-f20f7b115d04",
+      "opcode": "receive_goal",
+      "x": 46,
+      "y": 260,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "plant"
+        }
+      },
+      "next": {
+        "id": "8ba8e074-ad73-4e31-a1eb-75b6d3ceef84",
+        "opcode": "set_variable",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "m"
+          },
+          "value": {
+            "type": "NUMBER",
+            "value": "0"
+          }
+        },
+        "next": {
+          "id": "af844059-95db-4c21-a0e6-81bb98744b5d",
+          "opcode": "while",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "condition": {
+              "type": "BOOLEAN",
+              "block": {
+                "id": "90be7db2-caec-44fb-8e01-891b3bf6c8a5",
+                "opcode": "not",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "condition": {
+                    "type": "BOOLEAN",
+                    "block": {
+                      "id": "5ff3f642-ef0e-4cfd-b776-9edcf0fcba79",
+                      "opcode": "equal",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "a": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "c5be4d4c-c4a3-4641-a113-32adbf87fc65",
+                            "opcode": "get_list_value",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "water_positions"
+                              },
+                              "key": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "1f1f9a0f-8879-4680-bdc9-4b0e0671872d",
+                                  "opcode": "get_variable",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "name": {
+                                      "type": "TEXT",
+                                      "value": "m"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "b": {
+                          "type": "NUMBER",
+                          "value": ""
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "body": {
+              "type": "BLOCK",
+              "block": {
+                "id": "3bdcaf36-c030-4fae-b65a-eb22c4e6a71f",
+                "opcode": "set_list_list",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "current_water"
+                  },
+                  "list": {
+                    "type": "LIST",
+                    "block": {
+                      "id": "d8cb13cf-5de5-44f0-b519-a9ab94e6a632",
+                      "opcode": "get_list_value",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "name": {
+                          "type": "TEXT",
+                          "value": "water_positions"
+                        },
+                        "key": {
+                          "type": "NUMBER",
+                          "block": {
+                            "id": "bc971231-8033-4c6f-afab-3a99470ddaf0",
+                            "opcode": "get_variable",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "m"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "id": "612cebdf-a4c4-4552-8a97-26ac0cc5e843",
+                  "opcode": "set_variable",
+                  "x": 0,
+                  "y": 0,
+                  "inputs": {
+                    "name": {
+                      "type": "TEXT",
+                      "value": "m"
+                    },
+                    "value": {
+                      "type": "NUMBER",
+                      "block": {
+                        "id": "00080cb6-1ba6-40fb-835a-a62bb2804256",
+                        "opcode": "add",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "a": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "309fab20-f235-438e-9039-18c783fdcb40",
+                              "opcode": "get_variable",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "name": {
+                                  "type": "TEXT",
+                                  "value": "m"
+                                }
+                              }
+                            }
+                          },
+                          "b": {
+                            "type": "NUMBER",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "next": {
+                    "id": "5ff33b6a-eac8-4ded-ad79-3b438acb5300",
+                    "opcode": "move_to_blockpos",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "blockpos": {
+                        "type": "LIST",
+                        "block": {
+                          "id": "792da4c4-4f58-4183-aabe-4af14ffeb45f",
+                          "opcode": "get_list",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "current_water"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "id": "5df75144-f9bb-4639-a226-7b3b6af64279",
+                      "opcode": "submit_foreground_goal",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "goal": {
+                          "type": "TEXT",
+                          "value": "use_hoe"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "708368a6-ec6f-4b72-9584-72aed5e9ed44",
+      "opcode": "receive_goal",
+      "x": 63,
+      "y": 846,
+      "inputs": {
+        "goal": {
+          "type": "TEXT",
+          "value": "use_hoe"
+        }
+      },
+      "next": {
+        "id": "8ce648e3-bee4-459c-8bae-bc7678fa1c8d",
+        "opcode": "set_list_list",
+        "x": 0,
+        "y": 0,
+        "inputs": {
+          "name": {
+            "type": "TEXT",
+            "value": "dirt_positions"
+          },
+          "list": {
+            "type": "LIST",
+            "block": {
+              "id": "f64d8a9a-965d-446b-becf-13a6c9fe7d35",
+              "opcode": "find_block_list",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "block": {
+                  "type": "TEXT",
+                  "value": "dirt"
+                },
+                "count": {
+                  "type": "NUMBER",
+                  "value": "16"
+                }
+              }
+            }
+          }
+        },
+        "next": {
+          "id": "87685303-e51c-4558-a52d-1d673ae3dd5f",
+          "opcode": "set_list_list",
+          "x": 0,
+          "y": 0,
+          "inputs": {
+            "name": {
+              "type": "TEXT",
+              "value": "grass_positions"
+            },
+            "list": {
+              "type": "LIST",
+              "block": {
+                "id": "db3c0d34-4f2b-4797-87c2-3c29c05a1b01",
+                "opcode": "find_block_list",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "block": {
+                    "type": "TEXT",
+                    "value": "grass_blocks"
+                  },
+                  "count": {
+                    "type": "NUMBER",
+                    "value": "32"
+                  }
+                }
+              }
+            }
+          },
+          "next": {
+            "id": "65f0bb40-1843-4000-9865-3a186fd65c76",
+            "opcode": "set_variable",
+            "x": 0,
+            "y": 0,
+            "inputs": {
+              "name": {
+                "type": "TEXT",
+                "value": "x"
+              },
+              "value": {
+                "type": "NUMBER",
+                "value": "-1"
+              }
+            },
+            "next": {
+              "id": "eecf91cb-f524-4042-937a-aafa5d3eb842",
+              "opcode": "repeat",
+              "x": 0,
+              "y": 0,
+              "inputs": {
+                "count": {
+                  "type": "NUMBER",
+                  "value": "32"
+                },
+                "body": {
+                  "type": "BLOCK",
+                  "block": {
+                    "id": "65d2a85c-9fa6-4418-a0bc-656a7477233b",
+                    "opcode": "set_variable",
+                    "x": 0,
+                    "y": 0,
+                    "inputs": {
+                      "name": {
+                        "type": "TEXT",
+                        "value": "x"
+                      },
+                      "value": {
+                        "type": "NUMBER",
+                        "block": {
+                          "id": "f42c0ee5-e498-42bc-b6fe-4868bef5ad63",
+                          "opcode": "add",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "a": {
+                              "type": "NUMBER",
+                              "value": "1"
+                            },
+                            "b": {
+                              "type": "NUMBER",
+                              "block": {
+                                "id": "ffb5cf05-8aac-4d7b-b2c4-2d4b3ed12909",
+                                "opcode": "get_variable",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "x"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "id": "6f541544-f4e5-46af-b198-98f96a877757",
+                      "opcode": "set_list_list",
+                      "x": 0,
+                      "y": 0,
+                      "inputs": {
+                        "name": {
+                          "type": "TEXT",
+                          "value": "current_block"
+                        },
+                        "list": {
+                          "type": "LIST",
+                          "block": {
+                            "id": "9947f0b8-7245-4209-a1fb-5227b30d84f2",
+                            "opcode": "get_list_value",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "name": {
+                                "type": "TEXT",
+                                "value": "grass_positions"
+                              },
+                              "key": {
+                                "type": "NUMBER",
+                                "block": {
+                                  "id": "2feac70c-7ca4-4f1e-bc1d-9260c035e6e8",
+                                  "opcode": "get_variable",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "name": {
+                                      "type": "TEXT",
+                                      "value": "x"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "next": {
+                        "id": "09070fa9-7881-4ed5-bbcc-4069325e578e",
+                        "opcode": "if",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "condition": {
+                            "type": "BOOLEAN",
+                            "block": {
+                              "id": "c9cc5215-0fa7-443b-8116-05125e10dd86",
+                              "opcode": "or",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "condition_a": {
+                                  "type": "BOOLEAN",
+                                  "block": {
+                                    "id": "e9497769-0162-4ca3-a707-c5acc782c966",
+                                    "opcode": "equal",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "a": {
+                                        "type": "NUMBER",
+                                        "value": "minecraft:short_grass"
+                                      },
+                                      "b": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "7d0efb56-efd8-46da-bc46-dd8529ca4a4b",
+                                          "opcode": "get_block_xyz",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "x": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "1aa2f1ef-435f-485a-aaea-4351ed6347c7",
+                                                "opcode": "get_list_value",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "current_block"
+                                                  },
+                                                  "key": {
+                                                    "type": "NUMBER",
+                                                    "value": "0"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "y": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "e23eaacb-eb6d-46a5-8607-dd90471ffa5e",
+                                                "opcode": "add",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "a": {
+                                                    "type": "NUMBER",
+                                                    "block": {
+                                                      "id": "24d6fc38-8327-4739-88c8-70277977b7a0",
+                                                      "opcode": "get_list_value",
+                                                      "x": 0,
+                                                      "y": 0,
+                                                      "inputs": {
+                                                        "name": {
+                                                          "type": "TEXT",
+                                                          "value": "current_block"
+                                                        },
+                                                        "key": {
+                                                          "type": "NUMBER",
+                                                          "value": "1"
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "b": {
+                                                    "type": "NUMBER",
+                                                    "value": "1"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "z": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "4833b6fc-7d42-4cbe-b4f2-cfa24500e0b5",
+                                                "opcode": "get_list_value",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "current_block"
+                                                  },
+                                                  "key": {
+                                                    "type": "NUMBER",
+                                                    "value": "2"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "condition_b": {
+                                  "type": "BOOLEAN",
+                                  "block": {
+                                    "id": "19b064be-1ff7-4dd0-84e8-8e4c5e17ca2d",
+                                    "opcode": "equal",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "a": {
+                                        "type": "NUMBER",
+                                        "value": "minecraft:tall_grass"
+                                      },
+                                      "b": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "5e82601a-7112-45c4-96d6-dae8d1c69c8a",
+                                          "opcode": "get_block_xyz",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "x": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "43a2c94e-a11c-4887-bc37-ed8dc0caa475",
+                                                "opcode": "get_list_value",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "current_block"
+                                                  },
+                                                  "key": {
+                                                    "type": "NUMBER",
+                                                    "value": "0"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "y": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "2b26eb82-97cd-469c-9210-f8d840ff6aea",
+                                                "opcode": "add",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "a": {
+                                                    "type": "NUMBER",
+                                                    "block": {
+                                                      "id": "36fac03c-3531-4393-84e6-4ff6a8f28de9",
+                                                      "opcode": "get_list_value",
+                                                      "x": 0,
+                                                      "y": 0,
+                                                      "inputs": {
+                                                        "name": {
+                                                          "type": "TEXT",
+                                                          "value": "current_block"
+                                                        },
+                                                        "key": {
+                                                          "type": "NUMBER",
+                                                          "value": "1"
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "b": {
+                                                    "type": "NUMBER",
+                                                    "value": "1"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "z": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "699bfd88-fe13-406d-a3b4-b034dd03bd68",
+                                                "opcode": "get_list_value",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "current_block"
+                                                  },
+                                                  "key": {
+                                                    "type": "NUMBER",
+                                                    "value": "2"
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "body": {
+                            "type": "BLOCK",
+                            "block": {
+                              "id": "44ece519-065c-4e02-8dc9-91f9553db864",
+                              "opcode": "submit_foreground_goal",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "goal": {
+                                  "type": "TEXT",
+                                  "block": {
+                                    "id": "28515269-b14b-4293-bfc9-54d1f5fe1e48",
+                                    "opcode": "break_block_xyz",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "x": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "79e2f5e0-fbcf-4fc6-8a66-13c2fb041f2c",
+                                          "opcode": "get_list_value",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "current_block"
+                                            },
+                                            "key": {
+                                              "type": "NUMBER",
+                                              "value": "0"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "y": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "61f9b225-e25e-4c96-a64f-dfe41d2f149e",
+                                          "opcode": "add",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "a": {
+                                              "type": "NUMBER",
+                                              "block": {
+                                                "id": "861cb477-cf75-42a6-93b3-8f5a73011a93",
+                                                "opcode": "get_list_value",
+                                                "x": 0,
+                                                "y": 0,
+                                                "inputs": {
+                                                  "name": {
+                                                    "type": "TEXT",
+                                                    "value": "current_block"
+                                                  },
+                                                  "key": {
+                                                    "type": "NUMBER",
+                                                    "value": "1"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "b": {
+                                              "type": "NUMBER",
+                                              "value": "1"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "z": {
+                                        "type": "NUMBER",
+                                        "block": {
+                                          "id": "fd588382-ddf1-4000-a96f-db5cf25bd42f",
+                                          "opcode": "get_list_value",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "current_block"
+                                            },
+                                            "key": {
+                                              "type": "NUMBER",
+                                              "value": "2"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "id": "61acff33-0b5c-4d49-9499-d05931601ea5",
+                          "opcode": "submit_foreground_goal",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "goal": {
+                              "type": "TEXT",
+                              "block": {
+                                "id": "1901764c-ca5f-410c-979c-6874ac812b7e",
+                                "opcode": "use_block_blockpos",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "blockpos": {
+                                    "type": "LIST",
+                                    "block": {
+                                      "id": "3f372787-9a17-41c2-ae6d-a5b4dbe1c814",
+                                      "opcode": "get_list",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "current_block"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "face": {
+                                    "type": "TEXT",
+                                    "value": "up"
+                                  },
+                                  "held_item": {
+                                    "type": "BOOLEAN",
+                                    "block": {
+                                      "id": "b4568d90-ef84-4fba-bab7-f63a64181a89",
+                                      "opcode": "true",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {}
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "next": {
+                "id": "0c53041b-52a7-43f1-a5d1-b374dea2f2de",
+                "opcode": "set_variable",
+                "x": 0,
+                "y": 0,
+                "inputs": {
+                  "name": {
+                    "type": "TEXT",
+                    "value": "x"
+                  },
+                  "value": {
+                    "type": "NUMBER",
+                    "value": "-1"
+                  }
+                },
+                "next": {
+                  "id": "90f69aaa-4531-46e9-8ce4-77f08c6eb655",
+                  "opcode": "repeat",
+                  "x": 0,
+                  "y": 0,
+                  "inputs": {
+                    "count": {
+                      "type": "NUMBER",
+                      "value": "16"
+                    },
+                    "body": {
+                      "type": "BLOCK",
+                      "block": {
+                        "id": "804b9972-8d8d-4e8a-8622-4d216be9ad1a",
+                        "opcode": "set_variable",
+                        "x": 0,
+                        "y": 0,
+                        "inputs": {
+                          "name": {
+                            "type": "TEXT",
+                            "value": "x"
+                          },
+                          "value": {
+                            "type": "NUMBER",
+                            "block": {
+                              "id": "521c472c-d618-4a97-9822-fef86c3f2a00",
+                              "opcode": "add",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "a": {
+                                  "type": "NUMBER",
+                                  "value": "1"
+                                },
+                                "b": {
+                                  "type": "NUMBER",
+                                  "block": {
+                                    "id": "af3e36cc-390f-4fd3-81ea-32c290025bfe",
+                                    "opcode": "get_variable",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "name": {
+                                        "type": "TEXT",
+                                        "value": "x"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "next": {
+                          "id": "cc955ec4-bc94-41d6-91fd-4c014baa99f3",
+                          "opcode": "set_list_list",
+                          "x": 0,
+                          "y": 0,
+                          "inputs": {
+                            "name": {
+                              "type": "TEXT",
+                              "value": "current_block"
+                            },
+                            "list": {
+                              "type": "LIST",
+                              "block": {
+                                "id": "49338d76-e455-491f-850d-0a7bed4b93fa",
+                                "opcode": "get_list_value",
+                                "x": 0,
+                                "y": 0,
+                                "inputs": {
+                                  "name": {
+                                    "type": "TEXT",
+                                    "value": "dirt_positions"
+                                  },
+                                  "key": {
+                                    "type": "NUMBER",
+                                    "block": {
+                                      "id": "20605bfe-1e11-472e-bfb6-6db755eb6214",
+                                      "opcode": "get_variable",
+                                      "x": 0,
+                                      "y": 0,
+                                      "inputs": {
+                                        "name": {
+                                          "type": "TEXT",
+                                          "value": "x"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "id": "a9cdb18d-e41f-41f2-9cca-b4a18bcbf606",
+                            "opcode": "if",
+                            "x": 0,
+                            "y": 0,
+                            "inputs": {
+                              "condition": {
+                                "type": "BOOLEAN",
+                                "block": {
+                                  "id": "865428b0-15d1-44e0-a314-584ac1c8252a",
+                                  "opcode": "equal",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {
+                                    "a": {
+                                      "type": "NUMBER",
+                                      "value": "minecraft:water"
+                                    },
+                                    "b": {
+                                      "type": "NUMBER",
+                                      "block": {
+                                        "id": "dbf667d7-5190-4e8a-a04c-6d35134ce428",
+                                        "opcode": "get_block_xyz",
+                                        "x": 0,
+                                        "y": 0,
+                                        "inputs": {
+                                          "x": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "e151aa64-2630-4c4c-a059-16584a6a074e",
+                                              "opcode": "get_list_value",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "current_block"
+                                                },
+                                                "key": {
+                                                  "type": "NUMBER",
+                                                  "value": "0"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "y": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "320fbcbf-6331-4208-a757-525e68d699e4",
+                                              "opcode": "add",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "a": {
+                                                  "type": "NUMBER",
+                                                  "block": {
+                                                    "id": "2a168a74-fef5-4953-b62b-0e8918403a1e",
+                                                    "opcode": "get_list_value",
+                                                    "x": 0,
+                                                    "y": 0,
+                                                    "inputs": {
+                                                      "name": {
+                                                        "type": "TEXT",
+                                                        "value": "current_block"
+                                                      },
+                                                      "key": {
+                                                        "type": "NUMBER",
+                                                        "value": "1"
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                                "b": {
+                                                  "type": "NUMBER",
+                                                  "value": "1"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "z": {
+                                            "type": "NUMBER",
+                                            "block": {
+                                              "id": "d8384741-99e4-4cf2-b7b6-538d432c2477",
+                                              "opcode": "get_list_value",
+                                              "x": 0,
+                                              "y": 0,
+                                              "inputs": {
+                                                "name": {
+                                                  "type": "TEXT",
+                                                  "value": "current_block"
+                                                },
+                                                "key": {
+                                                  "type": "NUMBER",
+                                                  "value": "2"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "body": {
+                                "type": "BLOCK",
+                                "block": {
+                                  "id": "fbeff6ae-6958-4dd9-980f-c31869486dca",
+                                  "opcode": "continue",
+                                  "x": 0,
+                                  "y": 0,
+                                  "inputs": {}
+                                }
+                              }
+                            },
+                            "next": {
+                              "id": "085fe9aa-19cb-4dea-a168-a76718962616",
+                              "opcode": "submit_foreground_goal",
+                              "x": 0,
+                              "y": 0,
+                              "inputs": {
+                                "goal": {
+                                  "type": "TEXT",
+                                  "block": {
+                                    "id": "d614cbe0-829b-4be6-8476-6968901ec2b7",
+                                    "opcode": "use_block_blockpos",
+                                    "x": 0,
+                                    "y": 0,
+                                    "inputs": {
+                                      "blockpos": {
+                                        "type": "LIST",
+                                        "block": {
+                                          "id": "98391ec3-73e4-4ee3-b6e6-dec23e2d672a",
+                                          "opcode": "get_list",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {
+                                            "name": {
+                                              "type": "TEXT",
+                                              "value": "current_block"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "face": {
+                                        "type": "TEXT",
+                                        "value": "up"
+                                      },
+                                      "held_item": {
+                                        "type": "BOOLEAN",
+                                        "block": {
+                                          "id": "a9fccfe6-5730-4ed9-bd10-8eab036d7a4b",
+                                          "opcode": "true",
+                                          "x": 0,
+                                          "y": 0,
+                                          "inputs": {}
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

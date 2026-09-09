@@ -90,6 +90,7 @@ public final class AntBlackboard {
                             if(blockEntity != null) {
                                 blockEntity.getPheromoneList().put(pheromone, 1);
                             }
+                            return;
                         }
                     }
                 }

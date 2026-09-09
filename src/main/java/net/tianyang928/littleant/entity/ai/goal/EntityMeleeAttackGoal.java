@@ -10,7 +10,8 @@ public final class EntityMeleeAttackGoal extends MeleeAttackGoal {
     private LivingEntity target;
     public EntityMeleeAttackGoal(AntEntity ant, LivingEntity target, boolean follow) {
         super(ant, ant.speedModifier,follow);
-        this.target = target;
+        this.target = null;
+        this.setTarget(target);
     }
     @Override public boolean canUse() {
         if (target == null || !target.isAlive()) return false;
@@ -18,7 +19,28 @@ public final class EntityMeleeAttackGoal extends MeleeAttackGoal {
         return super.canUse();
     }
 
+    @Override public boolean canContinueToUse() {
+        if (target == null || !target.isAlive()) return false;
+        mob.setTarget(target);
+        return super.canContinueToUse();
+    }
+
+    @Override public void tick() {
+        if (target != null && target.isAlive()) mob.setTarget(target);
+        super.tick();
+    }
+
     public void setTarget(LivingEntity target) {
+        LivingEntity previous = this.target;
         this.target = target;
+        // Keep MeleeAttackGoal's Mob target in sync when the goal is reused.
+        // The scheduler normally does this in canUse() before registering a
+        // newly-created goal, while command-driven attacks update an already
+        // registered goal directly.
+        if (target != null && target.isAlive()) {
+            mob.setTarget(target);
+        } else if (mob.getTarget() == previous) {
+            mob.setTarget(null);
+        }
     }
 }
