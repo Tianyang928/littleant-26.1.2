@@ -10,6 +10,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.WorldlyContainerHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -40,6 +41,19 @@ public final class AntBlackboard {
 
     public void scriptSwitchInventorySlot(int slot) {
         ant.setSelectedSlot(slot);
+    }
+
+    public int getSelectedSlot() { return ant.getSelectedSlot(); }
+
+    /** Swings the main hand and drops the complete selected stack as behaviour. */
+    public void scriptDropSelectedItem() {
+        ItemStack stack = ant.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (stack.isEmpty() || ant.level().isClientSide()) return;
+        ant.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+        ant.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        // LivingEntity.drop(..., thrownFromHand=true) uses the same view-based
+        // velocity, pickup delay, and thrower metadata as a player toss.
+        ant.drop(stack, false, true);
     }
 
     public void scriptJump() {

@@ -273,6 +273,7 @@ public final class AntScriptInterpreter {
                     break;
                 }
             }
+            case "drop_selected_item" -> blackboard.scriptDropSelectedItem();
             case "jump" -> {
                 try {
                     blackboard.scriptJump();
@@ -737,6 +738,7 @@ public final class AntScriptInterpreter {
                     return "";
                 }
             }
+            case "get_selected_slot" -> { return String.valueOf(blackboard.getSelectedSlot()); }
             case "get_item_count_in_container_xyz" -> {
                 try {
                     double slot = Double.parseDouble(inputNumber(block, "slot", "0", blocks, active));

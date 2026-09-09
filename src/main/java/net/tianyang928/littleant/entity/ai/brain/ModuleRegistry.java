@@ -40,6 +40,7 @@ public final class ModuleRegistry {
         add("rotate", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("angle", ValueType.NUMBER, "45")),List.of("rotate","()"));
         add("say", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("message", ValueType.TEXT, "")),List.of("say","()"));
         add("switch_inventory_slot","behavior",BlockShape.COMMAND, List.of(new InputDefinition("slot", ValueType.NUMBER, "0")),List.of("switch_inventory_slot","()"));
+        add("drop_selected_item", "behavior", BlockShape.COMMAND, List.of(), List.of("drop_selected_item"));
         add("jump", "behavior", BlockShape.COMMAND, List.of(),List.of("jump"));
         add("set_run", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("run", ValueType.BOOLEAN, "")),List.of("set_run","<>"));
         add("set_crouching", "behavior", BlockShape.COMMAND, List.of(new InputDefinition("crouching", ValueType.BOOLEAN, "")),List.of("set_crouching","<>"));
@@ -119,6 +120,7 @@ public final class ModuleRegistry {
         add("has_item_in_inventory","sense", BlockShape.BOOLEAN, List.of(new InputDefinition("item", ValueType.TEXT, "minecraft:stone")),List.of("has_item_in_inventory","()"));
         add("get_item_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_in_inventory","()"));
         add("get_item_count_in_inventory","sense", BlockShape.REPORTER, List.of(new InputDefinition("slot", ValueType.NUMBER, "0", true)),List.of("get_item_count_in_inventory","()"));
+        add("get_selected_slot", "sense", BlockShape.REPORTER, List.of(), List.of("get_selected_slot"));
         add("time","sense", BlockShape.REPORTER, List.of(),List.of("time"));
         add("is_hurt","sense", BlockShape.BOOLEAN, List.of(),List.of("is_hurt"));
         add("is_on_fire","sense", BlockShape.BOOLEAN, List.of(),List.of("is_on_fire"));
@@ -227,7 +229,7 @@ public final class ModuleRegistry {
         if (definition.shape() == BlockShape.BOOLEAN) return ValueType.BOOLEAN;
         if (definition.shape() != BlockShape.REPORTER) return ValueType.BLOCK;
         return switch (opcode) {
-            case "health", "food_level", "x", "y", "z", "distance_to_xyz", "distance_to_blockpos", "time",
+            case "health", "food_level", "x", "y", "z", "distance_to_xyz", "distance_to_blockpos", "time", "get_selected_slot",
                     "add", "subtract", "multiply", "divide", "mod", "absolute", "random" -> ValueType.NUMBER;
             case "pos", "find_nearest_block", "find_nearest_block_entity", "find_nearest_pheromone", "find_nearest_drop",
                     "find_block_list", "find_entity_list", "find_block_entity_list", "find_pheromone_list", "find_drop_list",

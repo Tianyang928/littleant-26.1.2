@@ -25,6 +25,7 @@ import java.util.*;
 /** Registry-driven visual editor with graph-aware dragging, snapping and editable literal inputs. */
 public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgramMenu> {
     private static final float TEXT_SCALE = 0.75f;
+    private static final int MAX_UNDO_STEPS = 50;
     private static final int SIDEBAR_WIDTH=66, PALETTE_WIDTH=198, HEADER_HEIGHT=28, PALETTE_HEADER_HEIGHT=34, CANVAS_TOP=58, LIST_GAP=8;
     private static final int STACK_SNAP_DISTANCE=18, INPUT_SNAP_DISTANCE=18;
     private static final Map<String,List<BlockDefinition>> MODULES_BY_CATEGORY=ModuleRegistry.byCategory();
@@ -34,7 +35,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private String draggingOpcode; private UUID draggingId; private boolean draggingFromPalette;
     private String selectedOpcode; private UUID selectedId; private boolean selectedCopied = false;
     private final LinkedHashMap<UUID,BrainBlock> placedBlocks=new LinkedHashMap<>();
-    private final Deque<DeleteUndo> deleteUndoHistory = new ArrayDeque<>();
+    private final Deque<LinkedHashMap<UUID, BrainBlock>> undoHistory = new ArrayDeque<>();
     private LinkedHashMap<UUID, BrainBlock> beforeDragSnapshot;
     private final List<PaletteEntry> paletteEntries=new ArrayList<>();
     private final LinkedHashMap<UUID,BlockRenderLayout> canvasLayouts=new LinkedHashMap<>();
@@ -476,6 +477,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             }
             PaletteEntry pe = paletteEntryAt(x, y);
             if (pe != null) {
+                beforeDragSnapshot = snapshotProgram();
                 draggingOpcode = pe.definition().opcode();
                 selectedOpcode = draggingOpcode;
                 draggingId = null;
@@ -502,6 +504,10 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         LayoutHit hit = canvasBlockAt(x, y);
         if (hit != null) {
             beforeDragSnapshot = snapshotProgram();
+            // Move the dragged root to the end of insertion order so it is
+            // rendered above previously-created modules.
+            BrainBlock dragged = placedBlocks.remove(hit.id());
+            if (dragged != null) placedBlocks.put(hit.id(), dragged);
             draggingId = hit.id();
             selectedId = draggingId;
             draggingOpcode = placedBlocks.get(hit.id()).opcode();
@@ -555,6 +561,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             inputBoxes.clear();
             placedBlocks.putAll(blocks);
             savedSnapshotHashCode = aggregateHashCode(placedBlocks);
+            if (beforeDragSnapshot != null && !beforeDragSnapshot.equals(placedBlocks)) pushUndo(beforeDragSnapshot);
             sendProgram();
             closeDialog();
         })).exceptionally(error -> {
@@ -655,11 +662,12 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             else {
                 setBlockPosition(draggingId, Math.max(-canvasScrollX, dragX - canvasLeft() - canvasScrollX), Math.max(-canvasScrollY, dragY - HEADER_HEIGHT - canvasScrollY), null);
             }
+            if (beforeDragSnapshot != null && !beforeDragSnapshot.equals(placedBlocks)) pushUndo(beforeDragSnapshot);
             sendProgram();
             beforeDragSnapshot = null;
         } else if (!draggingFromPalette && draggingId != null) {
             for (UUID id : ownedIds(draggingId)) placedBlocks.remove(id);
-            recordDelete(beforeDragSnapshot);
+            if (beforeDragSnapshot != null && !beforeDragSnapshot.equals(placedBlocks)) pushUndo(beforeDragSnapshot);
             sendProgram();
         }
         draggingOpcode = null;
@@ -684,8 +692,9 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
 
         if (e.key() == 261 && selectedId != null) {
+            if (beforeDragSnapshot == null) beforeDragSnapshot = snapshotProgram();
             for (UUID id : ownedIds(selectedId)) placedBlocks.remove(id);
-            recordDelete(beforeDragSnapshot);
+            if (beforeDragSnapshot != null && !beforeDragSnapshot.equals(placedBlocks)) pushUndo(beforeDragSnapshot);
             sendProgram();
             draggingOpcode = null;
             draggingId = null;
@@ -785,26 +794,17 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         return new LinkedHashMap<>(placedBlocks);
     }
 
-    private void recordDelete(LinkedHashMap<UUID, BrainBlock> beforeDelete) {
-        if (beforeDelete == null) return;
-        LinkedHashMap<UUID, BrainBlock> removed = new LinkedHashMap<>();
-        LinkedHashMap<UUID, ChangedBlock> changed = new LinkedHashMap<>();
-        for (BrainBlock before : beforeDelete.values()) {
-            BrainBlock after = placedBlocks.get(before.id());
-            if (after == null) {
-                removed.put(before.id(), before);
-            } else if (!before.equals(after)) {
-                changed.put(before.id(), new ChangedBlock(before, after));
-            }
-        }
-        if (!removed.isEmpty()) deleteUndoHistory.push(new DeleteUndo(removed, changed));
+    private void pushUndo(LinkedHashMap<UUID, BrainBlock> snapshot) {
+        if (snapshot == null) return;
+        undoHistory.push(snapshot);
+        while (undoHistory.size() > MAX_UNDO_STEPS) undoHistory.removeLast();
     }
 
     private void undoLastDelete() {
-        if (deleteUndoHistory.isEmpty()) return;
-        DeleteUndo undo = deleteUndoHistory.pop();
-        placedBlocks.putAll(undo.removed());
-        for (ChangedBlock change : undo.changed().values()) restoreDeletedConnections(change);
+        if (undoHistory.isEmpty()) return;
+        LinkedHashMap<UUID, BrainBlock> previous = undoHistory.pop();
+        placedBlocks.clear();
+        placedBlocks.putAll(previous);
         draggingOpcode = null;
         draggingId = null;
         draggingFromPalette = false;
@@ -815,6 +815,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         selectedCopied = false;
         clearFocus();
         hideInputBoxes();
+        rebuildLayouts();
         sendProgram();
     }
 
@@ -1073,6 +1074,10 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                 box.setY(ey + 5);
                 box.setWidth((int) Math.ceil(e.width() / TEXT_SCALE));
                 box.setHeight((int) Math.ceil(e.height() / TEXT_SCALE));
+                if (!(getFocused() == box)) {
+                    String current = inputValue(l.blockId(), e.inputName());
+                    if (current != null && !current.equals(box.getValue())) box.setValue(current);
+                }
                 box.visible = draggingOpcode == null;
             }
         }
@@ -1085,6 +1090,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         if (b == null) return;
         for (InputSlot i : b.inputs())
             if (i.name().equals(key.input()) && i.blockId() == null) {
+                if (!Objects.equals(i.value(), value)) pushUndo(snapshotProgram());
                 placedBlocks.put(b.id(), copy(b, b.x(), b.y(), replaceInput(b.inputs(), key.input(), InputSlot.literal(i.name(), i.type(), value)), b.next(), b.parent()));
                 sendProgram();
                 return;
