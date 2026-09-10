@@ -38,3 +38,9 @@ run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+
+
+### custom ###
+dsl-module-plan.txt
+use item plan.txt
+how_to_manage_project.md

@@ -1,7 +1,7 @@
 <p align="center">
   <img src="docs/img/programming_gui.png" alt="title" width="300" />
 </p>
-<h1>LittleAnt 26.1.2</h1>
+<h1>LittleAnt</h1>
 <hr>
 <p align="center">
     <a href="https://github.com/Tianyang928/littleant-26.1.2/issues">Report Bug</a> 
@@ -9,7 +9,7 @@
     <a href="https://github.com/Tianyang928/littleant-26.1.2/releases">View Release</a>
 </p>
 
-This is a Minecraft 26.1.2 Neoforge mod.
+This is a Minecraft 1.21.1 and 26.1.2 Neoforge mod.
 
 **Ant** is the new entity added in this mod. It's able to break blocks, set blocks, craft things, operate inventories, just like players. 
 
