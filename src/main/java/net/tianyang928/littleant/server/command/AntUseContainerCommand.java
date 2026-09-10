@@ -25,7 +25,7 @@ public final class AntUseContainerCommand {
         var buildContext = event.getBuildContext();
         event.getDispatcher().register(
                 Commands.literal("antusecontainer")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .then(Commands.literal("put")
@@ -53,7 +53,7 @@ public final class AntUseContainerCommand {
         for (var entity : level.getEntities().getAll()) {
             if (entity instanceof AntEntity ant && ant.hasCustomName()
                     && name.equals(Objects.requireNonNull(ant.getCustomName()).getString())) {
-                ant.setContainerTarget(pos, operation, item.item().value(), slot, amount);
+                ant.setContainerTarget(pos, operation, item.getItem(), slot, amount);
                 count++;
             }
         }
@@ -66,7 +66,7 @@ public final class AntUseContainerCommand {
             try {
                 return Component.translatable("command.littleant.container.success", matched,
                         operation == UseContainerGoal.Operation.PUT ? Component.translatable("command.littleant.container.put") : Component.translatable("command.littleant.container.take"), amount,
-                        item.createItemStack(1).getDisplayName(), slot);
+                        item.createItemStack(1,false).getDisplayName(), slot);
             } catch (CommandSyntaxException e) {
                 throw new RuntimeException(e);
             }

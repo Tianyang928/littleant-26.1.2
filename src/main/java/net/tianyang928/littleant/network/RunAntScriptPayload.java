@@ -4,14 +4,14 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 
 /** Explicit server-side entry point for the small script runtime. */
 public record RunAntScriptPayload(int containerId, String source) implements CustomPacketPayload {
-    public static final Type<RunAntScriptPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "run_ant_script"));
+    public static final Type<RunAntScriptPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "run_ant_script"));
     public static final StreamCodec<ByteBuf, RunAntScriptPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, RunAntScriptPayload::containerId,
             ByteBufCodecs.stringUtf8(8192), RunAntScriptPayload::source,

@@ -22,7 +22,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.tianyang928.littleant.blockentity.ModBlockEntities;
 import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 import net.tianyang928.littleant.item.ModItems;
-import org.jspecify.annotations.Nullable;
+
+import javax.annotation.Nullable;
 
 public class PheromoneBlock extends Block implements EntityBlock {
     private static final Component CONTAINER_TITLE = Component.translatable("container.pheromone_list");

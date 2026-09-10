@@ -23,7 +23,7 @@ public class AntFindDropCommand {
         // find drop
         event.getDispatcher().register(
                 Commands.literal("antfinddrop")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("item", ItemArgument.item(buildContext))
                                         .executes(context -> execute(context, 1))
@@ -33,7 +33,7 @@ public class AntFindDropCommand {
     private static int execute(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context, int requestedCount) throws CommandSyntaxException {
                                             String name = StringArgumentType.getString(context, "name");
                                             ItemInput itemInput = ItemArgument.getItem(context, "item");
-                                            Item item = itemInput.item().value();
+                                            Item item = itemInput.getItem();
                                             ServerLevel level = context.getSource().getLevel();
                                             List<net.minecraft.core.BlockPos> positions = new ArrayList<>();
                                             int count = 0;
@@ -50,13 +50,13 @@ public class AntFindDropCommand {
                                                 return 0;
                                             }
                                             if (positions.isEmpty()) {
-                                                context.getSource().sendFailure(Component.translatable("command.littleant.find.none", itemInput.createItemStack(1).getDisplayName()));
+                                                context.getSource().sendFailure(Component.translatable("command.littleant.find.none", itemInput.createItemStack(1,false).getDisplayName()));
                                                 return 0;
                                             }
                                             context.getSource().sendSuccess(
                                                     () -> {
                                                         try {
-                                                            return Component.translatable("command.littleant.find.result", name, itemInput.createItemStack(1).getDisplayName(), positions.toString());
+                                                            return Component.translatable("command.littleant.find.result", name, itemInput.createItemStack(1,false).getDisplayName(), positions.toString());
                                                         } catch (CommandSyntaxException e) {
                                                             throw new RuntimeException(e);
                                                         }

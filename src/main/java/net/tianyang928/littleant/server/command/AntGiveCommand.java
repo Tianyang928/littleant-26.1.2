@@ -19,7 +19,7 @@ public class AntGiveCommand {
         // give ant item
         event.getDispatcher().register(
                 Commands.literal("antgive")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("ant_name", StringArgumentType.string())
                                 .then(Commands.argument("item", ItemArgument.item(buildContext))
                                         .then(Commands.argument("item_count", IntegerArgumentType.integer(1, 64))
@@ -29,7 +29,7 @@ public class AntGiveCommand {
                                                     int itemCount = IntegerArgumentType.getInteger(context, "item_count");
                                                     ServerLevel level = context.getSource().getLevel();
 
-                                                    ItemStack itemStack = itemInput.createItemStack(itemCount);
+                                                    ItemStack itemStack = itemInput.createItemStack(itemCount, false);
                                                     int antCount = 0;
                                                     for (var entity : level.getEntities().getAll()) {
                                                         if (entity instanceof AntEntity ant

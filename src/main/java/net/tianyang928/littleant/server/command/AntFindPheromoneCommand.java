@@ -21,7 +21,7 @@ public class AntFindPheromoneCommand {
         // find pheromone
         event.getDispatcher().register(
                 Commands.literal("antfindpheromone")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("pheromone_name", StringArgumentType.string())
                                         .executes(context -> execute(context, 1))

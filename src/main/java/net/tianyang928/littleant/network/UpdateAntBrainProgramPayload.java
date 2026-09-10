@@ -8,7 +8,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
@@ -30,7 +30,7 @@ import java.util.UUID;
 /** Atomic client-to-server update for the visual program graph. */
 public record UpdateAntBrainProgramPayload(int containerId, String program) implements CustomPacketPayload {
     public static final Type<UpdateAntBrainProgramPayload> TYPE = new Type<>(
-            Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "update_ant_brain_program"));
+            ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "update_ant_brain_program"));
     public static final StreamCodec<ByteBuf, UpdateAntBrainProgramPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, UpdateAntBrainProgramPayload::containerId,
             ByteBufCodecs.stringUtf8(1048576), UpdateAntBrainProgramPayload::program,

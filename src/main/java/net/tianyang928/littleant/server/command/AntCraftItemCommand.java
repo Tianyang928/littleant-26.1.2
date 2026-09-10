@@ -25,7 +25,7 @@ public class AntCraftItemCommand {
         // craft item
         event.getDispatcher().register(
                 Commands.literal("antcraft")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
                                         .then(Commands.literal("2x2")
@@ -62,7 +62,7 @@ public class AntCraftItemCommand {
     private static List<ItemStack> readSlots(CommandContext<CommandSourceStack> context, int count) throws CommandSyntaxException {
         List<ItemStack> items = new ArrayList<>(count);
         for (int i = 1; i <= count; i++) {
-            items.add(ItemArgument.getItem(context, "slot" + i).createItemStack(1));
+            items.add(ItemArgument.getItem(context, "slot" + i).createItemStack(1,false));
         }
         return items;
     }

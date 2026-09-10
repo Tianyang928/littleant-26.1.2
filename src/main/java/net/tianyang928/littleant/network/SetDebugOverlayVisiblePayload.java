@@ -4,14 +4,14 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.client.overlay.debug.AntDebugClientState;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 
 public record SetDebugOverlayVisiblePayload (int containerId, int visible) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SetDebugOverlayVisiblePayload> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "set_debug_overlay_visible"));
+    public static final CustomPacketPayload.Type<SetDebugOverlayVisiblePayload> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "set_debug_overlay_visible"));
     public static final StreamCodec<ByteBuf, SetDebugOverlayVisiblePayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, SetDebugOverlayVisiblePayload::containerId,
             ByteBufCodecs.VAR_INT, SetDebugOverlayVisiblePayload::visible,

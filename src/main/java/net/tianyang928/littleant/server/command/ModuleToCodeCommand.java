@@ -4,7 +4,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Util;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.AntEntity;
@@ -18,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 public final class ModuleToCodeCommand {
     public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("antmoduletocode")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(player -> player.hasPermission(2))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .executes(context -> {
                             String name = StringArgumentType.getString(context, "name");

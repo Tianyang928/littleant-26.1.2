@@ -16,7 +16,7 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
@@ -75,7 +75,7 @@ public class LittleAntClient {
         event.register(SyncAntTaskDebugPayload.TYPE, SyncAntTaskDebugPayload::handle);
     }
 
-    public static final KeyMapping.Category KEY_CATEGORY = new KeyMapping.Category(Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "main"));
+    public static final KeyMapping.Category KEY_CATEGORY = new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "main"));
     public static final KeyMapping DEBUG_TOGGLE = new KeyMapping("key.littleant.toggle_debug", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, KEY_CATEGORY);
     @SubscribeEvent static void registerKeys(RegisterKeyMappingsEvent event) { event.registerCategory(KEY_CATEGORY); event.register(DEBUG_TOGGLE); }
     @SubscribeEvent static void clientTick(ClientTickEvent.Post event) {
@@ -83,7 +83,7 @@ public class LittleAntClient {
         if (Minecraft.getInstance().level == null) AntDebugClientState.clear();
     }
     @SubscribeEvent static void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAbove(VanillaGuiLayers.CHAT, Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "ant_task_debug"), AntDebugOverlay::render);
+        event.registerAbove(VanillaGuiLayers.CHAT, ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "ant_task_debug"), AntDebugOverlay::render);
     }
 
 

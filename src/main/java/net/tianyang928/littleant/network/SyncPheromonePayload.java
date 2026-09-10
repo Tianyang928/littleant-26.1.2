@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.gui.PheromoneListMenu;
@@ -13,7 +13,7 @@ import net.tianyang928.littleant.gui.PheromoneListMenu;
 /** Server-to-client confirmation of one pheromone entry. */
 public record SyncPheromonePayload(int containerId, String id, int amount) implements CustomPacketPayload {
     public static final Type<SyncPheromonePayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "sync_pheromone"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "sync_pheromone"));
 
     public static final StreamCodec<ByteBuf, SyncPheromonePayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, SyncPheromonePayload::containerId,

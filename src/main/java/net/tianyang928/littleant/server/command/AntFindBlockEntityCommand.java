@@ -22,7 +22,7 @@ public class AntFindBlockEntityCommand {
         // find block entity
         event.getDispatcher().register(
                 Commands.literal("antfindblockentity")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("block_entity", BlockStateArgument.block(buildContext))
                                         .executes(context -> execute(context, 1))

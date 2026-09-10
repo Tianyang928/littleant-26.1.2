@@ -14,7 +14,7 @@ import java.util.Objects;
 public final class CodeToModuleCommand {
     public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("antcodetomodule")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(player -> player.hasPermission(2))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .then(Commands.argument("source", StringArgumentType.greedyString())
                                 .executes(context -> {

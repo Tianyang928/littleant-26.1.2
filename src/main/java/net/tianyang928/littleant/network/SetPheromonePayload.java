@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -19,7 +19,7 @@ public record SetPheromonePayload(
 ) implements CustomPacketPayload {
 
     public static final Type<SetPheromonePayload> TYPE =
-            new Type<>(Identifier.fromNamespaceAndPath(
+            new Type<>(ResourceLocation.fromNamespaceAndPath(
                     LittleAnt.MOD_ID,
                     "set_pheromone"
             ));

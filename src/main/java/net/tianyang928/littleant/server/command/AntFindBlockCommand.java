@@ -21,7 +21,7 @@ public class AntFindBlockCommand {
         // find block
         event.getDispatcher().register(
                 Commands.literal("antfindblock")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("block", BlockStateArgument.block(buildContext))
                                         .executes(context -> execute(context, 1))

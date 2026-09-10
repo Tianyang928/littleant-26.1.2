@@ -16,7 +16,7 @@ public class AntAttackCommand {
         // attack entity
         event.getDispatcher().register(
                 Commands.literal("antattack")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("entity_id", IntegerArgumentType.integer())
                                         .executes(context -> {

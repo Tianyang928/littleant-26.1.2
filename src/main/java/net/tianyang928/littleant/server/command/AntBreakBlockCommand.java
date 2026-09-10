@@ -16,7 +16,7 @@ public class AntBreakBlockCommand {
         // break block
         event.getDispatcher().register(
                 Commands.literal("antbreakblock")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(player -> player.hasPermission(2))
                         .then(Commands.argument("name", StringArgumentType.string())
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .executes(context -> {
