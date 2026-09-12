@@ -1,8 +1,8 @@
 package net.tianyang928.littleant.gui;
 
-import net.minecraft.client.multiplayer.ClientLevel;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -10,6 +10,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.tianyang928.littleant.entity.AntEntity;
@@ -24,10 +25,10 @@ import net.tianyang928.littleant.entity.AntEntity;
  */
 public class AntInventoryMenu extends AbstractContainerMenu {
     private static final int ANT_SLOT_COUNT = AntEntity.INVENTORY_SIZE + 4;
-    private static final Identifier EMPTY_HELMET_SLOT = Identifier.withDefaultNamespace("container/slot/helmet");
-    private static final Identifier EMPTY_CHESTPLATE_SLOT = Identifier.withDefaultNamespace("container/slot/chestplate");
-    private static final Identifier EMPTY_LEGGINGS_SLOT = Identifier.withDefaultNamespace("container/slot/leggings");
-    private static final Identifier EMPTY_BOOTS_SLOT = Identifier.withDefaultNamespace("container/slot/boots");
+    private static final ResourceLocation EMPTY_HELMET_SLOT = ResourceLocation.withDefaultNamespace("container/slot/helmet");
+    private static final ResourceLocation EMPTY_CHESTPLATE_SLOT = ResourceLocation.withDefaultNamespace("container/slot/chestplate");
+    private static final ResourceLocation EMPTY_LEGGINGS_SLOT = ResourceLocation.withDefaultNamespace("container/slot/leggings");
+    private static final ResourceLocation EMPTY_BOOTS_SLOT = ResourceLocation.withDefaultNamespace("container/slot/boots");
 
     public final AntEntity ant;
 
@@ -41,7 +42,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         this.ant = playerInventory.player.level().getEntity(entityId) instanceof AntEntity ? (AntEntity) playerInventory.player.level().getEntity(entityId) : null;
         addClientEquipmentSlots();
         addInventorySlots(new SimpleContainer(AntEntity.INVENTORY_SIZE));
-        this.addStandardInventorySlots(playerInventory, 8, 92);
+        addPlayerInventorySlots(playerInventory, 8, 92);
     }
 
     /** Server-side constructor used by AntEntity#createMenu. */
@@ -59,7 +60,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         addServerEquipmentSlot(EquipmentSlot.LEGS, 8, 54, EMPTY_LEGGINGS_SLOT);
         addServerEquipmentSlot(EquipmentSlot.FEET, 8, 72, EMPTY_BOOTS_SLOT);
         addInventorySlots(antInventory);
-        this.addStandardInventorySlots(playerInventory, 8, 92);
+        addPlayerInventorySlots(playerInventory, 8, 92);
     }
 
     private void addInventorySlots(Container antInventory) {
@@ -70,8 +71,19 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         }
     }
 
-    private void addServerEquipmentSlot(EquipmentSlot equipmentSlot, int x, int y, Identifier emptySlotSprite) {
-        Container equipment = this.ant.createEquipmentSlotContainer(equipmentSlot);
+    private void addPlayerInventorySlots(Inventory playerInventory, int x, int y) {
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 9; column++) {
+                addSlot(new Slot(playerInventory, column + row * 9 + 9, x + column * 18, y + row * 18));
+            }
+        }
+        for (int column = 0; column < 9; column++) {
+            addSlot(new Slot(playerInventory, column, x + column * 18, y + 58));
+        }
+    }
+
+    private void addServerEquipmentSlot(EquipmentSlot equipmentSlot, int x, int y, ResourceLocation emptySlotSprite) {
+        Container equipment = new EquipmentSlotContainer(this.ant, equipmentSlot);
         this.addSlot(new Slot(equipment, 0, x, y) {
             @Override
             public int getMaxStackSize() {
@@ -84,8 +96,8 @@ public class AntInventoryMenu extends AbstractContainerMenu {
             }
 
             @Override
-            public Identifier getNoItemIcon() {
-                return emptySlotSprite;
+            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+                return Pair.of(InventoryMenu.BLOCK_ATLAS, emptySlotSprite);
             }
         });
     }
@@ -94,7 +106,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         SimpleContainer equipment = new SimpleContainer(4);
         this.addSlot(new Slot(equipment, 0, 8, 18) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public Identifier getNoItemIcon() { return EMPTY_HELMET_SLOT; }
+            @Override public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() { return Pair.of(InventoryMenu.BLOCK_ATLAS, EMPTY_HELMET_SLOT); }
             @Override public boolean mayPlace(ItemStack itemStack) {
                     return itemStack.is(ItemTags.HEAD_ARMOR);
                 }
@@ -102,7 +114,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         );
         this.addSlot(new Slot(equipment, 1, 8, 36) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public Identifier getNoItemIcon() { return EMPTY_CHESTPLATE_SLOT; }
+            @Override public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() { return Pair.of(InventoryMenu.BLOCK_ATLAS, EMPTY_CHESTPLATE_SLOT); }
             @Override public boolean mayPlace(ItemStack itemStack) {
                     return itemStack.is(ItemTags.CHEST_ARMOR);
                 }
@@ -110,7 +122,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         );
         this.addSlot(new Slot(equipment, 2, 8, 54) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public Identifier getNoItemIcon() { return EMPTY_LEGGINGS_SLOT; }
+            @Override public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() { return Pair.of(InventoryMenu.BLOCK_ATLAS, EMPTY_LEGGINGS_SLOT); }
             @Override public boolean mayPlace(ItemStack itemStack) {
                     return itemStack.is(ItemTags.LEG_ARMOR);
                 }
@@ -118,7 +130,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
         );
         this.addSlot(new Slot(equipment, 3, 8, 72) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public Identifier getNoItemIcon() { return EMPTY_BOOTS_SLOT; }
+            @Override public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() { return Pair.of(InventoryMenu.BLOCK_ATLAS, EMPTY_BOOTS_SLOT); }
             @Override public boolean mayPlace(ItemStack itemStack) {
                     return itemStack.is(ItemTags.FOOT_ARMOR);
                 }
@@ -128,7 +140,7 @@ public class AntInventoryMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return this.ant == null || (this.ant.isAlive() && player.isWithinEntityInteractionRange(this.ant, 4.0));
+        return this.ant == null || (this.ant.isAlive() && player.distanceTo(this.ant) <= 4.0);
     }
 
     @Override
@@ -155,6 +167,44 @@ public class AntInventoryMenu extends AbstractContainerMenu {
             slot.setChanged();
         }
         return original;
+    }
+
+    private static final class EquipmentSlotContainer extends SimpleContainer {
+        private final AntEntity ant;
+        private final EquipmentSlot equipmentSlot;
+
+        private EquipmentSlotContainer(AntEntity ant, EquipmentSlot equipmentSlot) {
+            super(1);
+            this.ant = ant;
+            this.equipmentSlot = equipmentSlot;
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            return slot == 0 ? ant.getItemBySlot(equipmentSlot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public ItemStack removeItem(int slot, int amount) {
+            if (slot != 0) return ItemStack.EMPTY;
+            ItemStack stack = ant.getItemBySlot(equipmentSlot);
+            ItemStack removed = stack.split(amount);
+            ant.setItemSlot(equipmentSlot, stack);
+            return removed;
+        }
+
+        @Override
+        public ItemStack removeItemNoUpdate(int slot) {
+            if (slot != 0) return ItemStack.EMPTY;
+            ItemStack stack = ant.getItemBySlot(equipmentSlot);
+            ant.setItemSlot(equipmentSlot, ItemStack.EMPTY);
+            return stack;
+        }
+
+        @Override
+        public void setItem(int slot, ItemStack stack) {
+            if (slot == 0) ant.setItemSlot(equipmentSlot, stack);
+        }
     }
 
 }

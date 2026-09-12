@@ -1,25 +1,25 @@
 package net.tianyang928.littleant.datagen;
 
-import net.minecraft.client.data.models.BlockModelGenerators;
-import net.minecraft.client.data.models.ItemModelGenerators;
-import net.minecraft.client.data.models.ModelProvider;
-import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.data.PackOutput;
+import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
+import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.block.ModBlocks;
-import net.tianyang928.littleant.item.ModItems;
 
-public class ModModelProvider extends ModelProvider {
-    public ModModelProvider(PackOutput output) {
-        super(output, LittleAnt.MOD_ID);
+public class ModModelProvider extends BlockStateProvider {
+    public ModModelProvider(PackOutput output, ExistingFileHelper existingFileHelper) {
+        super(output, LittleAnt.MOD_ID, existingFileHelper);
     }
 
     @Override
-    protected void registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels) {
-        itemModels.generateFlatItem(ModItems.ANT_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
-        itemModels.generateFlatItem(ModItems.PHEROMONE_BLOCK.get(), ModelTemplates.FLAT_ITEM);
+    protected void registerStatesAndModels() {
+        ModelFile pheromoneModel = models()
+                .getBuilder("pheromone_block")
+                .texture("particle", modLoc("item/pheromone_block"));
+        simpleBlock(ModBlocks.PHEROMONE_BLOCK.get(), pheromoneModel);
 
-        blockModels.createTrivialCube(ModBlocks.ANT_CRAFTING_TABLE.get());
-        blockModels.createAirLikeBlock(ModBlocks.PHEROMONE_BLOCK.get(), ModItems.PHEROMONE_BLOCK.get());
+        ModelFile craftingTableModel = models().cubeAll("ant_crafting_table", modLoc("block/ant_crafting_table"));
+        simpleBlock(ModBlocks.ANT_CRAFTING_TABLE.get(), craftingTableModel);
     }
 }

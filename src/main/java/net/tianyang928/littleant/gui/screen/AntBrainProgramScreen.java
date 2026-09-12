@@ -2,23 +2,21 @@ package net.tianyang928.littleant.gui.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.*;
 import net.tianyang928.littleant.gui.AntBrainProgramMenu;
 import net.tianyang928.littleant.gui.BrainFileRepository;
 import net.tianyang928.littleant.network.SetDebugOverlayVisiblePayload;
 import net.tianyang928.littleant.network.UpdateAntBrainProgramPayload;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.*;
 
@@ -55,7 +53,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     private int savedSnapshotHashCode;
 
     public AntBrainProgramScreen(AntBrainProgramMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 1, 1);
+        super(menu, inventory, title);
         placedBlocks.putAll(menu.getPlacedBlocks());
         savedSnapshotHashCode = aggregateHashCode(placedBlocks);
         inventoryLabelY = -1000;
@@ -70,7 +68,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
 
         debugOverlayButton = this.addRenderableWidget(new AntBrainProgramButton(width-68, HEADER_HEIGHT+5, 63, 25, button -> {
             debugOverlayVisible = !debugOverlayVisible;
-            ClientPacketDistributor.sendToServer(
+            PacketDistributor.sendToServer(
                     new SetDebugOverlayVisiblePayload(
                             this.menu.containerId,
                             debugOverlayVisible?1:0
@@ -90,13 +88,15 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor g, int x, int y, float p) {
-        extractBlurredBackground(g);
-        extractTransparentBackground(g);
+    public void renderBg(GuiGraphics g, float p, int x, int y) {
+        renderBlurredBackground(p);
+        renderTransparentBackground(g);
     }
 
+
+
     @Override
-    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float p) {
+    public void render(GuiGraphics g, int mx, int my, float p) {
         mouseX = mx;
         mouseY = my;
         if (draggingOpcode != null) {
@@ -121,7 +121,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
 
         if (filesMode) drawFileDialog(g);
 
-        super.extractRenderState(g, mx, my, p);
+        super.render(g, mx, my, p);
         drawScaledText(g,Component.translatable("menu.littleant.show_debug_overlay"), width-65, HEADER_HEIGHT+5+8, 1.0f,debugOverlayVisible?0xFFFFFFFF:0x661E2430, true);
     }
 
@@ -186,7 +186,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         for (InputSlot i : b.inputs()) collectOwned(i.blockId(), r);
     }
 
-    private void drawCategories(GuiGraphicsExtractor g) {
+    private void drawCategories(GuiGraphics g) {
         g.fill(0, HEADER_HEIGHT, SIDEBAR_WIDTH, height, 0xD9181D27);
         for (int i = 0; i < CATEGORIES.size(); i++) {
             int y = 42 + i * 32;
@@ -204,7 +204,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         drawScaledText(g, Component.literal("Files"), 10, height-31, 1.0f, 0xFFFFFFFF, false);
     }
 
-    private void drawPalette(GuiGraphicsExtractor g) {
+    private void drawPalette(GuiGraphics g) {
         int right = canvasLeft();
         g.fill(SIDEBAR_WIDTH, HEADER_HEIGHT, right, height, 0xE52B3340);
         int listTop = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT;
@@ -227,7 +227,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         drawScaledText(g, Component.translatable(ModuleRegistry.categoryTranslationKey(currentCategory())), SIDEBAR_WIDTH + 8, 42, 1.0f,0xFFFFFFFF, false);
     }
 
-    private void drawFiles(GuiGraphicsExtractor g, int right) {
+    private void drawFiles(GuiGraphics g, int right) {
         int y = HEADER_HEIGHT + PALETTE_HEADER_HEIGHT + 8 - paletteScroll;
         drawScaledText(g, Component.literal("Presets"), SIDEBAR_WIDTH + 8, y, 1.0f, 0xFFB9D8C0, true); y += 22;
         for (BrainFileRepository.BrainFile f : brainFiles) if (f.preset()) { drawFileEntry(g, f, y, right); y += 25; }
@@ -252,7 +252,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         return Math.max(0, filesContentBottom() - (saveButtonY() - 6));
     }
 
-    private void drawFileEntry(GuiGraphicsExtractor g, BrainFileRepository.BrainFile f, int y, int right) {
+    private void drawFileEntry(GuiGraphics g, BrainFileRepository.BrainFile f, int y, int right) {
         int color;
         if(fileAt(mouseX,mouseY) != null && Objects.equals(fileAt(mouseX, mouseY), f)){
             color = 0xFF446B52;
@@ -263,7 +263,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         drawScaledText(g, Component.literal(f.name()), SIDEBAR_WIDTH + 14, y + 6, 0.9f, 0xFFFFFFFF, false);
     }
 
-    private void drawFileDialog(GuiGraphicsExtractor g) {
+    private void drawFileDialog(GuiGraphics g) {
         if (dialogMessage == null) return;
         int x = Math.max(80, width / 2 - 150), y = Math.max(70, height / 2 - 55);
         g.fill(x, y, x + 300, y + 110, 0xF0222935);
@@ -274,7 +274,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         drawScaledText(g, Component.literal(dialogMessage), x + 12, y + 14, 0.85f, 0xFFFFFFFF, true);
     }
 
-    private void drawCanvas(GuiGraphicsExtractor g) {
+    private void drawCanvas(GuiGraphics g) {
         int left = canvasLeft();
         g.fill(left, HEADER_HEIGHT, width, height, 0x94131A25);
         drawScaledText(g, Component.literal("Canvas"), left + 12, 42, 1.0f, 0xFFDAE2F2, false);
@@ -284,7 +284,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         g.disableScissor();
     }
 
-    private void drawBlock(GuiGraphicsExtractor g, BlockRenderLayout l, int x, int y, boolean floating) {
+    private void drawBlock(GuiGraphics g, BlockRenderLayout l, int x, int y, boolean floating) {
         int xd2 = x + l.width() - l.height() / 2;
         int dx = x - l.x(), dy = y - l.y(), color = floating ? fade(l.definition().color()) : l.definition().color();
 
@@ -342,7 +342,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
                             ? null
                             : inputBoxes.get(new InputKey(l.blockId(), e.inputName()));
                     if (box != null && box.visible) {
-                        box.extractRenderState(g, mouseX, mouseY, 0.0F);
+                        box.render(g, mouseX, mouseY, 0.0F);
                     } else {
                         drawScaledText(g, e.text(), ex + 3, ey + 5, TEXT_SCALE,0xFFFFFFFF, false);
                     }
@@ -359,14 +359,14 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
     }
 
-    private void drawOutline(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+    private void drawOutline(GuiGraphics g, int x, int y, int w, int h) {
         g.fill(x - 2, y - 2, x + w + 2, y, 0xFFFFFFFF);
         g.fill(x - 2, y + h, x + w + 2, y + h + 2, 0xFFFFFFFF);
         g.fill(x - 2, y, x, y + h, 0xFFFFFFFF);
         g.fill(x + w, y, x + w + 2, y + h, 0xFFFFFFFF);
     }
     // 画上下对称的等腰45度三角形
-    private void drawTriangle(GuiGraphicsExtractor g, int x, int y, int h, int direction, int triangleColor, int backgroundColor, int borderColor) {
+    private void drawTriangle(GuiGraphics g, int x, int y, int h, int direction, int triangleColor, int backgroundColor, int borderColor) {
         // direction 为1时，画右半三角形
         g.fill(x, y, x + h/2, y + h, backgroundColor);
         if(direction == -1) {
@@ -385,7 +385,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
     }
 
-    private void drawSemicircle(GuiGraphicsExtractor g, int x, int y, int h, int direction, int circleColor, int backgroundColor, int borderColor) {
+    private void drawSemicircle(GuiGraphics g, int x, int y, int h, int direction, int circleColor, int backgroundColor, int borderColor) {
         // direction 为1时，画右半圆
         g.fill(x, y, x + h/4, y + h, backgroundColor);
         if(direction == -1) {
@@ -411,7 +411,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
     }
 
-    private void drawDraggingChain(GuiGraphicsExtractor g, int x, int y) {
+    private void drawDraggingChain(GuiGraphics g, int x, int y) {
         if (draggingId == null) {
             BlockRenderLayout l = draggingLayout();
             if (l != null) drawBlock(g, l, x, y, true);
@@ -432,7 +432,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     private void drawScaledText(
-            GuiGraphicsExtractor graphics,
+            GuiGraphics graphics,
             Component text,
             int x,
             int y,
@@ -440,20 +440,20 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             int color,
             boolean shadow
     ) {
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(x, y);
-        graphics.pose().scale(scale, scale);
-        graphics.text(this.font, text, 0, 0, color, shadow);
-        graphics.pose().popMatrix();
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        graphics.pose().scale(scale, scale, 1);
+        graphics.drawString(this.font, text, 0, 0, color, shadow);
+        graphics.pose().popPose();
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent e, boolean d) {
-        if (e.button() != 0) return super.mouseClicked(e, d);
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
         // AbstractContainerScreen consumes every left click, even when no child widget was hit.
         // Only delegate when the pointer is actually over a visible literal input.
-        int x = (int) e.x(), y = (int) e.y();
-        if (dialogMessage != null) return super.mouseClicked(e, d);
+        int x = (int) mouseX, y = (int) mouseY;
+        if (dialogMessage != null) return super.mouseClicked(mouseX, mouseY, button);
         //先判断是否在左边的sidebar或palette中
         if(inside(x,y,0,0,canvasLeft(),height)) {
             clearFocus();
@@ -494,11 +494,11 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
         //然后是判断是否在输入框或按钮中
         if (inputBoxAt(x, y) != null) {
-            return super.mouseClicked(e, d);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
         clearFocus();
         if (inside(x, y, width-55, HEADER_HEIGHT+5, 50, 25)) {
-            return super.mouseClicked(e, d);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
         //最后是判断是否在canvas的brain block中
         LayoutHit hit = canvasBlockAt(x, y);
@@ -642,14 +642,14 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
-        return draggingOpcode != null || super.mouseDragged(e, dx, dy);
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return draggingOpcode != null || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent e) {
-        if (e.button() != 0 || draggingOpcode == null) return super.mouseReleased(e);
-        int x = (int) e.x(), y = (int) e.y();
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button != 0 || draggingOpcode == null) return super.mouseReleased(mouseX, mouseY, button);
+        int x = (int) mouseX, y = (int) mouseY;
         if (inside(x, y, canvasLeft(), HEADER_HEIGHT, width - canvasLeft(), height - HEADER_HEIGHT)) {
             if (draggingId == null) {
                 draggingId = UUID.randomUUID();
@@ -679,19 +679,19 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     @Override
-    public boolean keyPressed(KeyEvent e) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // A focused EditBox owns the complete key event (including clipboard
         // shortcuts). Return immediately so canvas shortcuts such as Ctrl+V
         // cannot also process the same event.
         if (getFocused() instanceof EditBox) {
             // Do not let the inventory key close the container while typing.
-            if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(e))) {
+            if (minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode,scanCode))) {
                 return true;
             }
-            return super.keyPressed(e);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
-        if (e.key() == 261 && selectedId != null) {
+        if (keyCode == 261 && selectedId != null) {
             if (beforeDragSnapshot == null) beforeDragSnapshot = snapshotProgram();
             for (UUID id : ownedIds(selectedId)) placedBlocks.remove(id);
             if (beforeDragSnapshot != null && !beforeDragSnapshot.equals(placedBlocks)) pushUndo(beforeDragSnapshot);
@@ -706,18 +706,18 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             beforeDragSnapshot = null;
             return true;
         }
-        if (e.key() == 90 && e.hasControlDown() && !(getFocused() instanceof EditBox)) {
+        if (keyCode == 90 && hasControlDown() && !(getFocused() instanceof EditBox)) {
             undoLastDelete();
             return true;
         }
-        if (e.key() == 67 && selectedId != null && e.hasControlDown()) {
+        if (keyCode == 67 && selectedId != null && hasControlDown()) {
             selectedCopied = true;
         }
-        if (e.key() == 86 && selectedId != null && e.hasControlDown()) {
+        if (keyCode == 86 && selectedId != null && hasControlDown()) {
             pasteSelectedBlocks();
         }
 
-        return super.keyPressed(e);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -1102,7 +1102,7 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
     }
 
     private void sendProgram() {
-        ClientPacketDistributor.sendToServer(new UpdateAntBrainProgramPayload(menu.containerId, UpdateAntBrainProgramPayload.encode(placedBlocks)));
+        PacketDistributor.sendToServer(new UpdateAntBrainProgramPayload(menu.containerId, UpdateAntBrainProgramPayload.encode(placedBlocks)));
     }
 
     private PaletteEntry paletteEntryAt(int x, int y) {
@@ -1280,8 +1280,8 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
         }
 
         @Override
-        public void extractWidgetRenderState(
-                GuiGraphicsExtractor graphics,
+        public void renderWidget(
+                GuiGraphics graphics,
                 int mouseX,
                 int mouseY,
                 float partialTick
@@ -1289,45 +1289,48 @@ public class AntBrainProgramScreen extends AbstractContainerScreen<AntBrainProgr
             float x = this.getX();
             float y = this.getY();
 
-            graphics.pose().pushMatrix();
+            graphics.pose().pushPose();
 
             // 将缩放中心移动到输入框左上角
-            graphics.pose().translate(x, y);
-            graphics.pose().scale(TEXT_SCALE, TEXT_SCALE);
-            graphics.pose().translate(-x, -y);
+            graphics.pose().translate(x, y, 0);
+            graphics.pose().scale(TEXT_SCALE, TEXT_SCALE, 1);
+            graphics.pose().translate(-x, -y, 0);
 
             int logicalMouseX = (int) (x + (mouseX - x) / TEXT_SCALE);
             int logicalMouseY = (int) (y + (mouseY - y) / TEXT_SCALE);
-            super.extractWidgetRenderState(graphics, logicalMouseX, logicalMouseY, partialTick);
+            super.render(graphics, logicalMouseX, logicalMouseY, partialTick);
 
-            graphics.pose().popMatrix();
+            graphics.pose().popPose();
         }
 
         @Override
-        public boolean mouseClicked(MouseButtonEvent e, boolean d)  {
+        public boolean mouseClicked(double mouseX, double mouseY, int button)  {
             // Hit testing must use rendered coordinates. Only EditBox's cursor
             // calculation needs the logical, inverse-scaled event.
-            if (!this.isActive() || !this.isValidClickButton(e.buttonInfo()) || !this.isMouseOver(e.x(), e.y())) {
+            if (!this.isActive() || !this.isValidClickButton(button) || !this.isMouseOver(mouseX,mouseY)) {
                 return false;
             }
             this.playDownSound(Minecraft.getInstance().getSoundManager());
-            this.onClick(toLogical(e), d);
+            int[] logical = toLogical(mouseX, mouseY, button);
+            this.onClick(logical[0], logical[1], logical[2]);
             return true;
         }
 
         @Override
-        public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
-            return super.mouseDragged(toLogical(e), dx / TEXT_SCALE, dy / TEXT_SCALE);
+        public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+            int[] logical = toLogical(mouseX, mouseY, button);
+            this.onDrag(logical[0], logical[1], dx / TEXT_SCALE, dy / TEXT_SCALE);
+            return true;
         }
 
-        private MouseButtonEvent toLogical(MouseButtonEvent e) {
-            int logicalX = (int) (this.getX() + (e.x() - this.getX()) / TEXT_SCALE);
-            int logicalY = (int) (this.getY() + (e.y() - this.getY()) / TEXT_SCALE);
-            return new MouseButtonEvent(logicalX, logicalY, e.buttonInfo());
+        private int[] toLogical(double mouseX, double mouseY, int button) {
+            int logicalX = (int) (this.getX() + (mouseX - this.getX()) / TEXT_SCALE);
+            int logicalY = (int) (this.getY() + (mouseY - this.getY()) / TEXT_SCALE);
+            return new int[]{logicalX, logicalY, button};
         }
     }
 
-    private class AntBrainProgramButton extends Button.Plain {
+    private class AntBrainProgramButton extends Button {
         public AntBrainProgramButton(int x, int y, int width, int height, Button.OnPress onPress) {
             super(x, y, width, height, CommonComponents.EMPTY, onPress, DEFAULT_NARRATION);
             this.visible = true;

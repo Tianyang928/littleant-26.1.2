@@ -9,7 +9,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -34,7 +33,7 @@ import net.tianyang928.littleant.network.SyncPheromonePayload;
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = LittleAnt.MOD_ID, dist = Dist.CLIENT)
 // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-@EventBusSubscriber(modid = LittleAnt.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = LittleAnt.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class LittleAntClient {
     public LittleAntClient(ModContainer container) {
         // Allows NeoForge to create a config screen for this mod's configs.
@@ -68,20 +67,9 @@ public class LittleAntClient {
         );
     }
 
-    // 服务端传到客户端的payload处理函数
-    @SubscribeEvent
-    static void registerClientPayloadHandlers(RegisterClientPayloadHandlersEvent event) {
-        event.register(SyncPheromonePayload.TYPE, SyncPheromonePayload::handlePheromoneSync);
-        event.register(SyncAntTaskDebugPayload.TYPE, SyncAntTaskDebugPayload::handle);
-    }
-
-    public static final KeyMapping.Category KEY_CATEGORY = new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "main"));
-    public static final KeyMapping DEBUG_TOGGLE = new KeyMapping("key.littleant.toggle_debug", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, KEY_CATEGORY);
-    @SubscribeEvent static void registerKeys(RegisterKeyMappingsEvent event) { event.registerCategory(KEY_CATEGORY); event.register(DEBUG_TOGGLE); }
-    @SubscribeEvent static void clientTick(ClientTickEvent.Post event) {
-        while (DEBUG_TOGGLE.consumeClick()) AntDebugClientState.toggle();
-        if (Minecraft.getInstance().level == null) AntDebugClientState.clear();
-    }
+    //public static final KeyMapping.Category KEY_CATEGORY = new KeyMapping.Category(ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "main"));
+    public static final KeyMapping DEBUG_TOGGLE = new KeyMapping("key.littleant.toggle_debug", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "main").toString());
+    @SubscribeEvent static void registerKeys(RegisterKeyMappingsEvent event) { event.register(DEBUG_TOGGLE); }
     @SubscribeEvent static void registerGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CHAT, ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "ant_task_debug"), AntDebugOverlay::render);
     }
@@ -91,5 +79,14 @@ public class LittleAntClient {
     @SubscribeEvent
     static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.ANT.get(), AntRenderer::new);
+    }
+
+    @EventBusSubscriber(modid = LittleAnt.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+    private static final class GameEvents {
+        @SubscribeEvent
+        static void clientTick(ClientTickEvent.Post event) {
+            while (DEBUG_TOGGLE.consumeClick()) AntDebugClientState.toggle();
+            if (Minecraft.getInstance().level == null) AntDebugClientState.clear();
+        }
     }
 }

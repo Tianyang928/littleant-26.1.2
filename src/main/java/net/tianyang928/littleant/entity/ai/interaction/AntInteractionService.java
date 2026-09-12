@@ -3,20 +3,13 @@ package net.tianyang928.littleant.entity.ai.interaction;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.Consumable;
-import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.CommonHooks;
@@ -33,31 +26,23 @@ public final class AntInteractionService {
 
     private AntInteractionService() {}
 
+    /** Creates the server-side player context used by interactions that require a Player. */
+    public static FakePlayer createFakePlayer(AntEntity ant) {
+        if (!(ant.level() instanceof ServerLevel level)) {
+            throw new IllegalStateException("Ant interactions require a server level");
+        }
+        FakePlayer fake = FakePlayerFactory.get(level, ANT_PROFILE);
+        fake.stopUsingItem();
+        fake.setPos(ant.getX(), ant.getY(), ant.getZ());
+        fake.setYRot(ant.getYRot());
+        fake.setXRot(ant.getXRot());
+        return fake;
+    }
+
     public static InteractionResult useItemAsMob(AntEntity ant, InteractionHand hand) {
         if (!(ant.level() instanceof ServerLevel level)) return InteractionResult.PASS;
         ItemStack stack = ant.getItemInHand(hand);
         if (stack.isEmpty()) return InteractionResult.PASS;
-
-        // Consumable accepts LivingEntity, but FoodProperties only updates Player hunger.
-        // Update Ant's FoodData explicitly and still use Consumable for all other effects.
-        Consumable consumable = stack.get(DataComponents.CONSUMABLE);
-        if (consumable != null) {
-            FoodProperties food = stack.get(DataComponents.FOOD);
-            if (food != null && !food.canAlwaysEat() && !ant.getFoodData().needsFood()) {
-                return InteractionResult.FAIL;
-            }
-            InteractionResult result = consumable.startConsuming(ant, stack, hand);
-            if (result.consumesAction() && food != null && consumable.consumeTicks() == 0) {
-                ant.getFoodData().eat(food);
-            }
-            ant.syncSelectedItemNow();
-            return result;
-        }
-
-        Equippable equippable = stack.get(DataComponents.EQUIPPABLE);
-        if (equippable != null && equippable.swappable()) {
-            return equipFromHand(ant, level, hand, stack, equippable);
-        }
 
         // The task defines a bow use as one fully drawn shot. FakePlayer preserves
         // mod hooks, projectile creation, enchantments, ammo and durability behavior.
@@ -94,15 +79,6 @@ public final class AntInteractionService {
 
         // Shields, spyglasses and similar items only need LivingEntity's sustained
         // use state. A later use call (or another goal) may stop/release that state.
-        if (stack.getUseDuration(ant) > 0) {
-            if (ant.isUsingItem() && ant.getUsedItemHand() == hand) {
-                ant.stopUsingItem();
-                return InteractionResult.SUCCESS;
-            }
-            ant.startUsingItem(hand);
-            return InteractionResult.CONSUME;
-        }
-
         // Instant-use and modded items need Player context; the full game-mode path
         // also fires NeoForge right-click events and handles transformed stacks.
         return withFakePlayer(ant, hand, stack,
@@ -133,42 +109,10 @@ public final class AntInteractionService {
             fake.setShiftKeyDown(secondaryUse);
             Vec3 localHit = new Vec3(0.0D, target.getBbHeight() * 0.5D, 0.0D);
             InteractionResult eventResult = CommonHooks.onInteractEntityAt(fake, target, localHit, hand);
-            return eventResult != null ? eventResult : fake.interactOn(target, hand, localHit);
+            return eventResult != null ? eventResult : fake.interactOn(target, hand);
         }, useHeldItem);
     }
 
-    /**
-     * Mirrors {@link Equippable#swapWithEquipmentSlot(ItemStack, net.minecraft.world.entity.player.Player)}
-     * for Ant's inventory-backed main hand.  Mob#equipItemIfPossible is deliberately
-     * not used here: it is an item-pickup helper that only upgrades equipment and
-     * does not consume the held stack.
-     */
-    private static InteractionResult equipFromHand(AntEntity ant, ServerLevel level, InteractionHand hand,
-                                                   ItemStack inHand, Equippable equippable) {
-        EquipmentSlot slot = equippable.slot();
-        if (!ant.isEquippableInSlot(inHand, slot)) return InteractionResult.PASS;
-
-        ItemStack equipped = ant.getItemBySlot(slot);
-        if (EnchantmentHelper.has(equipped, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE)
-                || ItemStack.isSameItemSameComponents(inHand, equipped)) {
-            return InteractionResult.FAIL;
-        }
-
-        if (inHand.getCount() <= 1) {
-            ItemStack replacement = equipped.isEmpty() ? inHand : equipped.copyAndClear();
-            ant.setItemSlot(slot, inHand.copyAndClear());
-            ant.setItemInHand(hand, replacement);
-        } else {
-            ItemStack replacement = equipped.copyAndClear();
-            ant.setItemSlot(slot, inHand.split(1));
-            if (!replacement.isEmpty()) {
-                ItemStack remainder = ant.getInventory().addItem(replacement);
-                if (!remainder.isEmpty()) ant.spawnAtLocation(level, remainder);
-            }
-            ant.syncSelectedItemNow();
-        }
-        return InteractionResult.SUCCESS;
-    }
 
     private static InteractionResult withFakePlayer(AntEntity ant, InteractionHand hand, ItemStack supplied,
                                                      FakePlayerAction action) {
@@ -198,7 +142,8 @@ public final class AntInteractionService {
             for (int slot = 0; slot < fake.getInventory().getContainerSize(); slot++) {
                 fake.getInventory().setItem(slot, ItemStack.EMPTY);
             }
-            fake.getCooldowns().removeCooldown(fake.getCooldowns().getCooldownGroup(supplied));
+            // TODO: Check if this is correct. I'm not sure.
+            fake.getCooldowns().removeCooldown(supplied.getItem());
             fake.setShiftKeyDown(false);
             ant.syncSelectedItemNow();
         }
@@ -210,7 +155,7 @@ public final class AntInteractionService {
         fake.setYRot(ant.getYRot());
         fake.setXRot(ant.getXRot());
         fake.setShiftKeyDown(false);
-        fake.getInventory().setSelectedSlot(0);
+        fake.getInventory().selected = 0;
         fake.setItemInHand(hand, supplied.copy());
         // ProjectileWeaponItem asks LivingEntity#getProjectile. Mirror the ant's
         // remaining inventory so arrows and fireworks are consumed by vanilla code.

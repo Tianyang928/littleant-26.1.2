@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -374,7 +374,7 @@ public final class AntGoalScheduler {
         if (name.equals("vanilla:use_crafting_table")) { pos = blockPos(args, 1); offset = 4; }
         List<ItemStack> items = new ArrayList<>(slots);
         for (int i = 0; i < slots; i++) {
-            var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(offset + i))).orElse(null);
+            var item = BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(args.get(offset + i))).orElse(null);
             if (item == null) return null;
             items.add(new ItemStack(item));
         }
@@ -390,7 +390,7 @@ public final class AntGoalScheduler {
             LittleAnt.LOGGER.info("[AntGoalScheduler] fail to load containerGoal given arg num {}",args.size());
             return null;
         }
-        var item = BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(args.get(4))).orElse(null);
+        var item = BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(args.get(4))).orElse(null);
         if (item == null) return null;
         UseContainerGoal goal = new UseContainerGoal(ant);
         goal.setRequest(blockPos(args, 0), Boolean.parseBoolean(args.get(3)) ? UseContainerGoal.Operation.PUT : UseContainerGoal.Operation.TAKE, item, (int)Double.parseDouble(args.get(5)), (int)Double.parseDouble(args.get(6)));

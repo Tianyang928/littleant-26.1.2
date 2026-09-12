@@ -39,7 +39,7 @@ public final class UseItemGoal extends Goal {
         ItemStack stack = ant.getItemInHand(hand);
         if (stack.isEmpty()) return false;
 
-        if (stack.get(DataComponents.CONSUMABLE) != null) {
+        if (stack.get(DataComponents.FOOD) != null || stack.get(DataComponents.POTION_CONTENTS) != null) {
             mode = Mode.CONSUME;
         } else if (stack.getItem() instanceof BowItem) {
             mode = Mode.BOW;

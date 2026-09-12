@@ -76,8 +76,8 @@ public class LittleAnt {
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
         registrar.playToServer(SetPheromonePayload.TYPE, SetPheromonePayload.STREAM_CODEC, SetPheromonePayload::handlePacketFromClient);
-        registrar.playToClient(SyncPheromonePayload.TYPE, SyncPheromonePayload.STREAM_CODEC);
-        registrar.playToClient(SyncAntTaskDebugPayload.TYPE, SyncAntTaskDebugPayload.STREAM_CODEC);
+        registrar.playToClient(SyncPheromonePayload.TYPE, SyncPheromonePayload.STREAM_CODEC, SyncPheromonePayload::handlePheromoneSync);
+        registrar.playToClient(SyncAntTaskDebugPayload.TYPE, SyncAntTaskDebugPayload.STREAM_CODEC, SyncAntTaskDebugPayload::handle);
         registrar.playToServer(UpdateAntBrainProgramPayload.TYPE, UpdateAntBrainProgramPayload.STREAM_CODEC,
                 UpdateAntBrainProgramPayload::handlePacketFromClient);
         registrar.playToServer(RunAntScriptPayload.TYPE, RunAntScriptPayload.STREAM_CODEC,

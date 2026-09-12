@@ -45,12 +45,12 @@ public class GetSurroundingPheromoneType {
 
     public void start() {
         List<ChunkPos> list = ChunkPos.rangeClosed(
-                ChunkPos.containing(mob.blockPosition()),
+                new ChunkPos(mob.blockPosition()),
                 Math.floorDiv(SEARCH_RADIUS, 16) + 1
         ).toList();
         // 遍历区块
         for (ChunkPos chunkPos : list) {
-            LevelChunk levelChunk = mob.level().getChunkSource().getChunkNow(chunkPos.x(), chunkPos.z());
+            LevelChunk levelChunk = mob.level().getChunkSource().getChunkNow(chunkPos.x, chunkPos.z);
             if (levelChunk != null) {
                 // 直接遍历区块中的 BlockEntity，而不是遍历所有方块
                 for (BlockEntity potentialTarget : levelChunk.getBlockEntities().values()) {

@@ -1,6 +1,8 @@
 package net.tianyang928.littleant.blockentity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
@@ -10,12 +12,10 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.tianyang928.littleant.gui.PheromoneListMenu;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 
@@ -29,27 +29,27 @@ public class PheromoneBlockEntity extends BlockEntity implements MenuProvider {
 
     // Read values from the passed ValueInput here.
     @Override
-    public void loadAdditional(@NotNull ValueInput input) {
-        super.loadAdditional(input);
+    public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider registries) {
+        super.loadAdditional(nbt, registries);
         // Will default to 0 if absent. See the ValueIO article for more information.
         String pheromoneId;
-        Optional<int[]> pheromoneAmount;
-        pheromoneId = input.getStringOr("pheromone_id", "");
-        pheromoneAmount = input.getIntArray("pheromone_amount");
+        int[] pheromoneAmount;
+        pheromoneId = nbt.getString("pheromone_id");
+        pheromoneAmount = nbt.getIntArray("pheromone_amount");
 
         // Map pheromone id to amount
-        if(!pheromoneId.isEmpty() && pheromoneAmount.isPresent()) {
+        if(!pheromoneId.isEmpty() && pheromoneAmount.length > 0) {
             String[] pheromoneIdArray = pheromoneId.split(",");
-            for (int i = 0; i < pheromoneIdArray.length && i < pheromoneAmount.get().length; i++) {
-                this.pheromoneMap.put(pheromoneIdArray[i], pheromoneAmount.get()[i]);
+            for (int i = 0; i < pheromoneIdArray.length && i < pheromoneAmount.length; i++) {
+                this.pheromoneMap.put(pheromoneIdArray[i], pheromoneAmount[i]);
             }
         }
     }
 
     // Save values into the passed ValueOutput here.
     @Override
-    public void saveAdditional(ValueOutput output) {
-        super.saveAdditional(output);
+    public void saveAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider registries) {
+        super.saveAdditional(nbt, registries);
         // clear pheromone map keys that have amount <= 0
         if(this.pheromoneMap.isEmpty()) {
             return;
@@ -69,9 +69,9 @@ public class PheromoneBlockEntity extends BlockEntity implements MenuProvider {
             index++;
         }
 
-        output.putString("pheromone_id", pheromoneId.toString());
+        nbt.putString("pheromone_id", pheromoneId.toString());
         pheromoneId.delete(0, pheromoneId.length());
-        output.putIntArray("pheromone_amount", pheromoneAmount.get());
+        nbt.putIntArray("pheromone_amount", pheromoneAmount.get());
     }
 
     public static void tick(Level level, BlockPos blockPos, BlockState blockState, PheromoneBlockEntity blockEntity) {

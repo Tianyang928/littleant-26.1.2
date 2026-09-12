@@ -24,9 +24,9 @@ public class FindNearestPheromone {
     public BlockPos setTarget(String type) {
         if (type == null || type.isEmpty()) return null;
         List<BlockPos> r = new ArrayList<>();
-        ChunkPos c = ChunkPos.containing(mob.blockPosition());
+        ChunkPos c = new ChunkPos(mob.blockPosition());
         for (ChunkPos cp : ChunkPos.rangeClosed(c, 5).toList()) {
-            LevelChunk ch = mob.level().getChunkSource().getChunkNow(cp.x(), cp.z());
+            LevelChunk ch = mob.level().getChunkSource().getChunkNow(cp.x, cp.z);
             if (ch != null) for (BlockEntity e : ch.getBlockEntities().values())
                 if (e.getBlockPos().distSqr(mob.blockPosition()) <= 4096 && e.getBlockState().is(ModBlocks.PHEROMONE_BLOCK.get()) && e instanceof PheromoneBlockEntity p && p.getPheromoneList().containsKey(type))
                     r.add(e.getBlockPos().immutable());

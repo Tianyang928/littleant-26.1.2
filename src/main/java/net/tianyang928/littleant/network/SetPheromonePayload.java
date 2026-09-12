@@ -67,11 +67,11 @@ public record SetPheromonePayload(
             return;
         }
         ServerPlayer serverPlayer = (ServerPlayer) player;
-        for (ServerPlayer viewer : serverPlayer.level().players()) {
+        for (Player viewer : serverPlayer.level().players()) {
             if (viewer.containerMenu instanceof PheromoneListMenu viewerMenu
                     && viewerMenu.isViewing(menu.getPheromoneBlockEntity())) {
                 PacketDistributor.sendToPlayer(
-                        viewer,
+                        (ServerPlayer) viewer,
                         new SyncPheromonePayload(viewerMenu.containerId, id, amount)
                 );
             }

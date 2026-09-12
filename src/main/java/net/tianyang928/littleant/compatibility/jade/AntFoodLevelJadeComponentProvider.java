@@ -1,7 +1,7 @@
 package net.tianyang928.littleant.compatibility.jade;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.IEntityComponentProvider;
 import snownee.jade.api.ITooltip;
@@ -21,7 +21,7 @@ public class AntFoodLevelJadeComponentProvider implements IEntityComponentProvid
     }
 
     @Override
-    public Identifier getUid() {
+    public ResourceLocation getUid() {
         return AntFoodLevelJadePlugin.ANT_FOOD_LEVEL;
     }
 }

@@ -2,7 +2,11 @@ package net.tianyang928.littleant.entity;
 
 import com.google.gson.JsonParser;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -29,7 +33,6 @@ import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -37,8 +40,6 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -57,7 +58,7 @@ import net.tianyang928.littleant.network.SyncAntTaskDebugPayload;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class AntEntity extends PathfinderMob implements InventoryCarrier, ContainerUser {
+public class AntEntity extends PathfinderMob implements InventoryCarrier {
 
     public static final int INVENTORY_SIZE = 9;
     private static final int INVENTORY_SLOT_OFFSET = 300;
@@ -66,7 +67,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     private static final EntityDimensions SWIMMING_DIMENSIONS =
             EntityDimensions.scalable(0.6F, 0.6F).withEyeHeight(0.4F);
 
-    AntEntityGlobalData antEntityGlobalData = new AntEntityGlobalData();
+    private AntEntityGlobalData antEntityGlobalData;
     AntScriptInterpreter antScriptInterpreter = new AntScriptInterpreter(this);
 
     @Nullable
@@ -296,10 +297,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     public @Nullable SpawnGroupData finalizeSpawn(
             ServerLevelAccessor level,
             DifficultyInstance difficulty,
-            EntitySpawnReason spawnReason,
+            MobSpawnType spawnType,
             @Nullable SpawnGroupData groupData
     ) {
-        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnReason, groupData);
+        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, groupData);
+        this.antEntityGlobalData = AntEntityGlobalData.get((ServerLevel) level.getLevel());
         this.setCustomName(getRandomCharacterName());
         this.getEntityData().set(skinNameAccessor, getRandomSkinName());
         this.setCustomNameVisible(true);
@@ -403,14 +405,13 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         return this.getSurroundingPheromoneTypes.setTarget();
     }
 
-    @Override
     public boolean hasContainerOpen(ContainerOpenersCounter container, BlockPos blockPos) {
         for (BlockPos openedPos : this.openedContainerPositions.keySet()) {
             if (openedPos.equals(blockPos)) return true;
             BlockState state = this.level().getBlockState(openedPos);
             if (state.getBlock() instanceof ChestBlock
                     && state.getValue(ChestBlock.TYPE) != ChestType.SINGLE
-                    && ChestBlock.getConnectedBlockPos(openedPos, state).equals(blockPos)) {
+                    && openedPos.relative(ChestBlock.getConnectedDirection(state)).equals(blockPos)) {
                 return true;
             }
         }
@@ -426,7 +427,6 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         openedContainerPositions.computeIfPresent(immutable, (ignored, count) -> count > 1 ? count - 1 : null);
     }
 
-    @Override
     public double getContainerInteractionRange() {
         return 4.0D;
     }
@@ -439,14 +439,14 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     }
 
     @Override
-    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+    public boolean hurt(DamageSource source, float amount) {
         Entity attacker = source.getEntity();
-        this.lastHurtTime = level.getGameTime();
+        this.lastHurtTime = this.level().getGameTime();
         // 记录最后攻击者
         if (attacker instanceof LivingEntity) {
             this.setLastHurtBy((LivingEntity) attacker);
         }
-        return super.hurtServer(level, source, amount);
+        return super.hurt(source, amount);
     }
 
     private void setLastHurtBy(LivingEntity attacker) {
@@ -459,50 +459,54 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         for(int i = 0; i<inventory.getContainerSize(); i++){
             ItemStack itemStack = inventory.getItem(i);
             if(!itemStack.isEmpty()){
-                this.spawnAtLocation(level, itemStack);
+                this.spawnAtLocation(itemStack);
             }
         }
         inventory.clearContent();
 
-        for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
             ItemStack itemStack = this.getItemBySlot(slot);
             if (!itemStack.isEmpty()
                     && !EnchantmentHelper.has(itemStack, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP)) {
-                this.spawnAtLocation(level, itemStack);
+                this.spawnAtLocation(itemStack);
                 this.setItemSlot(slot, ItemStack.EMPTY);
             }
         }
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(CompoundTag input) {
         super.readAdditionalSaveData(input);
         this.doubleFoodLevel = this.foodData.getFoodLevel();
-        this.getEntityData().set(skinNameAccessor, input.getStringOr("skin_name", ""));
-        this.readInventoryFromTag(input);
-        this.selectedSlot = input.getIntOr("selected_slot", 0);
+        this.getEntityData().set(skinNameAccessor, input.getString("skin_name"));
+        this.readInventoryFromTag(input,this.level().registryAccess());
+        this.selectedSlot = input.getInt("selected_slot");
         this.selectedSlot = Mth.clamp(this.selectedSlot, 0, INVENTORY_SIZE - 1);
         this.syncSelectedItem();
         this.foodData.readAdditionalSaveData(input);
         this.antScriptInterpreter.blackboard().readPermanentData(input);
         this.brainBlocks.clear();
-        for (ValueInput child : input.childrenListOrEmpty("BrainBlocks")) {
-            String opcode = child.getStringOr("opcode", "");
+        ListTag brainBlocks = input.getList("BrainBlocks", Tag.TAG_COMPOUND);
+        for (int i = 0; i < brainBlocks.size(); i++) {
+            CompoundTag child = brainBlocks.getCompound(i);
+            String opcode = child.getString("opcode");
             if (!opcode.isEmpty()) {
-                UUID next = parseUuid(child.getStringOr("next", ""));
-                UUID parent = parseUuid(child.getStringOr("parent", ""));
-                UUID id = parseUuid(child.getStringOr("id", ""));
+                UUID next = parseUuid(child.getString("next"));
+                UUID parent = parseUuid(child.getString("parent"));
+                UUID id = parseUuid(child.getString("id"));
                 List<InputSlot> inputs = new ArrayList<>();
-                for (ValueInput savedInput : child.childrenListOrEmpty("Inputs")) {
-                    String name = savedInput.getStringOr("name", "");
+                ListTag inputsList = child.getList("Inputs", Tag.TAG_COMPOUND);
+                for (int j = 0; j < inputsList.size(); j++) {
+                    CompoundTag savedInput = inputsList.getCompound(j);
+                    String name = savedInput.getString("name");
                     ValueType type;
-                    try { type = ValueType.valueOf(savedInput.getStringOr("type", ValueType.ANY.name())); }
+                    try { type = ValueType.valueOf(savedInput.getString("type")); }
                     catch (IllegalArgumentException ignored) { type = ValueType.ANY; }
-                    String value = savedInput.getStringOr("value", "");
-                    inputs.add(new InputSlot(name, type, value, parseUuid(savedInput.getStringOr("block", ""))));
+                    String value = savedInput.getString("value");
+                    inputs.add(new InputSlot(name, type, value, parseUuid(savedInput.getString("block"))));
                 }
                 if (inputs.isEmpty()) inputs = ModuleRegistry.createDefaultInputs(opcode);
-                if (id != null) this.brainBlocks.put(id, new BrainBlock(opcode, child.getIntOr("x", 0), child.getIntOr("y", 0), id, inputs, next, parent));
+                if (id != null) this.brainBlocks.put(id, new BrainBlock(opcode, child.getInt("x"), child.getInt("y"), id, inputs, next, parent));
             }
         }
         LittleAnt.LOGGER.info("[AntEntity] read skin name from save data: {}", getSkinNameAccessor());
@@ -515,32 +519,42 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput output) {
+    public void addAdditionalSaveData(CompoundTag output) {
         super.addAdditionalSaveData(output);
         output.putString("skin_name", getSkinNameAccessor());
-        this.writeInventoryToTag(output);
+        this.writeInventoryToTag(output,this.level().registryAccess());
         output.putInt("selected_slot", this.selectedSlot);
         this.foodData.addAdditionalSaveData(output);
         this.antScriptInterpreter.blackboard().writePermanentData(output);
-        ValueOutput.ValueOutputList brainBlockList = output.childrenList("BrainBlocks");
+        ListTag brainBlockList = new ListTag();
+
         for (BrainBlock block : this.brainBlocks.values()) {
-            ValueOutput child = brainBlockList.addChild();
+            CompoundTag child = new CompoundTag();
             child.putString("opcode", block.opcode());
             child.putInt("x", block.x());
             child.putInt("y", block.y());
             child.putString("id", block.id().toString());
             if (block.next() != null) child.putString("next", block.next().toString());
             if (block.parent() != null) child.putString("parent", block.parent().toString());
-            ValueOutput.ValueOutputList inputList = child.childrenList("Inputs");
-            for (InputSlot input : block.inputs()) {
-                ValueOutput savedInput = inputList.addChild();
-                savedInput.putString("name", input.name());
-                savedInput.putString("type", input.type().name());
-                if (input.value() != null) savedInput.putString("value", input.value());
-                if (input.blockId() != null) savedInput.putString("block", input.blockId().toString());
-            }
+            ListTag inputList = getInputList(block);
+            child.put("Inputs", inputList);
+            brainBlockList.add(child);
         }
+        output.put("BrainBlocks", brainBlockList);
         LittleAnt.LOGGER.info("[AntEntity] write skin name to save data: {}", getSkinNameAccessor());
+    }
+
+    private static ListTag getInputList(BrainBlock block) {
+        ListTag inputList = new ListTag();
+        for (InputSlot input : block.inputs()) {
+            CompoundTag savedInput = new CompoundTag();
+            savedInput.putString("name", input.name());
+            savedInput.putString("type", input.type().name());
+            if (input.value() != null) savedInput.putString("value", input.value());
+            if (input.blockId() != null) savedInput.putString("block", input.blockId().toString());
+            inputList.add(savedInput);
+        }
+        return inputList;
     }
 
     private static UUID parseUuid(String value) {
@@ -585,18 +599,18 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     public @Nullable SlotAccess getSlot(int slot) {
         int inventorySlot = slot - INVENTORY_SLOT_OFFSET;
         return inventorySlot >= 0 && inventorySlot < INVENTORY_SIZE
-                ? this.inventory.getSlot(inventorySlot)
+                ? SlotAccess.forContainer(this.inventory, inventorySlot)
                 : super.getSlot(slot);
     }
 
     @Override
-    protected void pickUpItem(ServerLevel level, ItemEntity itemEntity) {
-        InventoryCarrier.pickUpItem(level, this, this, itemEntity);
+    protected void pickUpItem(ItemEntity itemEntity) {
+        InventoryCarrier.pickUpItem(this, this, itemEntity);
         this.syncSelectedItem();
     }
 
     @Override
-    public boolean wantsToPickUp(ServerLevel level, ItemStack itemStack) {
+    public boolean wantsToPickUp(ItemStack itemStack) {
         //LittleAnt.LOGGER.info("[AntEntity] wantsToPickUp, itemStack: {}", itemStack.getDisplayName());
         return this.inventory.canAddItem(itemStack);
     }
@@ -626,6 +640,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     }
 
     private Component getRandomCharacterName() {
+        if (this.antEntityGlobalData == null) {
+            this.antEntityGlobalData = this.level() instanceof ServerLevel serverLevel
+                    ? AntEntityGlobalData.get(serverLevel)
+                    : new AntEntityGlobalData();
+        }
         // 从 CHARACTER_NAMES 中随机选择一个名字
         LinkedHashMap<String, Integer> CHARACTER_NAMES = antEntityGlobalData.getCharacterNames();
         int index = (int) (Math.random() * CHARACTER_NAMES.size());
@@ -640,6 +659,11 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
     }
 
     private String getRandomSkinName() {
+        if (this.antEntityGlobalData == null) {
+            this.antEntityGlobalData = this.level() instanceof ServerLevel serverLevel
+                    ? AntEntityGlobalData.get(serverLevel)
+                    : new AntEntityGlobalData();
+        }
         // 从 SKIN_NAMES 中随机选择一个皮肤
         int skinIndex = (int) (Math.random() * antEntityGlobalData.getSkinNames().length);
         LittleAnt.LOGGER.info("[AntEntity] random new skin name: {}", getSkinNameAccessor());
@@ -725,7 +749,7 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
         }
 
         if(currentTime % 20 == 0 && this.foodData.getFoodLevel() <= 0 && !this.level().isClientSide()) {
-            this.hurtServer((ServerLevel) this.level(), this.damageSources().starve(), 2.0F);
+            this.hurt(this.damageSources().starve(), 2.0F);
         }
 
         // 执行脚本
@@ -788,6 +812,44 @@ public class AntEntity extends PathfinderMob implements InventoryCarrier, Contai
 
     @Override
     public boolean hasLineOfSight(Entity target) {
-        return this.hasLineOfSight(target, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, target.getEyeY());
+        return super.hasLineOfSight(target);
+    }
+
+    public ItemEntity drop(ItemStack droppedItem, boolean dropAround, boolean includeThrowerName) {
+        if (droppedItem.isEmpty()) {
+            return null;
+        } else {
+            if (this.level().isClientSide) {
+                this.swing(InteractionHand.MAIN_HAND);
+            }
+
+            double d0 = this.getEyeY() - 0.3F;
+            ItemEntity itementity = new ItemEntity(this.level(), this.getX(), d0, this.getZ(), droppedItem);
+            itementity.setPickUpDelay(40);
+            if (includeThrowerName) {
+                itementity.setThrower(this);
+            }
+
+            if (dropAround) {
+                float f = this.random.nextFloat() * 0.5F;
+                float f1 = this.random.nextFloat() * (float) (Math.PI * 2);
+                itementity.setDeltaMovement((double)(-Mth.sin(f1) * f), 0.2F, (double)(Mth.cos(f1) * f));
+            } else {
+                float f7 = 0.3F;
+                float f8 = Mth.sin(this.getXRot() * (float) (Math.PI / 180.0));
+                float f2 = Mth.cos(this.getXRot() * (float) (Math.PI / 180.0));
+                float f3 = Mth.sin(this.getYRot() * (float) (Math.PI / 180.0));
+                float f4 = Mth.cos(this.getYRot() * (float) (Math.PI / 180.0));
+                float f5 = this.random.nextFloat() * (float) (Math.PI * 2);
+                float f6 = 0.02F * this.random.nextFloat();
+                itementity.setDeltaMovement(
+                        (double)(-f3 * f2 * 0.3F) + Math.cos((double)f5) * (double)f6,
+                        (double)(-f8 * 0.3F + 0.1F + (this.random.nextFloat() - this.random.nextFloat()) * 0.1F),
+                        (double)(f4 * f2 * 0.3F) + Math.sin((double)f5) * (double)f6
+                );
+            }
+
+            return itementity;
+        }
     }
 }

@@ -2,8 +2,11 @@ package net.tianyang928.littleant.entity.ai.brain;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
@@ -15,14 +18,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.tianyang928.littleant.block.ModBlocks;
-import net.tianyang928.littleant.block.PheromoneBlock;
 import net.tianyang928.littleant.blockentity.PheromoneBlockEntity;
 import net.tianyang928.littleant.entity.AntEntity;
-import net.minecraft.world.entity.EntityType;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -170,7 +168,7 @@ public final class AntBlackboard {
     public Boolean hasItemInInventory(String item) {
         List<Item> items = TagSupport.items(item);
         for(int i = 0; i < this.ant.getInventory().getContainerSize(); i++) {
-            if(items.contains(this.ant.getInventory().getSlot(i).get().getItem())) {
+            if(items.contains(this.ant.getInventory().getItem(i).getItem())) {
                 return true;
             }
         }
@@ -178,7 +176,7 @@ public final class AntBlackboard {
     }
 
     public String getItemInInventory(double slot) {
-        return BuiltInRegistries.ITEM.getKey(this.ant.getInventory().getSlot((int) slot).get().getItem()).toString();
+        return BuiltInRegistries.ITEM.getKey(this.ant.getInventory().getItem((int) slot).getItem()).toString();
     }
 
     public String getTime(){
@@ -302,17 +300,17 @@ public final class AntBlackboard {
 
     public boolean isInTag(String target, String tag) {
         if (target == null || tag == null) return false;
-        Identifier targetId = Identifier.tryParse(target.trim());
+        ResourceLocation targetId = ResourceLocation.tryParse(target.trim());
         if (targetId == null) return false;
 
         // Do not call getValue blindly: block/item registries are defaulted
         // and would turn an unknown id into minecraft:air.
         if (BuiltInRegistries.BLOCK.containsKey(targetId)
-                && TagSupport.blockInTag(BuiltInRegistries.BLOCK.getValue(targetId), tag)) return true;
+                && TagSupport.blockInTag(BuiltInRegistries.BLOCK.get(targetId), tag)) return true;
         if (BuiltInRegistries.ITEM.containsKey(targetId)
-                && TagSupport.itemInTag(BuiltInRegistries.ITEM.getValue(targetId), tag)) return true;
+                && TagSupport.itemInTag(BuiltInRegistries.ITEM.get(targetId), tag)) return true;
         return BuiltInRegistries.ENTITY_TYPE.containsKey(targetId)
-                && TagSupport.entityInTag(BuiltInRegistries.ENTITY_TYPE.getValue(targetId), tag);
+                && TagSupport.entityInTag(BuiltInRegistries.ENTITY_TYPE.get(targetId), tag);
     }
 
     public String getItemInContainer(int slot, double x, double y, double z) {
@@ -449,51 +447,63 @@ public final class AntBlackboard {
         }
     }
 
-    public void readPermanentData(ValueInput input) {
+    public void readPermanentData(CompoundTag input) {
         variables.clear();
         lists.clear();
         permanentVariables.clear();
         permanentLists.clear();
-
-        for (ValueInput savedVariable : input.childrenListOrEmpty("PermanentVariables")) {
-            String name = savedVariable.getStringOr("name", "");
+        ListTag variableList = input.getList("PermanentVariables", Tag.TAG_COMPOUND);
+        for (int i = 0; i < variableList.size(); i++) {
+            CompoundTag savedVariable = variableList.getCompound(i);
+            String name = savedVariable.getString("name");
             if (!name.isEmpty()) {
-                String value = savedVariable.getStringOr("value", "");
+                String value = savedVariable.getString("value");
                 permanentVariables.put(name, value);
                 variables.put(name, value);
             }
         }
-        for (ValueInput savedList : input.childrenListOrEmpty("PermanentLists")) {
-            String name = savedList.getStringOr("name", "");
+        ListTag listList = input.getList("PermanentLists", Tag.TAG_COMPOUND);
+        for (int i = 0; i < listList.size(); i++) {
+            CompoundTag savedList = listList.getCompound(i);
+            String name = savedList.getString("name");
             if (name.isEmpty()) {
                 continue;
             }
             List<String> values = new ArrayList<>();
-            for (ValueInput savedValue : savedList.childrenListOrEmpty("Values")) {
-                values.add(savedValue.getStringOr("value", ""));
+            ListTag valueList = savedList.getList("Values", Tag.TAG_COMPOUND);
+            for (int j = 0; j < valueList.size(); j++) {
+                CompoundTag savedValue = valueList.getCompound(j);
+                values.add(savedValue.getString("value"));
             }
             permanentLists.put(name, new ArrayList<>(values));
             lists.put(name, values);
         }
     }
 
-    public void writePermanentData(ValueOutput output) {
-        ValueOutput.ValueOutputList savedVariables = output.childrenList("PermanentVariables");
+    public void writePermanentData(CompoundTag output) {
+        ListTag savedVariables = new ListTag();
         permanentVariables.forEach((name, v) -> {
-            ValueOutput child = savedVariables.addChild();
+            CompoundTag child = new CompoundTag();
             child.putString("name", name);
             child.putString("value", v);
+            savedVariables.add(child);
         });
+        output.put("PermanentVariables", savedVariables);
 
-        ValueOutput.ValueOutputList savedLists = output.childrenList("PermanentLists");
+        ListTag savedLists = new ListTag();
         permanentLists.forEach((name, values) -> {
-            ValueOutput child = savedLists.addChild();
+            CompoundTag child = new CompoundTag();
             child.putString("name", name);
-            ValueOutput.ValueOutputList savedValues = child.childrenList("Values");
+            ListTag savedValues = new ListTag();
             for (String v : values) {
-                savedValues.addChild().putString("value", v);
+                CompoundTag value = new CompoundTag();
+                value.putString("value", v);
+                savedValues.add(value);
             }
+            child.put("Values", savedValues);
+            savedLists.add(child);
         });
+        output.put("PermanentLists", savedLists);
     }
 
     private Container getContainer(BlockPos containerPos) {
@@ -510,7 +520,7 @@ public final class AntBlackboard {
     }
 
     public String getItemCountInInventory(double slot) {
-        return String.valueOf(Objects.requireNonNull(this.ant.getInventory().getSlot((int) slot)).get().getCount());
+        return String.valueOf(Objects.requireNonNull(this.ant.getInventory().getItem((int) slot)).getCount());
     }
 
     public String getItemCountInContainer(double x, double y, double z, double slot) {

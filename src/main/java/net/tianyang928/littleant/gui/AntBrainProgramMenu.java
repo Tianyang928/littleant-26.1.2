@@ -77,7 +77,7 @@ public class AntBrainProgramMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return this.ant != null && this.ant.isAlive() && player.isWithinEntityInteractionRange(this.ant, 4.0);
+        return this.ant != null && this.ant.isAlive() && player.distanceTo(this.ant) <= 4.0;
     }
 
     @Override

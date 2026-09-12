@@ -74,10 +74,7 @@ public class PheromoneBlock extends Block implements EntityBlock {
                     || player.getItemInHand(InteractionHand.OFF_HAND).is(ModItems.PHEROMONE_BLOCK.get()))) {
 
             level.addParticle(
-                    new BlockParticleOption(
-                            ParticleTypes.BLOCK_MARKER,
-                            state
-                    ),
+                    new BlockParticleOption(ParticleTypes.BLOCK_MARKER, state),
                     pos.getX() + 0.5,
                     pos.getY() + 0.5,
                     pos.getZ() + 0.5,

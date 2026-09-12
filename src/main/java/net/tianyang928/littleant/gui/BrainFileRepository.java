@@ -2,8 +2,8 @@ package net.tianyang928.littleant.gui;
 
 import com.google.gson.JsonParser;
 import com.google.gson.GsonBuilder;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.client.Minecraft;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.entity.ai.brain.BrainBlock;
@@ -28,7 +28,7 @@ public final class BrainFileRepository {
             try { Files.createDirectories(DIRECTORY); } catch (IOException e) { LittleAnt.LOGGER.warn("Unable to create brain directory", e); }
             List<BrainFile> result = new ArrayList<>();
             Minecraft.getInstance().getResourceManager().listResources("brain_presets", p -> p.getPath().endsWith(".json"))
-                    .keySet().stream().sorted(Comparator.comparing(Identifier::toString))
+                    .keySet().stream().sorted(Comparator.comparing(ResourceLocation::toString))
                     .forEach(id -> result.add(new BrainFile(strip(id.getPath()), true, null)));
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(DIRECTORY, "*.json")) {
                 for (Path p : stream) result.add(new BrainFile(strip(p.getFileName().toString()), false, p));
@@ -43,7 +43,7 @@ public final class BrainFileRepository {
             try {
                 String source;
                 if (file.preset()) {
-                    var id = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "brain_presets/" + file.name() + ".json");
+                    var id = ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "brain_presets/" + file.name() + ".json");
                     try (var in = Minecraft.getInstance().getResourceManager().getResourceOrThrow(id).open()) {
                         source = new String(in.readAllBytes(), StandardCharsets.UTF_8);
                     }

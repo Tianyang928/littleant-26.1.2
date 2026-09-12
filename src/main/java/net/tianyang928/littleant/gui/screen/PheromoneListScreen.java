@@ -1,23 +1,19 @@
 package net.tianyang928.littleant.gui.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.tianyang928.littleant.LittleAnt;
 import net.tianyang928.littleant.gui.PheromoneListMenu;
 import net.tianyang928.littleant.network.SetPheromonePayload;
@@ -26,11 +22,11 @@ import java.util.LinkedHashMap;
 
 public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMenu> {
 
-    private static final Identifier BACKGROUND_LOCATION = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/pheromone_list_background.png");
-    private static final Identifier SCROLLER_SPRITE = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/scroller.png");
-    private static final Identifier SCROLLER_DISABLED_SPRITE = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/scroller_disabled.png");
-    private static final Identifier ADD_BUTTON = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/add_button.png");
-    private static final Identifier MINUS_BUTTON = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/minus_button.png");
+    private static final ResourceLocation BACKGROUND_LOCATION = ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/pheromone_list_background.png");
+    private static final ResourceLocation SCROLLER_SPRITE = ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/scroller.png");
+    private static final ResourceLocation SCROLLER_DISABLED_SPRITE = ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/scroller_disabled.png");
+    private static final ResourceLocation ADD_BUTTON = ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/add_button.png");
+    private static final ResourceLocation MINUS_BUTTON = ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID,"textures/gui/container/minus_button.png");
 
     private int scrollOff;
     private int selectedItem;
@@ -43,12 +39,12 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
     private final PheromoneListScreen.PheromoneLineEdit[] pheromoneLineEdit = new PheromoneListScreen.PheromoneLineEdit[2];
 
     public PheromoneListScreen(PheromoneListMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 178, 167);
+        super(menu, inventory, title);
         this.inventoryLabelY = 500;
     }
 
     private void sendChangePheromoneData(String pheromoneId, int pheromoneAmount) {
-        ClientPacketDistributor.sendToServer(
+        PacketDistributor.sendToServer(
                 new SetPheromonePayload(
                         this.menu.containerId,
                         pheromoneId,
@@ -73,7 +69,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
             return;
         }
 
-        ClientPacketDistributor.sendToServer(
+        PacketDistributor.sendToServer(
                 new SetPheromonePayload(
                         this.menu.containerId,
                         id,
@@ -93,7 +89,7 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
 
         for (int i = 0; i < 6; i++) {
             this.pheromoneTextWidget[i] = this.addRenderableWidget(new PheromoneStringWidget(this.font, xo + 5, buttonY, 120, 20, i + 1, Component.literal("")));
-            this.pheromoneTextWidget[i].setMaxWidth(120, StringWidget.TextOverflow.SCROLLING);
+            this.pheromoneTextWidget[i].setWidth(120);
 
             this.pheromoneAddButtons[i] = this.addRenderableWidget(new PheromoneButton(xo + 5 + 122, buttonY, 20, 20, i + 6 + 1, button -> {
                 if (button instanceof PheromoneButton) {
@@ -143,14 +139,13 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        super.extractBackground(graphics, mouseX, mouseY, a);
+    protected void renderBg(GuiGraphics graphics, float a, int mouseX, int mouseY) {
         int xo = (this.width - this.imageWidth) / 2;
         int yo = (this.height - this.imageHeight) / 2;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_LOCATION, xo, yo, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 512, 256);
+        graphics.blit(BACKGROUND_LOCATION, xo, yo, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 512, 256);
     }
 
-    private void extractScroller(GuiGraphicsExtractor graphics, int xo, int yo, int mouseX, int mouseY, LinkedHashMap<String, Integer> pheromones) {
+    private void extractScroller(GuiGraphics graphics, int xo, int yo, int mouseX, int mouseY, LinkedHashMap<String, Integer> pheromones) {
         int steps = pheromones.size() + 1 - 6;
         if (steps > 1) {
             int leftOver = 139 - (27 + (steps - 1) * 139 / steps);
@@ -163,26 +158,23 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
 
             int scrollerX = xo + 167;
             int scrollerY = yo + 18 + scrollerYOff;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, SCROLLER_SPRITE, scrollerX, scrollerY, 0.0F,0.0F, 6, 27,6,27);
-            if (mouseX >= scrollerX && mouseX < xo + 94 + 6 && mouseY >= scrollerY && mouseY <= scrollerY + 27) {
-                graphics.requestCursor(this.isDragging ? CursorTypes.RESIZE_NS : CursorTypes.POINTING_HAND);
-            }
+            graphics.blit(SCROLLER_SPRITE, scrollerX, scrollerY, 0.0F,0.0F, 6, 27,6,27);
         } else {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, SCROLLER_DISABLED_SPRITE, xo + 167, yo + 18, 0.0F, 0.0F, 6, 27,6, 27);
+            graphics.blit(SCROLLER_DISABLED_SPRITE, xo + 167, yo + 18, 0.0F, 0.0F, 6, 27,6, 27);
         }
     }
 
-    private void extractAddImage(GuiGraphicsExtractor graphics, int xo, int yo) {
-        graphics.blit(RenderPipelines.GUI_TEXTURED, ADD_BUTTON, xo, yo + 5, 0.0F,0.0F,10, 10,10,10);
+    private void extractAddImage(GuiGraphics graphics, int xo, int yo) {
+        graphics.blit(ADD_BUTTON, xo, yo + 5, 0.0F,0.0F,10, 10,10,10);
     }
 
-    private void extractMinusImage(GuiGraphicsExtractor graphics, int xo, int yo) {
-        graphics.blit(RenderPipelines.GUI_TEXTURED, MINUS_BUTTON, xo, yo + 5, 0.0F,0.0F,10, 10,10,10);
+    private void extractMinusImage(GuiGraphics graphics, int xo, int yo) {
+        graphics.blit(MINUS_BUTTON, xo, yo + 5, 0.0F,0.0F,10, 10,10,10);
     }
 
     @Override
-    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        super.extractContents(graphics, mouseX, mouseY, a);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float a) {
+        super.render(graphics, mouseX, mouseY, a);
         LinkedHashMap<String, Integer> pheromones = this.menu.getPheromoneList();
         int xo = (this.width - this.imageWidth) / 2;
         int yo = (this.height - this.imageHeight) / 2;
@@ -252,43 +244,41 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
         int numberOfOffers = this.menu.getPheromoneList().size();
         if (this.isDragging) {
             int fullScrollTopPos = this.topPos + 18;
             int fullScrollBottomPos = fullScrollTopPos + 139;
             int maxScrollOff = numberOfOffers - 6;
-            float scrolling = ((float)event.y() - fullScrollTopPos - 13.5F) / (fullScrollBottomPos - fullScrollTopPos - 27.0F);
+            float scrolling = ((float)mouseY - fullScrollTopPos - 13.5F) / (fullScrollBottomPos - fullScrollTopPos - 27.0F);
             scrolling = scrolling * maxScrollOff + 0.5F;
             this.scrollOff = Mth.clamp((int)scrolling, 0, maxScrollOff);
             return true;
         } else {
-            return super.mouseDragged(event, dx, dy);
+            return super.mouseDragged(mouseX, mouseY, button, dx, dy);
         }
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int xo = (this.width - this.imageWidth) / 2;
         int yo = (this.height - this.imageHeight) / 2;
         if (this.canScroll(this.menu.getPheromoneList().size())
-                && event.x() > xo + 167
-                && event.x() < xo + 167 + 6
-                && event.y() > yo + 18
-                && event.y() <= yo + 18 + 139 + 1) {
+                && mouseX > xo + 167 && mouseX < xo + 167 + 6
+                && mouseY > yo + 18 && mouseY <= yo + 18 + 139 + 1) {
             this.isDragging = true;
         }
 
-        return super.mouseClicked(event, doubleClick);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         this.isDragging = false;
-        return super.mouseReleased(event);
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
-    private class PheromoneButton extends Button.Plain {
+    private class PheromoneButton extends Button {
         final int index;
 
         public PheromoneButton(int x, int y, int width, int height, int index, Button.OnPress onPress) {
@@ -332,12 +322,12 @@ public class PheromoneListScreen extends AbstractContainerScreen<PheromoneListMe
     }
 
     @Override
-    public boolean keyPressed(KeyEvent e) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (getFocused() instanceof EditBox editBox
                 && editBox.isFocused()
-                && minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(e))) {
+                && minecraft.options.keyInventory.isActiveAndMatches(InputConstants.getKey(keyCode, scanCode))) {
             return true;
         }
-        return super.keyPressed(e);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 }

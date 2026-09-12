@@ -23,7 +23,7 @@ final class AntCrafting {
     }
 
     static Optional<RecipeHolder<CraftingRecipe>> findRecipe(ServerLevel level, CraftingInput input) {
-        return level.recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, level);
+        return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
     }
 
     static boolean hasIngredients(SimpleContainer inventory, CraftingInput input) {
@@ -50,7 +50,9 @@ final class AntCrafting {
             return false;
         }
 
-        ItemStack result = recipeHolder.value().assemble(input);
+        // In 1.21.1 recipes may resolve registry-backed components while assembling.
+        // ServerLevel.registryAccess() is the required HolderLookup.Provider.
+        ItemStack result = recipeHolder.value().assemble(input, level.registryAccess());
         if (result.isEmpty() || !result.isItemEnabled(level.enabledFeatures())) {
             return false;
         }
@@ -85,7 +87,7 @@ final class AntCrafting {
         }
         ItemStack overflow = ant.getInventory().addItem(stack.copy());
         if (!overflow.isEmpty()) {
-            ant.spawnAtLocation(level, overflow);
+            ant.spawnAtLocation(overflow);
         }
     }
 }

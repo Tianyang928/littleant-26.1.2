@@ -1,7 +1,7 @@
 package net.tianyang928.littleant.client.overlay.debug;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.EntityHitResult;
@@ -23,19 +23,19 @@ public final class AntDebugOverlay {
     private static final int ACTIVE_HEADER = 0xFFFFE79A;
     private AntDebugOverlay() {}
 
-    public static void render(GuiGraphicsExtractor graphics, DeltaTracker ignored) {
+    public static void render(GuiGraphics graphics, DeltaTracker ignored) {
         Minecraft minecraft = Minecraft.getInstance();
         if (!AntDebugClientState.enabled() || minecraft.player == null || minecraft.level == null || minecraft.options.hideGui) return;
         TaskDebugSnapshot snapshot = selectSnapshot(minecraft);
         if (snapshot == null) return;
 
-        boolean enlarged = GLFW.glfwGetKey(minecraft.getWindow().handle(), GLFW.GLFW_KEY_TAB) == GLFW.GLFW_PRESS;
+        boolean enlarged = GLFW.glfwGetKey(minecraft.getWindow().getWindow(), GLFW.GLFW_KEY_TAB) == GLFW.GLFW_PRESS;
         int width = enlarged ? WIDTH * 2 : WIDTH;
         int sectionHeight = enlarged ? SECTION_HEIGHT * 2 : SECTION_HEIGHT;
-        graphics.text(Minecraft.getInstance().font, Objects.requireNonNull(minecraft.level.getEntity(snapshot.entityId())).getName().getString(), 5, 5, 0xFFFFFFFF, false);
+        graphics.drawString(Minecraft.getInstance().font, Objects.requireNonNull(minecraft.level.getEntity(snapshot.entityId())).getName().getString(), 5, 5, 0xFFFFFFFF, false);
         drawSection(graphics, 5, 5 + Minecraft.getInstance().font.lineHeight, width, sectionHeight, "Foreground goal", snapshot.foreground(), snapshot.hasRunningForeground(), false);
         drawSection(graphics, 5, 5 + sectionHeight + Minecraft.getInstance().font.lineHeight, width, sectionHeight, "Background goal", snapshot.background(), snapshot.hasRunningBackground(), true);
-        graphics.text(Minecraft.getInstance().font, Component.translatable("tip.littleant.debug.f8_to_close"), 5, 5 + sectionHeight*2 + 5 + Minecraft.getInstance().font.lineHeight, 0xFFFFFFFF, false);
+        graphics.drawString(Minecraft.getInstance().font, Component.translatable("tip.littleant.debug.f8_to_close"), 5, 5 + sectionHeight*2 + 5 + Minecraft.getInstance().font.lineHeight, 0xFFFFFFFF, false);
     }
 
     private static TaskDebugSnapshot selectSnapshot(Minecraft minecraft) {
@@ -50,14 +50,14 @@ public final class AntDebugOverlay {
                 .orElse(null);
     }
 
-    private static void drawSection(GuiGraphicsExtractor graphics, int x, int y, int width, int sectionHeight, String title,
+    private static void drawSection(GuiGraphics graphics, int x, int y, int width, int sectionHeight, String title,
                                     List<TaskDebugEntry> entries, boolean running, boolean showPriority) {
         graphics.fill(x, y, x + width, y + sectionHeight, BACKGROUND);
         graphics.fill(x, y, x + width, y + 1, BORDER);
         graphics.fill(x, y + sectionHeight - 1, x + width, y + sectionHeight, BORDER);
         graphics.fill(x, y, x + 1, y + sectionHeight, BORDER);
         graphics.fill(x + width - 1, y, x + width, y + sectionHeight, BORDER);
-        graphics.text(Minecraft.getInstance().font, title, x + 5, y + 4, running ? ACTIVE_HEADER : 0xFFFFFFFF, false);
+        graphics.drawString(Minecraft.getInstance().font, title, x + 5, y + 4, running ? ACTIVE_HEADER : 0xFFFFFFFF, false);
         graphics.enableScissor(x + 2, y + 15, x + width - 2, y + sectionHeight - 2);
         // 计算运行中的任务, 绿色运行中任务只能在section的上半部分
         int lineY = y + 17;
@@ -79,8 +79,8 @@ public final class AntDebugOverlay {
             int available = (showPriority ? priorityX - 4 : x + width - 5) - (x + 5);
             String name = "  ".repeat(entry.depth()) + entry.name();
             name = Minecraft.getInstance().font.plainSubstrByWidth(name, Math.max(0, available));
-            graphics.text(Minecraft.getInstance().font, name, x + 5, lineY, color(entry.state()), false);
-            if (showPriority) graphics.text(Minecraft.getInstance().font, priority, priorityX, lineY, color(entry.state()), false);
+            graphics.drawString(Minecraft.getInstance().font, name, x + 5, lineY, color(entry.state()), false);
+            if (showPriority) graphics.drawString(Minecraft.getInstance().font, priority, priorityX, lineY, color(entry.state()), false);
             lineY += 10;
         }
         graphics.disableScissor();

@@ -12,6 +12,9 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.server.level.ServerLevel;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.tianyang928.littleant.entity.ai.interaction.AntInteractionService;
 import net.tianyang928.littleant.entity.AntEntity;
 
 import javax.annotation.Nullable;
@@ -28,6 +31,7 @@ public class UseContainerGoal extends Goal {
     @Nullable private Item item;
     @Nullable private Path path;
     @Nullable private Container openedContainer;
+    @Nullable private FakePlayer containerPlayer;
     private Operation operation = Operation.PUT;
     private int containerSlot;
     private int amount;
@@ -105,9 +109,10 @@ public class UseContainerGoal extends Goal {
         if (hasValidRequest(container)) {
             if (this.openedContainer == null) {
                 // Containers without an opening animation implement these hooks as no-ops.
-                container.startOpen(this.ant);
+                if (!(this.ant.level() instanceof ServerLevel)) return;
+                this.containerPlayer = AntInteractionService.createFakePlayer(this.ant);
+                container.startOpen(this.containerPlayer);
                 this.openedContainer = container;
-                this.ant.registerContainerOpen(this.containerPos);
                 return;
             }
             if (++this.openTicks < OPEN_ANIMATION_TICKS) return;
@@ -137,7 +142,7 @@ public class UseContainerGoal extends Goal {
         return blockEntity instanceof Container container ? container : null;
     }
 
-//    /** Used by {@link net.minecraft.world.entity.ContainerUser} to keep chest opener counts accurate. */
+//    /** Kept for compatibility with the old container-user integration. */
 //    public boolean isContainerOpenAt(BlockPos pos) {
 //        if (this.openedContainer == null || this.containerPos == null) return false;
 //        if (this.containerPos.equals(pos)) return true;
@@ -149,9 +154,12 @@ public class UseContainerGoal extends Goal {
 
     private void closeOpenedContainer() {
         if (this.openedContainer != null) {
-            this.openedContainer.stopOpen(this.ant);
-            if (this.containerPos != null) this.ant.unregisterContainerOpen(this.containerPos);
+            if (this.containerPlayer != null) {
+                this.openedContainer.stopOpen(this.containerPlayer);
+                this.containerPlayer.stopUsingItem();
+            }
             this.openedContainer = null;
+            this.containerPlayer = null;
         }
     }
 

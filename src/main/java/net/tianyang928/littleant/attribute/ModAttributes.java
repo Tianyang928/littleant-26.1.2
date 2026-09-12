@@ -3,7 +3,7 @@ package net.tianyang928.littleant.attribute;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.tianyang928.littleant.LittleAnt;
@@ -27,7 +27,7 @@ public class ModAttributes {
         // 使用你的 mod ID 作为命名空间
         return Registry.registerForHolder(
                 BuiltInRegistries.ATTRIBUTE,
-                Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, name),
+                ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, name),
                 attribute
         );
     }

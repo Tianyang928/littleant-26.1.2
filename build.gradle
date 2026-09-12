@@ -115,6 +115,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 			java_version: java_version,
 			icon: icon,
 			github_name: github_name,
+			jade_version: jade_version,
 	]
 
 	inputs.properties replaceProperties

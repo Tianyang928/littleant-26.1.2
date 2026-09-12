@@ -1,6 +1,6 @@
 package net.tianyang928.littleant.compatibility.jade;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.tianyang928.littleant.entity.AntEntity;
 import snownee.jade.api.IWailaClientRegistration;
 import snownee.jade.api.IWailaCommonRegistration;
@@ -11,7 +11,7 @@ import net.tianyang928.littleant.LittleAnt;
 
 @WailaPlugin
 public class AntFoodLevelJadePlugin implements IWailaPlugin{
-    static Identifier ANT_FOOD_LEVEL = Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "food_level");
+    static ResourceLocation ANT_FOOD_LEVEL = ResourceLocation.fromNamespaceAndPath(LittleAnt.MOD_ID, "food_level");
 
     @Override
     public void register(IWailaCommonRegistration registration) {

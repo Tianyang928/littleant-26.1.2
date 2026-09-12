@@ -1,19 +1,17 @@
 package net.tianyang928.littleant.entity;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.Identifier;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
-import net.tianyang928.littleant.LittleAnt;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class AntEntityGlobalData extends SavedData {
 
-    private static final LinkedHashMap<String, Integer> CHARACTER_NAMES = new LinkedHashMap<>() {{
+    private final LinkedHashMap<String, Integer> characterNames = new LinkedHashMap<>() {{
         put("Ante", 0);
         put("Anthem", 0);
         put("Antler", 0);
@@ -81,36 +79,48 @@ public class AntEntityGlobalData extends SavedData {
     };
 
     public AntEntityGlobalData(Map<String, Integer> characterNames) {
-        CHARACTER_NAMES.replaceAll((k, v) -> characterNames.getOrDefault(k, 0));
+        this.characterNames.replaceAll((k, v) -> characterNames.getOrDefault(k, 0));
     }
 
     public AntEntityGlobalData() {
     }
 
-    // 定义序列化用的 Codec
-    public static final Codec<AntEntityGlobalData> CODEC = RecordCodecBuilder.create(
-            instance -> instance.group(Codec.unboundedMap(Codec.STRING, Codec.INT)
-                    .optionalFieldOf("character_names", Map.of())
-                    .forGetter(AntEntityGlobalData::getCharacterNames)
-            ).apply(instance, AntEntityGlobalData::new)
-    );
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
+        CompoundTag compoundtag = new CompoundTag();
+        this.characterNames.forEach(compoundtag::putInt);
+        tag.put("character_names", compoundtag);
+        return tag;
+    }
 
-    public static final SavedDataType<AntEntityGlobalData> TYPE = new SavedDataType<>(
-            Identifier.fromNamespaceAndPath(LittleAnt.MOD_ID, "ant_entity_data"),
-            AntEntityGlobalData::new,
-            CODEC,
-            DataFixTypes.SAVED_DATA_WANDERING_TRADER
-    );
+    public static AntEntityGlobalData load(CompoundTag tag, HolderLookup.Provider registries) {
+        AntEntityGlobalData data = new AntEntityGlobalData();
+        CompoundTag compoundtag = tag.getCompound("character_names");
+        for(String characterName : compoundtag.getAllKeys()) {
+            int count = compoundtag.getInt(characterName);
+            if (data.characterNames.containsKey(characterName) && count >= 0) {
+                data.characterNames.put(characterName, count);
+            }
+        }
+        return data;
+    }
+
+    public static final SavedData.Factory<AntEntityGlobalData> FACTORY =
+            new SavedData.Factory<>(AntEntityGlobalData::new, AntEntityGlobalData::load, DataFixTypes.SAVED_DATA_MAP_INDEX);
+
+    public static AntEntityGlobalData get(ServerLevel level) {
+        return level.getDataStorage().computeIfAbsent(FACTORY, "ant_entity_data");
+    }
 
     public LinkedHashMap<String, Integer> getCharacterNames() {
-        return CHARACTER_NAMES;
+        return characterNames;
     }
     public String[] getSkinNames() {
         return SKIN_NAMES;
     }
 
     public void addNameCount(String characterName) {
-        CHARACTER_NAMES.put(characterName, CHARACTER_NAMES.getOrDefault(characterName, 0) + 1);
+        characterNames.put(characterName, characterNames.getOrDefault(characterName, 0) + 1);
         this.setDirty();
     }
 }

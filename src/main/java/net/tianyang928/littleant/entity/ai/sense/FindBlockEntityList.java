@@ -22,9 +22,9 @@ public class FindBlockEntityList {
     public List<BlockPos> setTarget(List<Block> blocks, int limit) {
         if (blocks == null || blocks.isEmpty() || limit <= 0) return List.of();
         List<BlockPos> r = new ArrayList<>();
-        ChunkPos c = ChunkPos.containing(mob.blockPosition());
+        ChunkPos c = new ChunkPos(mob.blockPosition());
         for (ChunkPos cp : ChunkPos.rangeClosed(c, 5).toList()) {
-            LevelChunk ch = mob.level().getChunkSource().getChunkNow(cp.x(), cp.z());
+            LevelChunk ch = mob.level().getChunkSource().getChunkNow(cp.x, cp.z);
             if (ch != null) for (BlockEntity e : ch.getBlockEntities().values())
                 if (blocks.contains(e.getBlockState().getBlock()) && e.getBlockPos().distSqr(mob.blockPosition()) <= 4096 && visible(e.getBlockPos()))
                     r.add(e.getBlockPos().immutable());

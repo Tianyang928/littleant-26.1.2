@@ -5,39 +5,26 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.tianyang928.littleant.block.ModBlocks;
 import net.tianyang928.littleant.item.ModItems;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
+
 public class ModRecipeProvider extends RecipeProvider {
-    public ModRecipeProvider(HolderLookup.Provider registries, RecipeOutput output) {
-        super(registries, output);
-    }
-
-    public static class Runner extends RecipeProvider.Runner {
-        public Runner(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> registries) {
-            super(packOutput, registries);
-        }
-
-        @Override
-        protected RecipeProvider createRecipeProvider(HolderLookup.Provider registries, RecipeOutput output) {
-            return new ModRecipeProvider(registries, output);
-        }
-
-        @Override
-        public String getName() {
-            return "LittleAnt Recipes";
-        }
+    public ModRecipeProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        super(output, registries);
     }
 
     @Override
-    protected void buildRecipes() {
-        shapeless(RecipeCategory.MISC, ModItems.ANT_SPAWN_EGG.get())
+    protected void buildRecipes(@NotNull RecipeOutput recipeOutput) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.ANT_SPAWN_EGG.get())
                 .requires(Blocks.CRAFTING_TABLE)
                 .requires(Blocks.DIRT)
                 .requires(Blocks.COBBLESTONE)
@@ -56,6 +43,6 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_bone", has(Items.BONE))
                 .unlockedBy("has_rotten_flesh", has(Items.ROTTEN_FLESH))
                 .unlockedBy("has_logs", has(ItemTags.LOGS))
-                .save(output);
+                .save(recipeOutput);
     }
 }

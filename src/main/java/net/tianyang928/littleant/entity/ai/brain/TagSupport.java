@@ -4,7 +4,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
@@ -16,14 +16,14 @@ import java.util.List;
 /** Resolves either a registry id or a tag id (with or without a leading '#'). */
 public final class TagSupport {
     private TagSupport() {}
-    private static Identifier id(String value) {
+    private static ResourceLocation id(String value) {
         if (value == null) return null;
         String v = value.trim();
         if (v.startsWith("#")) v = v.substring(1);
-        try { return Identifier.tryParse(v); } catch (RuntimeException e) { return null; }
+        try { return ResourceLocation.tryParse(v); } catch (RuntimeException e) { return null; }
     }
     public static <T> List<T> values(Registry<T> registry, net.minecraft.resources.ResourceKey<Registry<T>> key, String value) {
-        Identifier id = id(value);
+        ResourceLocation id = id(value);
         if (id == null) return List.of();
 
         // Some Minecraft registries (notably blocks and items) are defaulted
@@ -38,7 +38,7 @@ public final class TagSupport {
             for (Holder<T> holder : registry.getTagOrEmpty(tag)) result.add(holder.value());
         }
         if (result.isEmpty() && directEntry && !explicitTag) {
-            T direct = registry.getValue(id);
+            T direct = registry.get(id);
             // containsKey above guarantees this is a genuine entry, even for
             // a DefaultedRegistry.
             result.add(direct);
@@ -50,7 +50,7 @@ public final class TagSupport {
                                        net.minecraft.resources.ResourceKey<Registry<T>> key,
                                        T value, String tagName) {
         if (value == null) return false;
-        Identifier tagId = id(tagName);
+        ResourceLocation tagId = id(tagName);
         if (tagId == null) return false;
         TagKey<T> tag = TagKey.create(key, tagId);
         for (Holder<T> holder : registry.getTagOrEmpty(tag)) {

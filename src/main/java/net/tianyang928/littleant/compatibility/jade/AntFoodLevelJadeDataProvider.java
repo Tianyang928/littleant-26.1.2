@@ -3,11 +3,12 @@ package net.tianyang928.littleant.compatibility.jade;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.tianyang928.littleant.entity.AntEntity;
-import org.jspecify.annotations.Nullable;
 import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.StreamServerDataProvider;
+
+import javax.annotation.Nullable;
 
 public class AntFoodLevelJadeDataProvider   implements StreamServerDataProvider<EntityAccessor, Integer> {
     public static final AntFoodLevelJadeDataProvider INSTANCE = new AntFoodLevelJadeDataProvider();
@@ -29,7 +30,7 @@ public class AntFoodLevelJadeDataProvider   implements StreamServerDataProvider<
     }
 
     @Override
-    public Identifier getUid() {
+    public ResourceLocation getUid() {
         return AntFoodLevelJadePlugin.ANT_FOOD_LEVEL;
     }
 }

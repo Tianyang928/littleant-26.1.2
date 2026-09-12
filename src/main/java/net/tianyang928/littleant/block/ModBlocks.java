@@ -21,12 +21,12 @@ public class ModBlocks {
             properties -> new Block(properties.strength(4f)
                                                         .sound(SoundType.WOOD)
                                                         .explosionResistance(5f)));
-    public static final DeferredBlock<PheromoneBlock> PHEROMONE_BLOCK =  BLOCKS.registerBlock("pheromone_block",
+    public static final DeferredBlock<PheromoneBlock> PHEROMONE_BLOCK = BLOCKS.registerBlock("pheromone_block",
             properties -> new PheromoneBlock(properties
                                             .isValidSpawn(Blocks::never)
                                             .noTerrainParticles()
                                             .replaceable()
-                                            .noCollision()
+                                            .noCollission()
                                             .noOcclusion()                      // 不遮挡视线
                                             .noLootTable()                      // 无掉落物
                                             .strength(-1.0f, 3600000.0f)        // 或用 -1 表示不可挖掘
@@ -41,7 +41,7 @@ public class ModBlocks {
     }
 
     private static <T extends Block> void registerBlockItem(String name, DeferredBlock<T> block) {
-        ModItems.ITEMS.registerItem(name, properties -> new BlockItem(block.get(), properties.useBlockDescriptionPrefix()));
+        ModItems.ITEMS.registerItem(name, properties -> new BlockItem(block.get(), properties));
     }
 
     public static void register(IEventBus eventBus) {

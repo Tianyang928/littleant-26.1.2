@@ -2,23 +2,22 @@ package net.tianyang928.littleant.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.tianyang928.littleant.LittleAnt;
-import net.tianyang928.littleant.client.renderstate.AntRenderState;
 import net.tianyang928.littleant.entity.AntEntity;
 
-public class AntRenderer extends HumanoidMobRenderer<AntEntity, AntRenderState, HumanoidModel<AntRenderState>> {
+public class AntRenderer extends HumanoidMobRenderer<AntEntity, HumanoidModel<AntEntity>> {
 
     public AntRenderer(EntityRendererProvider.Context context) {
         super(
@@ -28,67 +27,60 @@ public class AntRenderer extends HumanoidMobRenderer<AntEntity, AntRenderState, 
         );
         this.addLayer(new HumanoidArmorLayer(
                 this,
-                        ArmorModelSet.bake(ModelLayers.PLAYER_ARMOR, context.getModelSet(), HumanoidModel::new),
-                        context.getEquipmentRenderer()));
+                new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
+                new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)),
+                context.getModelManager()));
     }
 
     @Override
-    public AntRenderState createRenderState() {
-        return new AntRenderState();
+    public ResourceLocation getTextureLocation(AntEntity antEntity) {
+        String skinName = antEntity.getSkinNameAccessor();
+        if(skinName.isEmpty()){
+            skinName = "null";
+        }
+        return ResourceLocation.fromNamespaceAndPath(
+                LittleAnt.MOD_ID,
+                "textures/entity/ant/" + skinName + ".png"
+        );
     }
 
     @Override
-    protected HumanoidModel.ArmPose getArmPose(AntEntity ant, HumanoidArm arm) {
-        ItemStack stack = ant.getItemHeldByArm(arm);
+    public void render(AntEntity ant, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        this.model.rightArmPose = getArmPose(ant, HumanoidArm.RIGHT);
+        this.model.leftArmPose = getArmPose(ant, HumanoidArm.LEFT);
+        super.render(ant, entityYaw, partialTicks, poseStack, buffer, packedLight);
+    }
+
+    private HumanoidModel.ArmPose getArmPose(AntEntity ant, HumanoidArm arm) {
+        InteractionHand hand = arm == ant.getMainArm() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        ItemStack stack = ant.getItemInHand(hand);
         if (stack.isEmpty()) return HumanoidModel.ArmPose.EMPTY;
         if (!ant.swinging && stack.getItem() instanceof CrossbowItem && CrossbowItem.isCharged(stack)) {
             return HumanoidModel.ArmPose.CROSSBOW_HOLD;
         }
 
-        InteractionHand hand = arm == ant.getMainArm() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-        if (!ant.isUsingItem() || ant.getUsedItemHand() != hand) return super.getArmPose(ant, arm);
+        if (!ant.isUsingItem() || ant.getUsedItemHand() != hand) return HumanoidModel.ArmPose.EMPTY;
         return switch (stack.getUseAnimation()) {
             case BLOCK -> HumanoidModel.ArmPose.BLOCK;
             case BOW -> HumanoidModel.ArmPose.BOW_AND_ARROW;
-            case TRIDENT -> HumanoidModel.ArmPose.THROW_TRIDENT;
+            case SPEAR -> HumanoidModel.ArmPose.THROW_SPEAR;
             case CROSSBOW -> HumanoidModel.ArmPose.CROSSBOW_CHARGE;
             case SPYGLASS -> HumanoidModel.ArmPose.SPYGLASS;
             case TOOT_HORN -> HumanoidModel.ArmPose.TOOT_HORN;
             case BRUSH -> HumanoidModel.ArmPose.BRUSH;
-            case SPEAR -> HumanoidModel.ArmPose.SPEAR;
             default -> HumanoidModel.ArmPose.ITEM;
         };
     }
 
     @Override
-    public void extractRenderState(AntEntity entity, AntRenderState state, float partialTick) {
-        super.extractRenderState(entity, state, partialTick);
-
-        // 从 entity 读取实体皮肤，写入 state
-        state.skinName = entity.getSkinNameAccessor();
-    }
-
-    @Override
-    protected void setupRotations(AntRenderState state, PoseStack poseStack, float bodyRot, float entityScale) {
-        super.setupRotations(state, poseStack, bodyRot, entityScale);
-        if (state.swimAmount > 0.0F) {
-            float targetXRot = state.isInWater ? -90.0F - state.xRot : -90.0F;
-            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(state.swimAmount, 0.0F, targetXRot)));
-            if (state.isVisuallySwimming) {
+    protected void setupRotations(AntEntity entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        if (entity.getSwimAmount(partialTick) > 0.0F) {
+            float targetXRot = entity.isInWater() ? -90.0F - bob : -90.0F;
+            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(entity.getSwimAmount(partialTick), 0.0F, targetXRot)));
+            if (entity.isVisuallySwimming()) {
                 poseStack.translate(0.0F, -1.0F, 0.3F);
             }
         }
-    }
-
-    @Override
-    public Identifier getTextureLocation(AntRenderState antRenderState) {
-        String skinName = antRenderState.skinName;
-        if(skinName.isEmpty()){
-            skinName = "null";
-        }
-        return Identifier.fromNamespaceAndPath(
-                LittleAnt.MOD_ID,
-                "textures/entity/ant/" + skinName + ".png"
-        );
     }
 }
